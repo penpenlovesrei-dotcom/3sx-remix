@@ -21,7 +21,12 @@ SoundPatch sdeb[SDEB_SIZE];
 
 s16 bgm_selectorDC[8] = { 0, 1, 2, 1, 2, 1, 2, 1 };
 s16 bgm_selectorAC[8] = { 0, 1, 0, 1, 0, 1, 0, 1 };
-s16* bgm_selector[2] = { bgm_selectorDC, bgm_selectorAC };
+// Remix slots keep the arranged mix1/mix2/mix3 rotation. A pack supplying the three per-round
+// mixes gets them; one supplying a single track per stage has every round resolve to it, and the
+// track then plays through the transitions without restarting (see bgm_remix_continues).
+s16* bgm_selector[BGM_TYPE_COUNT] = { bgm_selectorDC, bgm_selectorAC, bgm_selectorDC, bgm_selectorDC,
+                                      bgm_selectorDC, bgm_selectorDC, bgm_selectorDC, bgm_selectorDC,
+                                      bgm_selectorDC, bgm_selectorDC, bgm_selectorDC, bgm_selectorDC };
 
 const u16 BGM_Stage_Data[22] = { 46, 1, 13, 34, 31, 4, 7, 16, 25, 28, 34, 1, 28, 43, 22, 10, 19, 40, 4, 37, 61, 62 };
 const s16 SE_Shock_Data[7] = { 285, 286, 287, 288, 289, 305, 306 };
@@ -30,11 +35,27 @@ const s16 Finish_SE_Data[2][7] = { { 305, 306, 285, 286, 287, 288, 272 }, { 292,
 void Stage_BGM(u16 Stage_Number, u16 Round_Number) {
     u16 code;
 
+    u16 base;
+
     if (Mode_Type == MODE_ARCADE && Play_Type == 0 && My_char[COM_id] == 17 && Bonus_Game_Flag == 0) {
-        code = BGM_Stage_Data[17] + bgm_selector[sys_w.bgm_type][Round_Number & 7];
+        base = BGM_Stage_Data[17];
     } else {
-        code = BGM_Stage_Data[Stage_Number] + bgm_selector[sys_w.bgm_type][Round_Number & 7];
+        base = BGM_Stage_Data[Stage_Number];
     }
+
+    // Random and Custom settle once per fight, so a fight's rounds keep one soundtrack and its
+    // mixes stay coherent. The flag makes this idempotent: rollback re-simulates recent frames,
+    // and settling again on a replayed round 1 would swap the music mid-fight.
+    static bool settled_for_this_fight = false;
+
+    if (Round_Number != 0) {
+        settled_for_this_fight = false;
+    } else if (!settled_for_this_fight) {
+        settled_for_this_fight = true;
+        Resolve_bgm_type(base);
+    }
+
+    code = base + bgm_selector[sys_w.bgm_type][Round_Number & 7];
 
     *gSeqStatus = 0;
 
@@ -297,3 +318,4 @@ void Store_Sound_Code(u16 code, SoundPatchConfig* rmc) {
     sdeb->cp3code = code;
     sdeb->rmc = *rmc;
 }
+

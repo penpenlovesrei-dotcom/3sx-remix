@@ -23,3 +23,9 @@ states
 rom
 dump
 *.AFS
+
+run.log
+run.err
+*.log
+*.err
+*.before

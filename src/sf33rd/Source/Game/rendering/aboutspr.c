@@ -5,6 +5,13 @@
 
 #include "sf33rd/Source/Game/rendering/aboutspr.h"
 #include "common.h"
+#include "core/render_primitives.h"
+#include "core/renderer.h"
+#include "port/config/config.h"
+#include "port/video/art_remix.h"
+#include "sf33rd/AcrSDK/ps2/flps2render.h"
+
+#include <SDL3/SDL.h>
 #include "sf33rd/AcrSDK/ps2/foundaps2.h"
 #include "sf33rd/Source/Game/effect/effect.h"
 #include "sf33rd/Source/Game/engine/charid.h"
@@ -260,6 +267,143 @@ void all_cgps_put_back(WORK* wk) {
     // Do nothing
 }
 
+/// @brief Outline where a character select portrait's chips land, under `art-remix-boxes`.
+///
+/// The portraits are the one thing on that screen a replacement would want to reach, and also the
+/// one thing it cannot: effect 38 draws through multitexture slot 13, whose pages are built empty
+/// and filled chip by chip from sprite data, never loaded whole. A replacement therefore has to be
+/// drawn in the portrait's place rather than substituted for its pixels, which makes computing
+/// "its place" the first thing that has to be right.
+///
+/// The outline sits just outside the computed box and the portrait still draws, so the two can be
+/// compared: art touching the frame from the inside all round means the box is the sprite. A gap
+/// means it is too big, art crossing the frame means too small. A filled box was the first attempt
+/// and it answered nothing -- it hid the very thing it had to be checked against. Drawn outside
+/// rather than on the edge so the answer does not depend on which of the two wins the depth test.
+///
+/// Player one is magenta and player two cyan: the two portraits are mirrors, and one colour would
+/// hide a left-right mistake.
+static void Outline_Portrait_Box(WORK* wk, s16 bsy) {
+    f32 box[4];
+
+    // 38 with work_id 16 is effect_38_init's own signature; no other work carries the pair.
+    if (!Config_GetBool(CFG_ART_REMIX_BOXES) || wk->id != 38 || wk->work_id != 16) {
+        return;
+    }
+
+    if (!mlt_obj_bounds(wk, box)) {
+        return;
+    }
+
+    const u32 col = wk->rl_flag ? 0xFFFF00FF : 0xFF00FFFF;
+    const f32 t = 2.0f;
+    const f32 x = box[0] - t;
+    const f32 y = box[1] - t;
+    const f32 w = box[2] + (t * 2.0f);
+    const f32 h = box[3] + (t * 2.0f);
+
+    mlt_obj_matrix(wk, bsy);
+    draw_box(x, y, w, t, col, 0x60, wk->position_z);
+    draw_box(x, y + h - t, w, t, col, 0x60, wk->position_z);
+    draw_box(x, y, t, h, col, 0x60, wk->position_z);
+    draw_box(x + w - t, y, t, h, col, 0x60, wk->position_z);
+}
+
+/// @brief Draw a replacement portrait over the box the chips cover, if one is installed.
+///
+/// Everything that makes the portrait behave -- where it is, which way it faces, how far it has
+/// slid in, how faded it is, how it sorts -- belongs to the work, not to the chips, so taking the
+/// chips away and putting a picture on the same box keeps all of it. `mlt_obj_matrix` has already
+/// put the work's position and priority into the matrix, which is why the corners below are the
+/// plain box and not screen coordinates.
+///
+/// @return `true` when the portrait was drawn here and the chips should be skipped.
+static bool Draw_Portrait_Art(WORK* wk, s16 bsy) {
+    f32 box[4];
+    Sprite prm;
+    FLVec3 pos[2];
+    PAL_CURSOR_COL oricol;
+
+    if (wk->id != 38 || wk->work_id != 16) {
+        return false;
+    }
+
+    s32 art_w = 0;
+    s32 art_h = 0;
+    const u32 tex_code = ArtRemix_TexCode(wk->dir_step, &art_w, &art_h);
+
+    if (tex_code == 0 || art_w <= 0 || art_h <= 0 || !mlt_obj_bounds(wk, box)) {
+        return false;
+    }
+
+    static s32 traced_face = -1;
+
+    if (wk->dir_step != traced_face) {
+        traced_face = wk->dir_step;
+        SDL_Log("[portrait] face %d: clear_level %d, col_mode %04X, box %.0fx%.0f, art %dx%d", wk->dir_step,
+                wk->my_clear_level, wk->my_col_mode, box[2], box[3], art_w, art_h);
+    }
+
+    mlt_obj_matrix(wk, bsy);
+
+    oricol.color = -1;
+    oricol.argb.a = (0xFF - wk->my_clear_level);
+
+    prm.tex_code = tex_code;
+    flSetRenderState(FLRENDER_TEXSTAGE0, prm.tex_code);
+
+    // The artwork is authored the way player one's portrait faces, so player one takes it as it is
+    // and player two is the one that turns round. `rl_flag` is `PL_id ^ 1`, hence the inversion.
+    const bool mirrored = ((wk->cg_flip ^ wk->rl_flag) & 1) == 0;
+    prm.t[0].s = mirrored ? 1.0f : 0.0f;
+    prm.t[3].s = mirrored ? 0.0f : 1.0f;
+    prm.t[0].t = 0.0f;
+    prm.t[3].t = 1.0f;
+
+    // Three things are wanted at once and only two of them fit: the arcade's 4:3 screen, a picture
+    // at its true proportions, and a picture that fills the box. Every mode but square-pixels
+    // presents the 384x224 buffer as 4:3, stretching it vertically by 9/7, and the box is the
+    // sprite's -- drawn to be stretched. Undoing that stretch on the picture alone makes it 9/7 too
+    // short for its box.
+    //
+    // So it covers the box rather than fitting inside it: sized to the box's height, overflowing
+    // sideways by however much the correction takes. The overflow is the cheap side to lose -- the
+    // portrait already runs off the screen edge and under the roster, whereas a gap above and below
+    // it would be plainly wrong.
+    const char* const mode = Config_GetString(CFG_KEY_SCALEMODE);
+    const bool anamorphic = (mode == NULL) || (SDL_strcmp(mode, "square-pixels") != 0);
+    const f32 shape = ((f32)art_w / (f32)art_h) * (anamorphic ? (9.0f / 7.0f) : 1.0f);
+
+    f32 fit_w = box[3] * shape;
+    f32 fit_h = box[3];
+
+    if (fit_w < box[2]) {
+        fit_w = box[2];
+        fit_h = box[2] / shape;
+    }
+
+    // The box is the sprite's own extent, chips included, and a portrait sits a little inside it.
+    fit_w *= 0.91f;
+    fit_h *= 0.91f;
+
+    // Centred sideways, but sitting on the floor of the box rather than in the middle of it. A
+    // portrait is a standing figure cut off at the bottom edge, so slack shared evenly leaves it
+    // hovering; all of it belongs above the head, where there is nothing to see.
+    const f32 fit_x = box[0] + ((box[2] - fit_w) * 0.5f);
+    const f32 fit_y = box[1];
+
+    pos[0].x = fit_x;
+    pos[0].y = fit_y + fit_h;
+    pos[1].x = fit_x + fit_w;
+    pos[1].y = fit_y;
+    pos[0].z = pos[1].z = 0.0f;
+
+    njCalcPoint(NULL, (Vec3*)&pos[0], &prm.v[0]);
+    njCalcPoint(NULL, (Vec3*)&pos[1], &prm.v[3]);
+    Renderer_DrawSprite(&prm, oricol.color);
+    return true;
+}
+
 void Mtrans_use_trans_mode(WORK* wk, s16 bsy) {
     if (mts_ok[wk->my_mts].be == 0) {
         // A display request was received before MTS initialization. MTS number: %d\n
@@ -279,6 +423,12 @@ void Mtrans_use_trans_mode(WORK* wk, s16 bsy) {
     }
 
     if (No_Trans) {
+        return;
+    }
+
+    Outline_Portrait_Box(wk, bsy);
+
+    if (Draw_Portrait_Art(wk, bsy)) {
         return;
     }
 

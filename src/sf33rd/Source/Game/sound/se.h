@@ -5,6 +5,8 @@
 #include "types.h"
 
 extern u8 gSeqStatus[1];
+extern s16* bgm_selector[];
+extern s16 bgm_selectorAC[8];
 
 void Stage_BGM(u16 Stage_Number, u16 Round_Number);
 void Sound_SE(s16 Code);

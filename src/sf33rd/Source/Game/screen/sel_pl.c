@@ -17,6 +17,8 @@
 #include "sf33rd/Source/Game/effect/eff50.h"
 #include "sf33rd/Source/Game/effect/eff52.h"
 #include "sf33rd/Source/Game/effect/eff58.h"
+#include "port/video/pal_remix.h"
+#include "sf33rd/Source/Game/effect/eff64.h"
 #include "sf33rd/Source/Game/effect/eff66.h"
 #include "sf33rd/Source/Game/effect/eff69.h"
 #include "sf33rd/Source/Game/effect/eff70.h"
@@ -52,6 +54,7 @@
 #include "sf33rd/Source/Game/ui/sc_sub.h"
 
 void Switch_Work();
+void Palette_Set_Control();
 void Sel_PL_Control();
 void Sel_PL_Cont_1st();
 void Check_Use_Gill();
@@ -143,6 +146,107 @@ const u8 Repeat_Time_Data[3] = { 26, 9, 7 };
 
 const u8 Repeat_Time_Data_Wife[3] = { 1, 1, 1 };
 
+/// @name The palette set on the select screen
+///
+/// Which game's colours a fighter comes out in is chosen here, in the two modes that ask — see
+/// CHAR_COLOR_MODE_* — rather than on a menu page nobody is looking at while they pick.
+/// @{
+/// Cell columns and rows of the 384x224 picture, SSPutStr counting in eight-pixel steps
+#define PAL_SET_LINE_COLUMNS 48
+/// Inset from whichever edge a line is against. The left one is the column the PRESS 1P START
+/// line uses; the right one matches it so the two read as a pair.
+#define PAL_SET_LINE_MARGIN 2
+/// The two rows a line can sit on, opposite corners of the picture
+#define PAL_SET_LINE_TOP_Y 1
+#define PAL_SET_LINE_BOTTOM_Y 26
+/// The palette bank every PRESS START line is drawn in — the blue one
+#define PAL_SET_LINE_ATTR 9
+#define PAL_SET_LINE_PRIORITY 2
+/// A stop that names something not built yet is drawn at half brightness rather than skipped, so
+/// the cycle shows where it is going. The vertex colour multiplies the palette's, so half here is
+/// the same half the menus dim an unavailable row by, and the line keeps its own hue.
+#define PAL_SET_LINE_LIT 0xFFFFFFFF
+#define PAL_SET_LINE_DIM 0xFF808080
+
+static s16 Pal_Set_Line_Length(const s8* str) {
+    s16 n = 0;
+
+    while (str[n] != 0) {
+        n++;
+    }
+
+    return n;
+}
+
+/// @brief One side's line, against the left or the right edge of a given row.
+///
+/// Right-aligned rather than placed when it sits on the right: the names run from six letters to
+/// fourteen, and a fixed column would either clip the longest or leave the shortest stranded in
+/// the middle of the picture.
+static void Draw_Palette_Set_Line(s16 player, bool right, s16 y) {
+    const s8* name = Character_Palette_Name(player);
+    const s16 x = right ? (s16)(PAL_SET_LINE_COLUMNS - PAL_SET_LINE_MARGIN - Pal_Set_Line_Length(name))
+                        : PAL_SET_LINE_MARGIN;
+
+    SSPutStrCol((u16)x, (u16)y, PAL_SET_LINE_ATTR,
+                Character_Palette_Selectable(player) ? PAL_SET_LINE_LIT : PAL_SET_LINE_DIM, name,
+                PAL_SET_LINE_PRIORITY);
+}
+
+/// @brief Both sides' current set, once a frame, for as long as the screen is up.
+///
+/// Only in the mode where Start chooses it: the other two are settled on a menu page, and a line
+/// here would be reporting rather than offering.
+///
+/// The two sides take opposite corners, and which corner player one gets depends on whether there
+/// is a second person at all. Alone, the line belongs at the bottom, out of the way of a roster
+/// being read from the top. With two, they go top left and bottom right, so that neither sits in
+/// the other's half of the screen and each has a corner of their own to glance at.
+static void Draw_Palette_Set() {
+    // Player two's slot is the processor's in a one-player game, and a line telling someone what
+    // colours the machine picked for itself answers nothing.
+    const bool two_players = plw[1].wu.operator != 0;
+
+    if (Display_Buff[DISPLAY_ROW_CHARACTER_COLOR] != CHAR_COLOR_MODE_START) {
+        return;
+    }
+
+    Draw_Palette_Set_Line(0, false, two_players ? PAL_SET_LINE_TOP_Y : PAL_SET_LINE_BOTTOM_Y);
+
+    if (two_players) {
+        Draw_Palette_Set_Line(1, true, PAL_SET_LINE_BOTTOM_Y);
+    }
+}
+
+/// @brief Start steps a side's palette set. Once a frame, straight off the pad.
+///
+/// Read here rather than in Sel_PL_Sub, which is where every other button on this screen is
+/// handled. That path cannot see Start at all: Deley_Shot_Sub masks its edge word with SWK_ATTACKS
+/// before anything looks at it, and Start is not one of them — so the SWK_START it then tests for
+/// is a bit that was cleared two lines earlier and can never be set. Rather than unpick a mask the
+/// three-button colour shortcuts depend on, this reads the pad itself.
+void Palette_Set_Control() {
+    s16 id;
+
+    for (id = 0; id < 2; id++) {
+        const u16 edge = (u16)((id == 0) ? (~p1sw_1 & p1sw_0) : (~p2sw_1 & p2sw_0));
+
+        if (!(edge & SWK_START) || (Display_Buff[DISPLAY_ROW_CHARACTER_COLOR] != CHAR_COLOR_MODE_START)) {
+            continue;
+        }
+
+        // Once a fighter is confirmed the choice is already on its way to the loader, so letting
+        // Start move it would only make the line disagree with what walks out.
+        if (Sel_PL_Complete[id] || (plw[id].wu.operator == 0)) {
+            continue;
+        }
+
+        Character_Palette_Cycle(id);
+        Sound_SE(id + 96);
+    }
+}
+/// @}
+
 s16 Select_Player() {
     SEL_PL_X = 0;
 
@@ -157,6 +261,8 @@ s16 Select_Player() {
     Sel_PL();
     ID = 1;
     Sel_PL();
+    Palette_Set_Control();
+    Draw_Palette_Set();
     Time_Over = false;
     return SEL_PL_X;
 }
@@ -270,6 +376,10 @@ void Sel_PL_Cont_1st() {
     Flash_Complete[1] = 0;
     Cursor_Move[0] = 0;
     Cursor_Move[1] = 0;
+    // Both sides back on the game's own colours. A set carried over from the last visit would
+    // dress a fighter nobody chose it for, and the line that says so is not drawn until this
+    // screen is up — so it would be a silent one.
+    Character_Palette_Reset();
     Check_Use_Gill();
     pulpul_stop();
     pp_operator_check_flag(1);
@@ -1165,6 +1275,7 @@ void Sel_PL_Sub(s16 PL_id, u16 sw) {
 
     Sound_SE(ID + 98);
     Sound_SE(*Free_Ptr[PL_id]++);
+
     Setup_PL_Color(PL_id, sw);
     Correct_Control_Time(PL_id);
 }

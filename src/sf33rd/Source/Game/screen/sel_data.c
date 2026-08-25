@@ -155,7 +155,7 @@ const u8 Random_Stage_Data[2][32] = {
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 2, 3, 4, 5, 6, 7, 8, 11, 12, 15, 16, 19, 0 }
 };
 
-const s16 Slide_Pos_Data_61[68][2] = {
+const s16 Slide_Pos_Data_61[135][2] = {
     { -120, 156 }, { -104, 135 }, { -88, 114 },  { -72, 93 },   { -56, 72 },   { -40, 51 },   { -24, 30 },
     { -120, 164 }, { -104, 142 }, { -88, 120 },  { -72, 98 },   { -56, 76 },   { -40, 54 },   { -24, 32 },
     { -144, 164 }, { -124, 142 }, { -104, 120 }, { -84, 98 },   { -64, 76 },   { -44, 54 },   { -24, 32 },
@@ -165,14 +165,76 @@ const s16 Slide_Pos_Data_61[68][2] = {
     { 72, 40 },    { -72, 124 },  { -56, 92 },   { -40, 60 },   { -24, 28 },   { -104, 156 }, { -88, 132 },
     { -72, 108 },  { -56, 84 },   { -40, 60 },   { -24, 36 },   { -112, 132 }, { -88, 92 },   { -24, 52 },
     { -40, 100 },  { -19, 76 },   { -19, 52 },   { -160, 163 }, { -144, 145 }, { -128, 127 }, { -112, 109 },
-    { -96, 91 },   { -76, 68 },   { -24, 28 },   { -112, 132 }, { -88, 92 }
+    { -96, 91 },   { -76, 68 },   { -24, 28 },   { -112, 132 }, { -88, 92 },
+    // Rows 68-83: the Custom tracklist's bracketed theme, in the menu's small charset. Its x follows
+    // the condensed character before it, which advances 8px a letter.
+    { -116, 186 }, { -76, 168 }, { -100, 150 }, { -108, 132 },
+    { -116, 114 }, { -124, 96 }, { -124, 78 }, { -116, 60 },
+    { -108, 186 }, { -44, 168 }, { -148, 150 }, { -124, 132 },
+    { -132, 114 }, { -76, 96 }, { -116, 78 }, { -76, 60 },
+    // Rows 84-91: the Display page. It follows the sound menu's diagonal (entries 59-65 above)
+    // rather than the option menu's, because five of its rows carry a value: that diagonal starts
+    // far enough left to leave the value column its 176px. The sixth row is regularised to the
+    // same 18px step as the rest, where the sound menu detaches it to set BGM TEST apart, so no
+    // row here reads as orphaned. The seventh carries that step one further, to the 55 the sound
+    // menu leaves empty. EXIT keeps its own gap.
+    { -160, 163 }, { -144, 145 }, { -128, 127 }, { -112, 109 }, { -96, 91 }, { -80, 73 }, { -64, 55 },
+    { -24, 28 },
+    // Rows 92-111: the Custom backgrounds screen's bracketed stage, in the menu's small charset.
+    // Its x follows the condensed character name before it, which advances 8px a letter.
+    { -95, 186 }, { -103, 168 }, { -79, 150 }, { -87, 132 },
+    { -95, 114 }, { -103, 96 }, { -103, 78 }, { -95, 60 },
+    { -111, 186 }, { -87, 168 }, { -95, 150 }, { -111, 132 },
+    { -127, 114 }, { -103, 96 }, { -111, 78 }, { -103, 60 },
+    { -87, 186 }, { -95, 168 }, { -103, 150 }, { -111, 132 },
+    // Rows 112-114: the colour editor's R, G and B captions, under their bars. Appended past
+    // everything so that adding them shifted no index; the bars step 18px from x -180.
+    { -174, 132 }, { -156, 132 }, { -138, 132 },
+    // Rows 115-134: the colour editor's name line, one per character in engine order. All the same
+    // spot — only one is ever drawn, and this table is indexed by the string rather than by where
+    // it goes, so each name needs its own copy of the position.
+    { 46, 60 }, { 46, 60 }, { 46, 60 }, { 46, 60 }, { 46, 60 },
+    { 46, 60 }, { 46, 60 }, { 46, 60 }, { 46, 60 }, { 46, 60 },
+    { 46, 60 }, { 46, 60 }, { 46, 60 }, { 46, 60 }, { 46, 60 },
+    { 46, 60 }, { 46, 60 }, { 46, 60 }, { 46, 60 }, { 46, 60 }
 };
 
 const s16 Slide_Pos_Data_63[5][2] = { { 40, 164 }, { 60, 142 }, { 80, 120 }, { 100, 98 }, { 120, 76 } };
 
-const s16 Slide_Pos_Data_64[18][2] = { { 96, 76 },  { 20, 169 }, { 16, 156 }, { 24, 143 }, { 32, 130 }, { 52, 117 },
+const s16 Slide_Pos_Data_64[67][2] = { { 96, 76 },  { 20, 169 }, { 16, 156 }, { 24, 143 }, { 32, 130 }, { 52, 117 },
                                        { 48, 104 }, { 56, 91 },  { 64, 78 },  { 72, 65 },  { 80, 52 },  { -88, 156 },
-                                       { 16, 163 }, { 32, 145 }, { 48, 127 }, { 64, 109 }, { 80, 91 },  { 96, 68 } };
+                                       { 16, 163 }, { 32, 145 }, { 48, 127 }, { 64, 109 }, { 80, 91 },  { 96, 68 },
+                                       // 18-25: the Custom tracklist's soundtrack column, one per
+                                       // row of a page. 26-33 are unused since it went to eight
+                                       // rows a page.
+                                       { 76, 186 }, { 76, 168 }, { 76, 150 }, { 76, 132 },
+                                       { 76, 114 }, { 76, 96 },  { 76, 78 },  { 76, 60 },
+                                       { 52, 98 },  { 52, 88 },  { 52, 78 },  { 52, 68 },
+                                       { 52, 58 },  { 52, 48 },  { 52, 38 },  { 52, 28 },
+                                       // 34-41: the Custom backgrounds screen's set column, one per
+                                       // row of a page. Its rows are the widest of the three Custom
+                                       // screens, carrying a character and a stage both.
+                                       { 104, 186 }, { 104, 168 }, { 104, 150 }, { 104, 132 },
+                                       { 104, 114 }, { 104, 96 },  { 104, 78 },  { 104, 60 },
+                                       // 42-53: unused since that screen went to eight rows a page
+                                       { 52, 130 }, { 52, 122 },
+                                       { 52, 114 }, { 52, 106 }, { 52, 98 },  { 52, 90 },
+                                       { 52, 82 },  { 52, 74 },  { 52, 66 },  { 52, 58 },
+                                       { 52, 50 },  { 52, 42 },
+                                       // 54-58: the Display page's value column, for its rows 1-5.
+                                       // Same as the sound menu's rows above, which its labels
+                                       // borrow, except the character colour row: that one is
+                                       // drawn in the narrow charset, whose glyphs sit 2px lower,
+                                       // so its baseline is raised to match its neighbours.
+                                       { 32, 145 }, { 48, 127 }, { 64, 109 }, { 80, 91 },
+                                       { 96, 73 },
+                                       // 59-66: the Custom character colours screen, one per row
+                                       // of a page. Sits where the 25-character dotted labels end,
+                                       // in the narrow charset, and far enough left that New
+                                       // Generation still clears the screen edge.
+                                       { 64, 186 }, { 64, 168 }, { 64, 150 },
+                                       { 64, 132 }, { 64, 114 }, { 64, 96 },
+                                       { 64, 78 },  { 64, 60 } };
 
 const s16 Slide_Pos_Data_23[22][2] = { { -100, 164 }, { -100, 151 }, { -100, 138 }, { -100, 125 }, { -100, 112 },
                                        { -100, 99 },  { -100, 86 },  { -100, 73 },  { -88, 60 },   { -148, 164 },
@@ -180,14 +242,18 @@ const s16 Slide_Pos_Data_23[22][2] = { { -100, 164 }, { -100, 151 }, { -100, 138
                                        { -148, 86 },  { -148, 73 },  { -152, 60 },  { -152, 47 },  { -152, 34 },
                                        { -96, 34 },   { 0, 0 } };
 
-const s16 Suddenly_Pos_Data_66[42][3] = {
+const s16 Suddenly_Pos_Data_66[44][3] = {
     { 376, 148, 68 }, { 376, 100, 68 },  { 336, 76, 68 },   { 392, 76, 68 },  { 448, 76, 68 },  { 504, 76, 68 },
     { 384, 3, 70 },   { 0, 80, 66 },     { 0, 64, 70 },     { 0, 56, 3 },     { -88, -8, 2 },   { 88, -8, 2 },
     { 0, 204, 68 },   { -136, 148, 68 }, { -136, 100, 68 }, { -48, 76, 68 },  { 8, 76, 68 },    { 64, 76, 68 },
     { 120, 76, 68 },  { 0, 3, 70 },      { 0, 236, 68 },    { 176, 236, 68 }, { 172, 236, 68 }, { 384, 106, 70 },
     { -176, 32, 70 }, { 16, 32, 70 },    { -96, 128, 71 },  { 96, 128, 71 },  { -96, 172, 23 }, { 96, 172, 23 },
     { 0, 44, 23 },    { 0, -32, 25 },    { -96, 172, 22 },  { 96, 172, 22 },  { 0, 44, 22 },    { -96, 172, 24 },
-    { 96, 172, 24 },  { 0, 44, 24 },     { 0, 36, 22 },     { 208, 218, 68 }, { 204, 218, 68 }, { 0, 36, 22 }
+    { 96, 172, 24 },  { 0, 44, 24 },     { 0, 36, 22 },     { 208, 218, 68 }, { 204, 218, 68 }, { 0, 36, 22 },
+    // 42-43: the Custom character colours screen's page indicator, the word then the digit. Copied
+    // from the System Direction menu's, entries 21 and 22 above, which is the only placement of it
+    // I can check against a screenshot.
+    { 176, 236, 68 }, { 172, 236, 68 }
 };
 
 const s16 Slide_Pos_Data_66[2][3] = { { -24, 12, 70 }, { 168, 12, 70 } };

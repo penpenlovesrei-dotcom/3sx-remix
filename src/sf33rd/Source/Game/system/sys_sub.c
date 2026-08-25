@@ -6,6 +6,7 @@
 #include "sf33rd/Source/Game/system/sys_sub.h"
 #include "common.h"
 #include "main.h"
+#include "port/sound/bgm_remix.h"
 #include "sf33rd/AcrSDK/common/mlPAD.h"
 #include "sf33rd/Source/Game/com/com_data.h"
 #include "sf33rd/Source/Game/com/com_datu.h"
@@ -609,7 +610,9 @@ void Save_Game_Data() {
     save_w[1].SoundMode = Convert_Buff[3][1][0];
     save_w[1].BGM_Level = Convert_Buff[3][1][1];
     save_w[1].SE_Level = Convert_Buff[3][1][2];
-    save_w[1].BgmType = Convert_Buff[3][1][3];
+    // Store the BGM type, not the menu position, so reordering the row later can't repoint a
+    // saved setting at a different soundtrack
+    save_w[1].BgmType = BgmRemix_GetSlotType(Convert_Buff[3][1][3]);
 }
 
 void Copy_Save_w() {
@@ -657,7 +660,13 @@ void Copy_Save_w() {
     Convert_Buff[3][1][0] = save_w[1].SoundMode;
     Convert_Buff[3][1][1] = save_w[1].BGM_Level;
     Convert_Buff[3][1][2] = save_w[1].SE_Level;
-    Convert_Buff[3][1][3] = save_w[1].BgmType;
+    // The save holds the player's choice, Random included; the menu row works in positions. A
+    // choice whose pack was removed since it was saved has no position left, and lands back on
+    // the first entry.
+    Convert_Buff[3][1][3] = BgmRemix_GetSlotForType(save_w[1].BgmType);
+    sys_w.bgm_choice = (BgmType)BgmRemix_GetSlotType(Convert_Buff[3][1][3]);
+    Apply_bgm_choice();
+
     for (ix = 0; ix < 20; ix++) {
         Ranking_Data[ix] = save_w[1].Ranking[ix];
     }

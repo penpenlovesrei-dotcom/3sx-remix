@@ -1112,23 +1112,15 @@ s32 flPS2ConvertContext(plContext* lpSrc, plContext* lpDst, u32 direction, u32 t
                 dst = keep_dst + (lpDst->pitch * y) + (lpDst->bitdepth * x);
             }
 
-            if (lpSrc->bitdepth == 4) {
-                if (direction == 0) {
-                    if (a == 0xFF) {
-                        a = 0x80;
-                    } else if (a != 0) {
-                        a >>= 1;
-
-                        if (a == 0) {
-                            a = 1;
-                        }
-                    }
-                } else if (a == 0x80) {
-                    a = 0xFF;
-                } else {
-                    a *= 2;
-                }
-            }
+            // The PS2 stores a 32-bit texture's alpha over 0 to 128, so the original halved it here
+            // on the way in and doubled it on the way back out. Nothing downstream expects that any
+            // more: the texture is handed to a shader that reads alpha as a byte over 0 to 255, so
+            // a fully opaque pixel arrived at half strength and every replacement page came out
+            // blended with whatever was behind it. Left as it is, in both directions.
+            //
+            // Safe to drop because the game itself has no 32-bit textures -- a dump of a full boot
+            // and the menus holds 4bpp, 8bpp and a single 16bpp page, and nothing else. This path
+            // only ever runs for the replacements we add.
 
             color = ((lpDst->pixelformat.am & (a >> (8 - lpDst->pixelformat.al))) << lpDst->pixelformat.as) |
                     (((lpDst->pixelformat.bm & (b >> (8 - lpDst->pixelformat.bl))) << lpDst->pixelformat.bs) |

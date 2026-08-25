@@ -33,6 +33,11 @@ static const ConfigEntry default_entries[] = {
     { .key = CFG_KEY_WINDOW_HEIGHT, .type = CFG_INT, .value.i = 480 },
     { .key = CFG_KEY_SCALEMODE, .type = CFG_STRING, .value.s = "nearest" },
     { .key = CFG_KEY_SCANLINES, .type = CFG_INT, .value.i = 0 },
+    { .key = CFG_KEY_RENDER_SCALE, .type = CFG_INT, .value.i = 1 },
+    { .key = CFG_TEX_REMIX_DUMP, .type = CFG_BOOL, .value.b = false },
+    { .key = CFG_ART_REMIX_BOXES, .type = CFG_BOOL, .value.b = false },
+    { .key = CFG_KEY_BGM_LEVEL, .type = CFG_INT, .value.i = 15 },
+    { .key = CFG_KEY_SE_LEVEL, .type = CFG_INT, .value.i = 15 },
     { .key = CFG_DRAW_PLAYERS_ABOVE_HUD, .type = CFG_BOOL, .value.b = false },
     { .key = CFG_ARCADE_BALANCE, .type = CFG_BOOL, .value.b = false },
 };

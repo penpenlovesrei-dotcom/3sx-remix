@@ -22,6 +22,12 @@ void ADX_StartMem(void* buf, size_t size);
 int ADX_GetNumFiles();
 void ADX_EntryAfs(int file_id);
 void ADX_StartAfs(int file_id);
+/// @brief Play a looping .adx read from disk instead of from the AFS archive.
+/// @param path Absolute path to the file. Playback is skipped if it can't be read.
+void ADX_StartFile(const char* path);
+/// @brief Path passed to the last ADX_StartFile, as long as it is still the loaded track.
+/// @return `NULL` once playback stopped or moved to an AFS track.
+const char* ADX_GetCurrentFilePath();
 void ADX_ResetEntry();
 void ADX_SetOutVol(int volume);
 void ADX_SetMono(bool mono);

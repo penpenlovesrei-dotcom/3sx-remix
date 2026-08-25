@@ -17,7 +17,7 @@ void EFF61_SLIDE_IN(WORK_Other_CONN* ewk);
 void EFF61_SLIDE_OUT(WORK_Other_CONN* /* unused */);
 void EFF61_SUDDENLY(WORK_Other_CONN* ewk);
 
-const s8* Menu_Letter_Data[68] = { "ARCADE",
+const s8* Menu_Letter_Data[135] = { "ARCADE",
                                    "VERSUS",
                                    "TRAINING",
                                    "SYSTEM DIRECTION",
@@ -30,7 +30,7 @@ const s8* Menu_Letter_Data[68] = { "ARCADE",
                                    "EXIT GAME",
                                    "GAME OPTION",
                                    "BUTTON CONFIG.",
-                                   "SCREEN ADJUST",
+                                   "DISPLAY",
                                    "SOUND",
                                    "SAVE#/#LOAD",
                                    "EXTRA OPTION",
@@ -70,7 +70,7 @@ const s8* Menu_Letter_Data[68] = { "ARCADE",
                                    "EXIT",
                                    "GAME OPTION",
                                    "BUTTON CONFIG.",
-                                   "SCREEN ADJUST",
+                                   "DISPLAY",
                                    "SOUND",
                                    "SAVE#/#LOAD",
                                    "EXIT",
@@ -88,7 +88,106 @@ const s8* Menu_Letter_Data[68] = { "ARCADE",
                                    "BGM TEST",
                                    "EXIT",
                                    "FIND MATCH",
-                                   "EXIT" };
+                                   "EXIT",
+                                   // The Custom tracklist, second half of each row: the theme in
+                                   // brackets and its leader, in the menu's small charset,
+                                   // following the character drawn in the condensed one.
+                                   "(KILLING MOON).........",
+                                   "(JAZZY NYC '99)...",
+                                   "(CHINA VOX)..........",
+                                   "(YOU BLOW MY MIND)....",
+                                   "(BEATS IN MY HEAD).....",
+                                   "(PSYCH OUT).............",
+                                   "(THE CIRCUIT)...........",
+                                   "(TWILIGHT).............",
+                                   "(SPUNKY)..............",
+                                   "(SNOWLAND)....",
+                                   "(THE THEME OF Q)...........",
+                                   "(THE BEEP)..............",
+                                   "(KOBU)...................",
+                                   "(THE LONGSHOREMAN)",
+                                   "(CRAZY CHILI DOG)......",
+                                   "(CROWDED STREET)..",
+                                   // The Display page, on the sound menu's diagonal grown to eight
+                                   // rows. HUD and ARTWORKS are still placeholders, greyed out by
+                                   // letter_data_64_selectable; the rest are wired up.
+                                   "SCREEN ADJUST",
+                                   "RESOLUTION",
+                                   // Abbreviated: a label sharing its row with a value column has
+                                   // 176px, and "CHARACTER COLOR" needs 210 in this charset. Sits
+                                   // this high up so its long value names clear the screen edge.
+                                   "CHAR. COLOR",
+                                   "BACKGROUNDS",
+                                   "HUD",
+                                   "ARTWORKS",
+                                   // The page's eighth row. Its diagonal had the room — it steps
+                                   // 18px and stopped at 73, so 55 was free and the six rows above
+                                   // did not move. Everything after this entry did shift by one,
+                                   // which is what BACKGROUND_STAGE_FIRST is counting.
+                                   "COLOR EDIT",
+                                   "EXIT",
+                                   // The Custom backgrounds screen, second half of each row: the
+                                   // stage in brackets, in the small charset, dotted out to where
+                                   // the value column starts. Each row's dot count differs because
+                                   // the character name before it does. The character is what tells
+                                   // the four shared locations apart, since unlike the music, each
+                                   // of those pairs is two distinct sets of assets.
+                                   "(KOUSYU STREET).........",
+                                   "(SUBWAY STATION).........",
+                                   "(CHINESE RESTAURANT)..",
+                                   "(MAIN STREET)..........",
+                                   "(SAVANNA)...............",
+                                   "(GILL STAGE).............",
+                                   "(HOME SWEET HOME)........",
+                                   "(A ROAD IN KYOTO).......",
+                                   "(SUBWAY STATION)..........",
+                                   "(DOJO OF RINDO-KAN)....",
+                                   "(MOSQUE)................",
+                                   "(SANTOS HARBOR)...........",
+                                   "(SUBWAY STATION)............",
+                                   "(CLUB METRO).............",
+                                   "(SUZAKU CASTLE ROOFTOP)...",
+                                   "(SANTOS HARBOR)..........",
+                                   "(MOSQUE)...............",
+                                   "(ORMECA RUINS)..........",
+                                   "(SHOPPING DISTRICT)......",
+                                   "(SHOPPING DISTRICT).......",
+                                   // The colour editor's three channel captions. Appended past
+                                   // everything rather than placed with the rest of that screen,
+                                   // because an entry inserted anywhere shifts every index after
+                                   // it — Slide_Pos_Data_61 is indexed by the same number.
+                                   "R",
+                                   "G",
+                                   "B",
+                                   // The cast, in engine order, for the colour editor's name line.
+                                   // The message table has these too, but only in the charset
+                                   // effect_18 draws and in alphabetical order; here they are in
+                                   // the numbering the rest of that screen works in, and in
+                                   // whichever charset the caller asks for.
+                                   //
+                                   // Chun-Li's hyphen was checked on screen and draws correctly,
+                                   // so the charset covers it as it does the punctuation in the
+                                   // labels above.
+                                   "GILL",
+                                   "ALEX",
+                                   "RYU",
+                                   "YUN",
+                                   "DUDLEY",
+                                   "NECRO",
+                                   "HUGO",
+                                   "IBUKI",
+                                   "ELENA",
+                                   "ORO",
+                                   "YANG",
+                                   "KEN",
+                                   "SEAN",
+                                   "URIEN",
+                                   "AKUMA",
+                                   "CHUN-LI",
+                                   "MAKOTO",
+                                   "Q",
+                                   "TWELVE",
+                                   "REMY" };
 
 void (*const EFF61_Jmp_Tbl[4])() = { EFF61_WAIT, EFF61_SLIDE_IN, EFF61_SLIDE_OUT, EFF61_SUDDENLY };
 

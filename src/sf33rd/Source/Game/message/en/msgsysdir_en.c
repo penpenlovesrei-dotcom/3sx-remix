@@ -186,7 +186,75 @@ static s8* msgSYSDIR_200[1] = { "Return to the previous page." };
 static s8* msgSYSDIR_201[1] = { "Exit this mode and return to the Menu Screen." };
 static s8* msgSYSDIR_202[1] = { "Proceed to the next page." };
 
-static s8** msgSysDirAdr[119] = {
+// 119-138: the Custom character colours screen borrows this table to reach the condensed message
+// charset, which the menu charsets do not offer. Padded with dots to a constant width, as the
+// entries above are, so the value column lines up.
+static s8* msgSYSDIR_300[1] = { "AKUMA...................." };
+static s8* msgSYSDIR_301[1] = { "ALEX....................." };
+static s8* msgSYSDIR_302[1] = { "CHUN-LI.................." };
+static s8* msgSYSDIR_303[1] = { "DUDLEY..................." };
+static s8* msgSYSDIR_304[1] = { "ELENA...................." };
+static s8* msgSYSDIR_305[1] = { "GILL....................." };
+static s8* msgSYSDIR_306[1] = { "HUGO....................." };
+static s8* msgSYSDIR_307[1] = { "IBUKI...................." };
+static s8* msgSYSDIR_308[1] = { "KEN......................" };
+static s8* msgSYSDIR_309[1] = { "MAKOTO..................." };
+static s8* msgSYSDIR_310[1] = { "NECRO...................." };
+static s8* msgSYSDIR_311[1] = { "ORO......................" };
+static s8* msgSYSDIR_312[1] = { "Q........................" };
+static s8* msgSYSDIR_313[1] = { "REMY....................." };
+static s8* msgSYSDIR_314[1] = { "RYU......................" };
+static s8* msgSYSDIR_315[1] = { "SEAN....................." };
+static s8* msgSYSDIR_316[1] = { "TWELVE..................." };
+static s8* msgSYSDIR_317[1] = { "URIEN...................." };
+static s8* msgSYSDIR_318[1] = { "YANG....................." };
+static s8* msgSYSDIR_319[1] = { "YUN......................" };
+
+// 139-158: the Custom backgrounds screen, alphabetically. Only the character comes from here,
+// for the condensed charset; the stage that follows it is drawn in the menu one.
+static s8* msgSYSDIR_400[1] = { "AKUMA" };
+static s8* msgSYSDIR_401[1] = { "ALEX" };
+static s8* msgSYSDIR_402[1] = { "CHUN-LI" };
+static s8* msgSYSDIR_403[1] = { "DUDLEY" };
+static s8* msgSYSDIR_404[1] = { "ELENA" };
+static s8* msgSYSDIR_405[1] = { "GILL" };
+static s8* msgSYSDIR_406[1] = { "HUGO" };
+static s8* msgSYSDIR_407[1] = { "IBUKI" };
+static s8* msgSYSDIR_408[1] = { "KEN" };
+static s8* msgSYSDIR_409[1] = { "MAKOTO" };
+static s8* msgSYSDIR_410[1] = { "NECRO" };
+static s8* msgSYSDIR_411[1] = { "ORO" };
+static s8* msgSYSDIR_412[1] = { "Q" };
+static s8* msgSYSDIR_413[1] = { "REMY" };
+static s8* msgSYSDIR_414[1] = { "RYU" };
+static s8* msgSYSDIR_415[1] = { "SEAN" };
+static s8* msgSYSDIR_416[1] = { "TWELVE" };
+static s8* msgSYSDIR_417[1] = { "URIEN" };
+static s8* msgSYSDIR_418[1] = { "YANG" };
+static s8* msgSYSDIR_419[1] = { "YUN" };
+
+
+// 159-174: the Custom tracklist, alphabetically by character. Only the character comes from
+// here, for the condensed charset; the theme that follows is drawn in the menu one. Which
+// theme each row stands for is in Custom_Row_To_Theme; the save file keeps its own order.
+static s8* msgSYSDIR_500[1] = { "AKUMA" };
+static s8* msgSYSDIR_501[1] = { "ALEX & KEN" };
+static s8* msgSYSDIR_502[1] = { "CHUN-LI" };
+static s8* msgSYSDIR_503[1] = { "DUDLEY" };
+static s8* msgSYSDIR_504[1] = { "ELENA" };
+static s8* msgSYSDIR_505[1] = { "GILL" };
+static s8* msgSYSDIR_506[1] = { "HUGO" };
+static s8* msgSYSDIR_507[1] = { "IBUKI" };
+static s8* msgSYSDIR_508[1] = { "MAKOTO" };
+static s8* msgSYSDIR_509[1] = { "NECRO & TWELVE" };
+static s8* msgSYSDIR_510[1] = { "Q" };
+static s8* msgSYSDIR_511[1] = { "REMY" };
+static s8* msgSYSDIR_512[1] = { "RYU" };
+static s8* msgSYSDIR_513[1] = { "SEAN & ORO" };
+static s8* msgSYSDIR_514[1] = { "URIEN" };
+static s8* msgSYSDIR_515[1] = { "YUN & YANG" };
+
+static s8** msgSysDirAdr[175] = {
     msgSYSDIR_000, msgSYSDIR_001, msgSYSDIR_002, msgSYSDIR_003, msgSYSDIR_004, msgSYSDIR_005, msgSYSDIR_006,
     msgSYSDIR_007, msgSYSDIR_008, msgSYSDIR_009, msgSYSDIR_010, msgSYSDIR_011, msgSYSDIR_012, msgSYSDIR_013,
     msgSYSDIR_014, msgSYSDIR_015, msgSYSDIR_016, msgSYSDIR_017, msgSYSDIR_018, msgSYSDIR_019, msgSYSDIR_020,
@@ -203,13 +271,29 @@ static s8** msgSysDirAdr[119] = {
     msgSYSDIR_091, msgSYSDIR_092, msgSYSDIR_093, msgSYSDIR_094, msgSYSDIR_095, msgSYSDIR_096, msgSYSDIR_097,
     msgSYSDIR_098, msgSYSDIR_099, msgSYSDIR_100, msgSYSDIR_101, msgSYSDIR_102, msgSYSDIR_103, msgSYSDIR_104,
     msgSYSDIR_105, msgSYSDIR_106, msgSYSDIR_107, msgSYSDIR_108, msgSYSDIR_109, msgSYSDIR_110, msgSYSDIR_111,
-    msgSYSDIR_112, msgSYSDIR_113, msgSYSDIR_114, msgSYSDIR_115, msgSYSDIR_200, msgSYSDIR_201, msgSYSDIR_202
+    msgSYSDIR_112, msgSYSDIR_113, msgSYSDIR_114, msgSYSDIR_115, msgSYSDIR_200, msgSYSDIR_201, msgSYSDIR_202,
+    msgSYSDIR_300, msgSYSDIR_301, msgSYSDIR_302, msgSYSDIR_303, msgSYSDIR_304, msgSYSDIR_305, msgSYSDIR_306,
+    msgSYSDIR_307, msgSYSDIR_308, msgSYSDIR_309, msgSYSDIR_310, msgSYSDIR_311, msgSYSDIR_312, msgSYSDIR_313,
+    msgSYSDIR_314, msgSYSDIR_315, msgSYSDIR_316, msgSYSDIR_317, msgSYSDIR_318, msgSYSDIR_319,
+    msgSYSDIR_400, msgSYSDIR_401, msgSYSDIR_402, msgSYSDIR_403, msgSYSDIR_404,
+    msgSYSDIR_405, msgSYSDIR_406, msgSYSDIR_407, msgSYSDIR_408, msgSYSDIR_409,
+    msgSYSDIR_410, msgSYSDIR_411, msgSYSDIR_412, msgSYSDIR_413, msgSYSDIR_414,
+    msgSYSDIR_415, msgSYSDIR_416, msgSYSDIR_417, msgSYSDIR_418, msgSYSDIR_419,
+    msgSYSDIR_500, msgSYSDIR_501, msgSYSDIR_502, msgSYSDIR_503, msgSYSDIR_504,
+    msgSYSDIR_505, msgSYSDIR_506, msgSYSDIR_507, msgSYSDIR_508, msgSYSDIR_509,
+    msgSYSDIR_510, msgSYSDIR_511, msgSYSDIR_512, msgSYSDIR_513, msgSYSDIR_514,
+    msgSYSDIR_515
 };
 
-static s8 msgSysDirCtr[119] = { 1, 2, 1, 2, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 2, 1, 1,
+static s8 msgSysDirCtr[175] = { 1, 2, 1, 2, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 2, 1, 1,
                                 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1,
                                 1, 2, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 1, 1, 1,
                                 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2,
-                                1, 2, 1, 2, 1, 2, 1, 2, 1, 1, 1, 2, 1, 2, 1, 2, 1, 1, 1, 2, 1, 1, 1 };
+                                1, 2, 1, 2, 1, 2, 1, 2, 1, 1, 1, 2, 1, 2, 1, 2, 1, 1, 1, 2, 1, 1, 1,
+                                // 119-138: the character names, 139-158: the stage names
+                                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                // 159-174: the tracklist themes
+                                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
 MessageTable msgSysDirTbl_usa = { msgSysDirAdr, msgSysDirCtr };

@@ -6,6 +6,7 @@
 
 #if CRS_VIDEO_DRIVER_SDL_GENERIC
 #include "args.h"
+#include "port/video/tex_remix.h"
 
 #include "platform/video/sdl_generic/sdl_generic_renderer.h"
 #elif CRS_VIDEO_DRIVER_PSP
@@ -114,6 +115,8 @@ void Renderer_DrawTexturedQuad(const Sprite* sprite, unsigned int color) {
         return;
     }
 
+    // Corners 0 and 3 are the diagonal pair everywhere in this renderer.
+    TexRemix_NoteQuad(sprite->t[0].s, sprite->t[0].t, sprite->t[3].s, sprite->t[3].t);
     SDLGenericRenderer_DrawTexturedQuad(sprite, color);
 #elif CRS_VIDEO_DRIVER_PSP
     PSPRenderer_DrawTexturedQuad(sprite, color);
@@ -126,6 +129,7 @@ void Renderer_DrawSprite(const Sprite* sprite, unsigned int color) {
         return;
     }
 
+    TexRemix_NoteQuad(sprite->t[0].s, sprite->t[0].t, sprite->t[3].s, sprite->t[3].t);
     SDLGenericRenderer_DrawSprite(sprite, color);
 #elif CRS_VIDEO_DRIVER_PSP
     PSPRenderer_DrawSprite(sprite, color);
@@ -138,6 +142,7 @@ void Renderer_DrawSprite2(const Sprite2* sprite2) {
         return;
     }
 
+    TexRemix_NoteQuad(sprite2->t[0].s, sprite2->t[0].t, sprite2->t[1].s, sprite2->t[1].t);
     SDLGenericRenderer_DrawSprite2(sprite2);
 #elif CRS_VIDEO_DRIVER_PSP
     PSPRenderer_DrawSprite2(sprite2);

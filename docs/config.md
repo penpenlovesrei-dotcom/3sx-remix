@@ -35,6 +35,25 @@ Produces a pixel-perfect image, but requires a 4K display
 
 The internal buffer is scaled up by an integer (whole number) factor. Use this if you play on a CRT
 
+### `render-scale`
+
+How many pixels per side the internal 384x224 buffer is rendered into, from `1` (default) to `8`. At
+`4` the frame is drawn at 1536x896 before being scaled to the window.
+
+The game's own artwork gains nothing from this: it is drawn from textures that hold no more detail
+at `4` than at `1`, and the picture only stops being scaled up somewhere else. What the setting does
+is give HD replacement assets somewhere to be seen, since nothing can show more than 384x224 worth
+of detail until the frame itself is bigger.
+
+Positions, layouts and the scanline filter keep counting in 384x224 whatever this is set to, so
+nothing moves. Read once at startup.
+
+### `tex-remix-dump`
+
+Write every texture page the game loads to `<resources>/tex_remix/dump/`, which is how you find out
+what a screen is made of and what to name a replacement after. See
+[texture replacement](tex_remix.md). Costs a file write per new page, nothing per frame.
+
 ### `scanlines`
 
 Defines the strength of the scanline filter (from `0` to `100`). `0` means the filter is disabled.

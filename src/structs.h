@@ -1,6 +1,7 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
+#include "port/sound/bgm_remix.h"
 #include "sf33rd/AcrSDK/common/plcommon.h"
 #include "types.h"
 
@@ -47,12 +48,25 @@ struct _TASK {
 typedef enum {
     BGM_ARRANGED,
     BGM_ORIGINAL,
+    /// First installed remix pack; further packs take the slots above it, so the pack index is
+    /// `bgm_type - BGM_REMIX`. Slots with no pack behind them are hidden from the menu, and a
+    /// pack falls back to the arranged tables for anything it doesn't override.
+    BGM_REMIX,
+    /// Not a soundtrack of its own: each fight draws one of the others and plays the track the
+    /// game asked for in that soundtrack's rendition.
+    BGM_RANDOM = BGM_REMIX + BGM_REMIX_PACKS_MAX,
+    /// Also not a soundtrack: each stage names its own in custom.txt.
+    BGM_CUSTOM,
+    BGM_TYPE_COUNT,
 } BgmType;
 
 struct _SYSTEM_W {
     u8 sound_mode;
     u8 screen_mode;
+    /// The soundtrack actually playing. Never BGM_RANDOM: that resolves to a real one per fight.
     BgmType bgm_type;
+    /// What the player picked on the BGM Type row, which may be BGM_RANDOM
+    BgmType bgm_choice;
 };
 
 typedef struct {

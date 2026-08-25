@@ -1,0 +1,82 @@
+# 3SX remix pack manifest. Copy to <resources>/bgm_remix/<your pack>/remix.txt and fill in.
+
+# Name shown on the BGM Type row. Up to 9 characters keeps the menu's own lettering;
+# up to 16 is allowed, but that value switches to the smaller lettering to fit.
+!name My Pack
+
+# One track per line:  bgm code | file name | sound test label
+#
+# The label is optional; without it the arranged label is used.
+# Delete or comment out any line you don't override: it keeps playing the arranged track.
+#
+# Stage themes come in threes (mix 1/2/3, one per round). A soundtrack without per-round
+# variation only needs the mix 1 line: the other two rounds fall back to it, and the track
+# then plays straight through the round transitions without restarting.
+
+#  1 | .adx | 1. Alex & Ken Stage -JAZZY NYC '99 mix1-
+#  2 | .adx | 2. Alex & Ken Stage -JAZZY NYC '99 mix2-
+#  3 | .adx | 3. Alex & Ken Stage -JAZZY NYC '99 mix3-
+#  4 | .adx | 4. Necro & Twelve Stage -SNOWLAND mix1-
+#  5 | .adx | 5. Necro & Twelve Stage -SNOWLAND mix2-
+#  6 | .adx | 6. Necro & Twelve Stage -SNOWLAND mix3-
+#  7 | .adx | 7. Hugo Stage -THE CIRCUIT mix1-
+#  8 | .adx | 8. Hugo Stage -THE CIRCUIT mix2-
+#  9 | .adx | 9. Hugo Stage -THE CIRCUIT mix3-
+# 10 | .adx | 10. Chun-Li Stage -CHINA VOX mix1-
+# 11 | .adx | 11. Chun-Li Stage -CHINA VOX mix2-
+# 12 | .adx | 12. Chun-Li Stage -CHINA VOX mix3-
+# 13 | .adx | 13. Ryu Stage -KOBU mix1-
+# 14 | .adx | 14. Ryu Stage -KOBU mix2-
+# 15 | .adx | 15. Ryu Stage -KOBU mix3-
+# 16 | .adx | 16. Ibuki Stage -TWILIGHT mix1-
+# 17 | .adx | 17. Ibuki Stage -TWILIGHT mix2-
+# 18 | .adx | 18. Ibuki Stage -TWILIGHT mix3-
+# 19 | .adx | 19. Makoto Stage -SPUNKY mix1-
+# 20 | .adx | 20. Makoto Stage -SPUNKY mix2-
+# 21 | .adx | 21. Makoto Stage -SPUNKY mix3-
+# 22 | .adx | 22. Akuma Stage -KILLING MOON mix1-
+# 23 | .adx | 23. Akuma Stage -KILLING MOON mix2-
+# 24 | .adx | 24. Akuma Stage -KILLING MOON mix3-
+# 25 | .adx | 25. Elena Stage -BEATS IN MY HEAD mix1-
+# 26 | .adx | 26. Elena Stage -BEATS IN MY HEAD mix2-
+# 27 | .adx | 27. Elena Stage -BEATS IN MY HEAD mix3-
+# 28 | .adx | 28. Sean & Oro Stage -THE LONGSHOREMAN mix1-
+# 29 | .adx | 29. Sean & Oro Stage -THE LONGSHOREMAN mix2-
+# 30 | .adx | 30. Sean & Oro Stage -THE LONGSHOREMAN mix3-
+# 31 | .adx | 31. Dudley Stage -YOU BLOW MY MIND mix1-
+# 32 | .adx | 32. Dudley Stage -YOU BLOW MY MIND mix2-
+# 33 | .adx | 33. Dudley Stage -YOU BLOW MY MIND mix3-
+# 34 | .adx | 34. Yun & Yang Stage -CROWDED STREET mix1-
+# 35 | .adx | 35. Yun & Yang Stage -CROWDED STREET mix2-
+# 36 | .adx | 36. Yun & Yang Stage -CROWDED STREET mix3-
+# 37 | .adx | 37. Remy Stage -THE BEEP mix1-
+# 38 | .adx | 38. Remy Stage -THE BEEP mix2-
+# 39 | .adx | 39. Remy Stage -THE BEEP mix3-
+# 40 | .adx | 40. The Theme Of Q -Q mix1-
+# 41 | .adx | 41. The Theme Of Q -Q mix2-
+# 42 | .adx | 42. The Theme Of Q -Q mix3-
+# 43 | .adx | 43. Urien Stage -CRAZY CHILI DOG mix1-
+# 44 | .adx | 44. Urien Stage -CRAZY CHILI DOG mix2-
+# 45 | .adx | 45. Urien Stage -CRAZY CHILI DOG mix3-
+# 46 | .adx | 46. Gill Stage -PSYCH OUT mix1-
+# 47 | .adx | 47. Gill Stage -PSYCH OUT mix2-
+# 48 | .adx | 48. Gill Stage -PSYCH OUT mix3-
+# 49 | .adx | 49. Ending1
+# 50 | .adx | 50. Ending2
+# 51 | .adx | 51. Just Before The Battle
+# 52 | .adx | 52. Opening Demo
+# 53 | .adx | 53. Player Select -ARCADE-
+# 54 | .adx | 54. Final Results
+# 55 | .adx | 55. Stage Results
+# 56 | .adx | 56. Judgement
+# 57 | .adx | 57. Stage Select & Score Ranking
+# 58 | .adx | 58. Continue
+# 59 | .adx | 59. We Await Your Return,Warrior!
+# 60 | .adx | 60. Gill Appears!
+# 61 | .adx | 61. Bonus Game 1
+# 62 | .adx | 62. Bonus Game 2
+# 63 | .adx | 63. Staff Roll -Moving On-
+# 64 | .adx | 64. Staff Roll -THIRD STRIKE REMIX-
+# 65 | .adx | 65. Menu -THIRD STRIKE-
+# 66 | .adx | 66. Player Select -VERSUS-
+# 67 | .adx | 67. Capcom Logo

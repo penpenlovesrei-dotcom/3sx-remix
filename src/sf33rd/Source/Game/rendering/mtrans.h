@@ -16,6 +16,7 @@ void makeup_tpu_free(s32 x16, s32 x32, PatternMap* map);
 void mlt_obj_trans_update(MultiTexture* mt);
 void mlt_obj_melt2(MultiTexture* mt, u16 cg_number);
 void mlt_obj_trans_init(MultiTexture* mt, s32 mode, u8* adrs);
+bool mlt_obj_bounds(WORK* wk, f32 box[4]);
 void mlt_obj_matrix(WORK* wk, s32 base_y);
 void mlt_obj_disp_rgb(MultiTexture* mt, WORK* wk, s32 base_y);
 void mlt_obj_disp(MultiTexture* mt, WORK* wk, s32 base_y);

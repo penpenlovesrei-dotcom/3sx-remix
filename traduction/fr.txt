@@ -1,0 +1,3273 @@
+# ============================================================================
+# Catalogue de traduction de 3SX -- citations de victoire, dialogues, fins
+# Genere le 2026-08-26 depuis C:/3sx-up/src/sf33rd/Source/Game/message/en
+#
+# COMMENT REMPLIR
+#   Chaque bloc [..] est un message. Les lignes "=" sont l'anglais, en lecture
+#   seule. Ecrivez la traduction sur les lignes ">", une par ligne d'origine.
+#   Ecrivez les accents normalement -- e accent aigu, c cedille, et le reste.
+#   Un bloc dont aucune ligne ">" n'est remplie reste en anglais.
+#
+# LA BOITE
+#   40 signes par ligne au maximum. La regle ci-dessous s'aligne sur le
+#   premier caractere qui suit "> " :
+#   ....|....1....|....2....|....3....|....4
+#   Une lettre accentuee occupe une colonne, comme les autres. Le jeu ajoute
+#   ensuite son propre retrait, ce qui amene la ligne a la colonne 43.
+#
+# CE QU'IL NE FAUT PAS CHANGER
+#   Les lignes [..], et le nombre de lignes ">" d'un bloc : il fixe le nombre
+#   de lignes affichees. Deux au maximum, comme en anglais.
+#
+# Les messages vides du jeu -- les pauses dans les fins -- ne sont pas listes.
+# ----------------------------------------------------------------------------
+# 3SX translation catalogue -- win quotes, pre-fight dialogue, endings
+# Generated on 2026-08-26 from C:/3sx-up/src/sf33rd/Source/Game/message/en
+#
+# HOW TO FILL IT IN
+#   Each [..] block is one message. The "=" lines are the English source and are
+#   read-only. Write the translation on the ">" lines, one per source line.
+#   Type accents normally -- e acute, c cedilla, and the rest. The generator
+#   encodes them. A block with no ">" line filled in stays in English.
+#
+# THE BOX
+#   40 characters per line, at most. The ruler below lines up with the
+#   first character after "> ":
+#   ....|....1....|....2....|....3....|....4
+#   An accented letter takes one column, like any other. The game then adds its
+#   own indent, which brings the line out to column 43.
+#
+# WHAT NOT TO CHANGE
+#   The [..] lines, and how many ">" lines a block has: that count sets how many
+#   lines are drawn on screen. Two at most, as in English.
+#
+# The game's empty messages -- the beats between lines of an ending -- are not
+# listed here.
+# ============================================================================
+
+
+## pl00win -- Gill, citations de victoire (8 messages)
+
+[pl00win/msgWinPL00_20P]
+= You will have to exceed your
+= limitations if you wish to survive.
+> Il te faudra depasser tes limites
+> si tu espères survivre.
+
+[pl00win/msgWinPL00_21P]
+= Immortality is not a gift.
+= It is a responsibility.
+> L'immortalité n'est pas un cadeau.
+> C'est une responsabilité.
+
+[pl00win/msgWinPL00_22P]
+= It is natural for you to desire that
+= which you can never have or achieve!
+> Il est naturel de désirer ce que
+> l'on ne pourra jamais atteindre !
+
+[pl00win/msgWinPL00_23P]
+= A supreme being's influence
+= is the key to his power.
+> L'influence d'un être suprême
+> est la clé de sa puissance.
+
+[pl00win/msgWinPL00_24P]
+= Two centuries... A mere blink
+= upon the face of eternity...
+> Deux siècles... Un simple battement
+> de cils sur le visage de l'éternité.
+
+[pl00win/msgWinPL00_25P]
+= Rest for now, then perform the
+= great work that is ahead of you!
+> Repose-toi, puis accomplis la
+> grande oeuvre qui t'attend !
+
+[pl00win/msgWinPL00_26P]
+= My methods may seem harsh in
+= contrast to my true intentions.
+> Mes méthodes peuvent sembler rudes
+> au regard de mes vraies intentions.
+
+[pl00win/msgWinPL00_27P]
+= The stage has been set. Do not
+= interfere with my grand performance!
+> La scène est dressée. N'entrave pas
+> ma grande représentation !
+
+
+## pl01win -- Alex, citations de victoire (8 messages)
+
+[pl01win/msgWinPL01_20P]
+= Defeat will help you
+= to solve your ego problem.
+> La défaite t'aidera à régler
+> ton petit problème d'ego.
+
+[pl01win/msgWinPL01_21P]
+= Be a master of your mind before
+= attempting to master your body!
+> Maîtrise ton esprit avant de
+> prétendre maîtriser ton corps !
+
+[pl01win/msgWinPL01_22P]
+= Don't waste my time.
+= I can learn nothing from you.
+> Ne me fais pas perdre mon temps.
+> Tu n'as rien à m'apprendre.
+
+[pl01win/msgWinPL01_23P]
+= Study your opponents and exploit
+= their weaknesses. That is the key...
+> Étudie tes adversaires et exploite
+> leurs faiblesses. Voilà la clé...
+
+[pl01win/msgWinPL01_24P]
+= Use your head, or I will!
+= I need a new bowling ball...
+> Sers-toi de ta tête, ou je le ferai !
+> Il me faut une boule de bowling...
+
+[pl01win/msgWinPL01_25P]
+= You don't have to be big,
+= to look like a big loser.
+> Pas besoin d'être costaud
+> pour avoir l'air d'un gros nul.
+
+[pl01win/msgWinPL01_26P]
+= You can't escape! Real fighters
+= know their true calling!
+> Tu ne peux pas fuir ! Un vrai
+> combattant connaît sa vocation !
+
+[pl01win/msgWinPL01_27P]
+= A lack of spirit will
+= always lead to defeat!
+> Le manque de coeur mène
+> toujours à la défaite !
+
+
+## pl02win -- Ryu, citations de victoire (8 messages)
+
+[pl02win/msgWinPL02_20P]
+= The eyes of a warrior never stray
+= from the spectacle of battle.
+> Le regard du guerrier ne quitte
+> jamais le spectacle du combat.
+
+[pl02win/msgWinPL02_21P]
+= Every moment gives us a chance to
+= become more than what we are.
+> Chaque instant nous offre la chance
+> de devenir plus que ce que nous sommes.
+
+[pl02win/msgWinPL02_22P]
+= Range... Speed... Priority...
+= Know and master all of your attacks!
+> Portee... Vitesse... Priorite...
+> Connais et maîtrise tous tes coups !
+
+[pl02win/msgWinPL02_23P]
+= A defeat learned from is more
+= important than an empty victory.
+> Une defaite dont on apprend vaut
+> mieux qu'une victoire sans saveur.
+
+[pl02win/msgWinPL02_24P]
+= Seek an opponent who is your equal.
+= Only then can you improve.
+> Cherche un adversaire a ta mesure.
+> C'est ainsi seulement qu'on progresse.
+
+[pl02win/msgWinPL02_25P]
+= It's better to conquer a hardship
+= than to conquer nothing at all.
+> Mieux vaut vaincre une epreuve
+> que de n'en affronter aucune.
+
+[pl02win/msgWinPL02_26P]
+= Keep your mind calm and pure.
+= Focus on what is important!
+> Garde l'esprit calme et pur.
+> Concentre-toi sur l'essentiel !
+
+[pl02win/msgWinPL02_27P]
+= To try something new, is to
+= explore your true potential.
+> Tenter quelque chose de nouveau,
+> c'est explorer ce que tu peux devenir.
+
+
+## pl03win -- Yun, citations de victoire (8 messages)
+
+[pl03win/msgWinPL03_20P]
+= I see why you lost... You weren't
+= having any fun during the fight!
+> Je vois pourquoi tu as perdu... Tu ne
+> t'es pas amusé une seule seconde !
+
+[pl03win/msgWinPL03_21P]
+= My style may change, but the outcome
+= is always the same. I win. You lose!
+> Mon style change, le résultat non.
+> Je gagne. Tu perds !
+
+[pl03win/msgWinPL03_22P]
+= Now you're always afraid of things
+= falling on you from above? Sorry!
+> Tu as peur de ce qui tombe du ciel,
+> maintenant ? Désolé !
+
+[pl03win/msgWinPL03_23P]
+= I'd rather rave than
+= misbehave! Later!
+> Je préfère faire la fête que
+> faire des bêtises ! Salut !
+
+[pl03win/msgWinPL03_24P]
+= Perhaps you'd prefer to challenge
+= me at a skateboarding game?
+> Tu préfères peut-être m'affronter
+> à un jeu de skate ?
+
+[pl03win/msgWinPL03_25P]
+= Cheap? I paid a lot for this hat!
+> Radin ? Cette casquette m'a coûté cher !
+
+[pl03win/msgWinPL03_26P]
+= My skateboard isn't a stretcher,
+= but it'll get you to the hospital!
+> Mon skate n'est pas un brancard,
+> mais il te mènera à l'hôpital !
+
+[pl03win/msgWinPL03_27P]
+= Don't you know it's rude to ask your
+= opponent to let you win a round?!
+> Tu ne sais pas qu'il est malpoli de
+> demander à gagner un round ?!
+
+
+## pl04win -- Dudley, citations de victoire (8 messages)
+
+[pl04win/msgWinPL04_20P]
+= Fight like a gentleman...
+= Live like a gentleman!
+> Battez-vous en gentleman...
+> Vivez en gentleman !
+
+[pl04win/msgWinPL04_21P]
+= Not very articulated, are you?
+= Work on your movements, chap!
+> Vous manquez de fluidité, on dirait.
+> Travaillez vos déplacements !
+
+[pl04win/msgWinPL04_22P]
+= Learn to fight with class!
+= Self-respect breeds discipline!
+> Apprenez à combattre avec classe !
+> Le respect de soi forge la rigueur !
+
+[pl04win/msgWinPL04_23P]
+= Even a spectator needs to be sharp
+= to comprehend the grace of boxing!
+> Même un spectateur doit être vif pour
+> saisir la grâce de la boxe !
+
+[pl04win/msgWinPL04_24P]
+= A champion does not achieve
+= victory when fueled by anger.
+> Un champion ne l'emporte jamais
+> lorsque la colère le guide.
+
+[pl04win/msgWinPL04_25P]
+= A punching bag that can bleed
+= is not a suitable rival for me.
+> Un sac de frappe qui saigne
+> ne fait pas un rival à ma mesure.
+
+[pl04win/msgWinPL04_26P]
+= To win with prestige and glory
+= is a sensation like no other!
+> Vaincre avec panache et honneur,
+> il n'est pas de sensation pareille !
+
+[pl04win/msgWinPL04_27P]
+= Despite your manners, I like your
+= style. Let me buy you a drink...
+> Malgré vos manières, j'aime votre
+> style. Je vous offre un verre...
+
+
+## pl05win -- Necro, citations de victoire (8 messages)
+
+[pl05win/msgWinPL05_20P]
+= What's that smell? That's the aroma
+= of freshly cooked brain matter!
+> Cette odeur ? C'est celle de la
+> cervelle fraîchement grillée !
+
+[pl05win/msgWinPL05_21P]
+= The pain sensitivity of the flesh
+= varies. Where does it hurt the most?
+> La chair ne souffre pas partout
+> pareil. Où as-tu le plus mal ?
+
+[pl05win/msgWinPL05_22P]
+= Freedom was once just a dream.
+= Now, I can fight to achieve it!
+> La liberté n'était qu'un rêve.
+> Je peux me battre pour elle !
+
+[pl05win/msgWinPL05_23P]
+= When I realized that I was no longer
+= alone, I became determined to win!
+> Quand j'ai compris que je n'étais
+> plus seul, j'ai voulu vaincre !
+
+[pl05win/msgWinPL05_24P]
+= I'm long and I'm strong!
+= To challenge me would be so wrong!
+> Je suis long et je suis fort !
+> Me défier serait une grosse erreur !
+
+[pl05win/msgWinPL05_25P]
+= You think I'm a freak? You should
+= see some of these other characters!
+> Tu me trouves monstrueux ? Tu devrais
+> voir certains des autres !
+
+[pl05win/msgWinPL05_26P]
+= A little battery won't kill ya...
+= Or will it?
+> Un peu de courant ne tue pas...
+> Ou peut-être que si ?
+
+[pl05win/msgWinPL05_27P]
+= If you thought that was abnormal,
+= wait until you see THIS!!
+> Si tu trouvais ça anormal,
+> attends de voir CECI !!
+
+
+## pl06win -- Hugo, citations de victoire (8 messages)
+
+[pl06win/msgWinPL06_20P]
+= Would you be able to get up if I
+= sat down on you? Let's find out!
+> Tu pourrais te relever si je
+> m'asseyais sur toi ? On essaie !
+
+[pl06win/msgWinPL06_21P]
+= I am number one!
+> Je suis le numéro un !
+
+[pl06win/msgWinPL06_22P]
+= The bigger I am, the
+= harder they fall!
+> Plus je suis gros, plus
+> ils tombent de haut !
+
+[pl06win/msgWinPL06_23P]
+= The force of your body smashed the
+= pavement! Help me fix it!
+> Ton corps a défoncé le trottoir !
+> Aide-moi à le réparer !
+
+[pl06win/msgWinPL06_24P]
+= It's a natural instinct for you
+= to fear my size and strength!
+> C'est un instinct naturel de
+> craindre ma taille et ma force !
+
+[pl06win/msgWinPL06_25P]
+= Strange... Is suicide a popular
+= activity where you come from?
+> Étrange... Le suicide est un loisir
+> répandu là d'où tu viens ?
+
+[pl06win/msgWinPL06_26P]
+= I held back. If I used any more
+= force, there would be a huge mess!
+> Je me suis retenu. Un peu plus de
+> force et ça faisait un beau gâchis !
+
+[pl06win/msgWinPL06_27P]
+= You enjoyed that, didn't you?
+= Let's do it again!
+> Ça t'a plu, hein ?
+> On recommence !
+
+
+## pl07win -- Ibuki, citations de victoire (8 messages)
+
+[pl07win/msgWinPL07_20P]
+= I can't let anyone know that I
+= wasted my time on a loser like you!
+> Personne ne doit savoir que j'ai
+> perdu mon temps sur un cas pareil !
+
+[pl07win/msgWinPL07_21P]
+= I'm sorry it went so quickly!
+= A girl's gotta have fun, you know!
+> Désolée que ça ait été si court !
+> Une fille doit s'amuser, non ?
+
+[pl07win/msgWinPL07_22P]
+= What a crazy graduation exam!
+= Being a Shinobi isn't easy!
+> Quel examen de fin d'études !
+> Ce n'est pas facile, d'être shinobi !
+
+[pl07win/msgWinPL07_23P]
+= I have clothes that are much more
+= fashionable than this! Believe me!
+> J'ai des tenues bien plus à la mode
+> que celle-ci ! Crois-moi !
+
+[pl07win/msgWinPL07_24P]
+= Please don't look. I have to change
+= outfits and I'm out of bombs...
+> Ne regarde pas. Je dois me changer
+> et je n'ai plus de bombes...
+
+[pl07win/msgWinPL07_25P]
+= Hey, I'll tell everyone you
+= put up a good fight, okay?
+> Je dirai à tout le monde que tu
+> t'es bien battu, d'accord ?
+
+[pl07win/msgWinPL07_26P]
+= That wasn't the most efficient way
+= to knock you out, but it worked!
+> Ce n'était pas la façon la plus
+> efficace de t'assommer, mais bon !
+
+[pl07win/msgWinPL07_27P]
+= I don't think you'd last long at
+= all if you were in my village...
+> Je ne crois pas que tu tiendrais
+> bien longtemps dans mon village...
+
+
+## pl08win -- Elena, citations de victoire (8 messages)
+
+[pl08win/msgWinPL08_20P]
+= I hope this moment of friendship
+= will bring you many happy memories!
+> J'espère que ce moment d'amitié
+> te laissera de beaux souvenirs !
+
+[pl08win/msgWinPL08_21P]
+= My accent? I must have picked
+= it up during my travels!
+> Mon accent ? Je l'ai sûrement pris
+> au fil de mes voyages !
+
+[pl08win/msgWinPL08_22P]
+= That was my best dance,
+= performed especially for you!
+> C'était ma plus belle danse,
+> rien que pour toi !
+
+[pl08win/msgWinPL08_23P]
+= When you feel the wind, you can feel
+= many elements of nature at work.
+> Quand tu sens le vent, tu sens la
+> nature tout entière à l'oeuvre.
+
+[pl08win/msgWinPL08_24P]
+= You need to be more flexible. Let
+= me help you to stretch your body!
+> Tu manques de souplesse. Laisse-moi
+> t'aider à t'étirer !
+
+[pl08win/msgWinPL08_25P]
+= Forget about your troubles and
+= realize the harmony around us!
+> Oublie tes soucis et découvre
+> l'harmonie qui nous entoure !
+
+[pl08win/msgWinPL08_26P]
+= Get addicted to the beat!
+= Rhythm can be your friend too!
+> Laisse-toi prendre par le rythme !
+> Il peut être ton ami aussi !
+
+[pl08win/msgWinPL08_27P]
+= You could teach me some new moves!
+= Let's dance together again!
+> Tu pourrais m'apprendre des pas !
+> Dansons encore ensemble !
+
+
+## pl09win -- Oro, citations de victoire (8 messages)
+
+[pl09win/msgWinPL09_20P]
+= Your moves are deadly... They could
+= kill me by boring me to death!
+> Tes coups sont mortels... Ils
+> pourraient me tuer d'ennui !
+
+[pl09win/msgWinPL09_21P]
+= Have you no sense of defense?
+= Or do you just like to feel pain?
+> Tu n'as aucun sens de la défense ?
+> Ou tu aimes juste avoir mal ?
+
+[pl09win/msgWinPL09_22P]
+= If we went home right now, would
+= anyone really care? Probably not.
+> Si on rentrait tout de suite, qui
+> s'en soucierait ? Personne.
+
+[pl09win/msgWinPL09_23P]
+= Keep it up and you'll suffer the
+= horror of pain!
+> Continue comme ça et tu connaîtras
+> l'horreur de la douleur !
+
+[pl09win/msgWinPL09_24P]
+= Would you like to meet my pets?
+= Or are you too injured?
+> Tu veux rencontrer mes animaux ?
+> Ou tu es trop amoché ?
+
+[pl09win/msgWinPL09_25P]
+= If you are angry, how can you
+= hope to strike accurately?
+> Si la colère t'aveugle, comment
+> espères-tu frapper juste ?
+
+[pl09win/msgWinPL09_26P]
+= If I kept fighting against you,
+= I might actually get worse!
+> Si je continuais à t'affronter,
+> je finirais par régresser !
+
+[pl09win/msgWinPL09_27P]
+= I'm so bored! I feel so limited!
+= Huh? You feel the same way?
+> Je m'ennuie ! Je me sens à l'étroit !
+> Hein ? Toi aussi ?
+
+
+## pl10win -- Yang, citations de victoire (8 messages)
+
+[pl10win/msgWinPL10_20P]
+= I was trying not to piss you off...
+= I guess I wasn't trying hard enough!
+> J'essayais de ne pas t'énerver...
+> Je n'ai pas dû essayer assez fort !
+
+[pl10win/msgWinPL10_21P]
+= I hope you planned on taking a long
+= vacation. You'll need it to heal!
+> J'espère que tu as prévu de longues
+> vacances. Il te faudra guérir !
+
+[pl10win/msgWinPL10_22P]
+= Don't assume that the same patterns
+= you use on others will work on me!
+> Ne crois pas que tes petites recettes
+> marcheront aussi sur moi !
+
+[pl10win/msgWinPL10_23P]
+= Every wound is a punishment
+= for your careless training!
+> Chaque blessure punit
+> ton entraînement négligé !
+
+[pl10win/msgWinPL10_24P]
+= I wonder if my brother would have
+= hurt you even more than I did...
+> Je me demande si mon frère t'aurait
+> fait encore plus mal que moi...
+
+[pl10win/msgWinPL10_25P]
+= Unless you want to disgrace history,
+= don't call what we did a fight!
+> Sauf à insulter l'histoire, n'appelle
+> pas ça un combat !
+
+[pl10win/msgWinPL10_26P]
+= An angry fighter is an ineffective
+= one... Not to mention ugly, too...
+> Un combattant en colère perd toute
+> efficacité... et de la grâce aussi...
+
+[pl10win/msgWinPL10_27P]
+= I move with the grace of the wind,
+= you just make it smell bad!
+> Je me déplace avec la grâce du vent,
+> toi tu ne fais que le polluer !
+
+
+## pl11win -- Ken, citations de victoire (8 messages)
+
+[pl11win/msgWinPL11_20P]
+= Whether you are reckless or brave,
+= use the style that suits you best!
+> Téméraire ou courageux, adopte le
+> style qui te convient le mieux !
+
+[pl11win/msgWinPL11_21P]
+= Look forward to the battle! Live
+= for the excitement of the fight!
+> Attends le combat avec impatience !
+> Vis pour le frisson de la bagarre !
+
+[pl11win/msgWinPL11_22P]
+= I wish you good luck!
+> Je te souhaite bonne chance !
+
+[pl11win/msgWinPL11_23P]
+= That's the spirit! Fight fiercely
+= every moment of the battle!
+> C'est ça l'esprit ! Bats-toi avec
+> rage à chaque instant !
+
+[pl11win/msgWinPL11_24P]
+= I will fight with style and finesse,
+= no matter what the outcome may be!
+> Je me battrai avec style et finesse,
+> quel que soit le résultat !
+
+[pl11win/msgWinPL11_25P]
+= Maybe my kid should practice
+= sparring with you!
+> Mon gamin devrait peut-être
+> s'entraîner contre toi !
+
+[pl11win/msgWinPL11_26P]
+= Thanks for helping me to show Mel
+= who has the world's strongest fists!
+> Merci de m'avoir aidé à montrer à Mel
+> qui a les poings les plus forts !
+
+[pl11win/msgWinPL11_27P]
+= Hey, they might make an action
+= figure out of you too, someday!
+> Ils feront peut-être une figurine
+> à ton effigie, un jour !
+
+
+## pl12win -- Sean, citations de victoire (8 messages)
+
+[pl12win/msgWinPL12_20P]
+= Wow! That actually worked?!
+= Next time I'll do it with skill!
+> Ouah ! Ça a vraiment marché ?!
+> La prochaine fois, avec la manière !
+
+[pl12win/msgWinPL12_21P]
+= I'm so eager to try out new and
+= different things! This is great!
+> J'ai tellement envie d'essayer des
+> trucs nouveaux ! C'est génial !
+
+[pl12win/msgWinPL12_22P]
+= Tell me who just rocked
+= your world with skill!
+> Dis-moi qui vient de te retourner
+> le cerveau avec talent !
+
+[pl12win/msgWinPL12_23P]
+= With every match, my timing
+= becomes more precise!
+> À chaque combat, mon timing
+> devient plus précis !
+
+[pl12win/msgWinPL12_24P]
+= Oh yeah! I'll start using
+= that move more often now!
+> Oh ouais ! Je vais ressortir
+> ce coup-là plus souvent !
+
+[pl12win/msgWinPL12_25P]
+= My master was right... I have to
+= improve myself with every battle!
+> Mon maître avait raison... Je dois
+> progresser à chaque combat !
+
+[pl12win/msgWinPL12_26P]
+= Now I understand why they fight!
+= This feeling is incredible!
+> Je comprends pourquoi ils se battent !
+> Cette sensation est incroyable !
+
+[pl12win/msgWinPL12_27P]
+= Call the fire department,
+= cause I'm on fire, baby!
+> Appelez les pompiers,
+> parce que je suis en feu !
+
+
+## pl13win -- Urien, citations de victoire (8 messages)
+
+[pl13win/msgWinPL13_20P]
+= How dost thou suck? Let me
+= count thy wounds! 1, 2, 3...
+> À quel point es-tu mauvais ? Laisse-moi
+> compter tes plaies ! 1, 2, 3...
+
+[pl13win/msgWinPL13_21P]
+= Look! Your cells have
+= betrayed you to serve me!
+> Regarde ! Tes cellules t'ont
+> trahi pour me servir !
+
+[pl13win/msgWinPL13_22P]
+= That's right... Kneel before me!
+= How do you like the view now?!
+> C'est cela... Agenouille-toi !
+> La vue te plaît, d'en bas ?!
+
+[pl13win/msgWinPL13_23P]
+= Lie there as long as you want.
+= I've had my fun with you.
+> Reste couché autant que tu veux.
+> Je me suis assez amusé.
+
+[pl13win/msgWinPL13_24P]
+= You are not even worthy enough
+= to do my bidding! Be gone!
+> Tu n'es même pas digne de servir
+> mes desseins ! Disparais !
+
+[pl13win/msgWinPL13_25P]
+= Pounding on you is satisfying,
+= but I need something more...
+> Te marteler est satisfaisant,
+> mais il me faut davantage...
+
+[pl13win/msgWinPL13_26P]
+= Your inferior vital fluids are
+= tainting the ground! Clean it up!
+> Tes fluides inférieurs souillent
+> le sol ! Nettoie-moi ça !
+
+[pl13win/msgWinPL13_27P]
+= How can you refuse to bow
+= to a superior being?
+> Comment oses-tu refuser de t'incliner
+> devant un être supérieur ?
+
+
+## pl14win -- Akuma, citations de victoire (8 messages)
+
+[pl14win/msgWinPL14_20P]
+= My fist knows no equal!
+> Mon poing n'a pas d'égal !
+
+[pl14win/msgWinPL14_21P]
+= Perfection equals obliteration!
+> La perfection, c'est l'anéantissement !
+
+[pl14win/msgWinPL14_22P]
+= Your body assumed its proper form
+= when my fists tore it apart!
+> Ton corps a pris sa vraie forme
+> quand mes poings l'ont déchiré !
+
+[pl14win/msgWinPL14_23P]
+= Weakness is a disease...
+= I am the cure!
+> La faiblesse est une maladie...
+> Je suis le remède !
+
+[pl14win/msgWinPL14_24P]
+= The unworthy must be
+= removed from existence.
+> Ceux qui n'en sont pas dignes
+> doivent être rayés du monde.
+
+[pl14win/msgWinPL14_25P]
+= You've fulfilled your purpose in
+= life by allowing me to end it!
+> Tu as rempli ton rôle en me
+> laissant y mettre fin !
+
+[pl14win/msgWinPL14_26P]
+= A weak shell for a weak soul. It was
+= an easy task to separate the two...
+> Coquille faible, âme faible. Les
+> séparer fut un jeu d'enfant...
+
+[pl14win/msgWinPL14_27P]
+= To show mercy is to show
+= proof of your imperfections!
+> Faire preuve de pitié, c'est
+> prouver son imperfection !
+
+
+## pl15win -- Chun-Li, citations de victoire (8 messages)
+
+[pl15win/msgWinPL15_20P]
+= It's been much too long since
+= I've been in a fair fight!
+> Il y a bien longtemps que je n'avais
+> pas eu de combat loyal !
+
+[pl15win/msgWinPL15_21P]
+= Hey, leave me alone!
+= I'm a fighter, not a news reporter!
+> Laissez-moi tranquille !
+> Je me bats, je ne suis pas reporter !
+
+[pl15win/msgWinPL15_22P]
+= No, I've never thrown any of my
+= bracelets away. Why do you ask?
+> Non, je n'ai jamais jeté un seul de
+> mes bracelets. Pourquoi ?
+
+[pl15win/msgWinPL15_23P]
+= Power is useless without
+= skill and speed!
+> La puissance ne sert à rien sans
+> technique ni vitesse !
+
+[pl15win/msgWinPL15_24P]
+= Put some thought into your actions
+= and you will eliminate your regrets.
+> Réfléchis avant d'agir et tu
+> n'auras plus rien à regretter.
+
+[pl15win/msgWinPL15_25P]
+= You haven't seen my best yet!
+= Please let me show you!
+> Tu n'as pas vu mon meilleur !
+> Laisse-moi te le montrer !
+
+[pl15win/msgWinPL15_26P]
+= You'd be great if you found a
+= better reason to fight!
+> Tu serais redoutable avec une
+> meilleure raison de te battre !
+
+[pl15win/msgWinPL15_27P]
+= Am I still the strongest
+= woman in the world? Tell me!
+> Suis-je toujours la femme la plus
+> forte du monde ? Dis-le-moi !
+
+
+## pl16win -- Makoto, citations de victoire (8 messages)
+
+[pl16win/msgWinPL16_20P]
+= You'd fare better if you
+= would just cheer up!
+> Tu t'en sortirais mieux si tu
+> te déridais un peu !
+
+[pl16win/msgWinPL16_21P]
+= That was a lot easier than
+= I thought it would be!
+> C'était bien plus facile que
+> ce que je croyais !
+
+[pl16win/msgWinPL16_22P]
+= That couldn't have been your
+= best effort! Stop holding back!
+> Tu ne t'es pas donné à fond !
+> Arrête de te retenir !
+
+[pl16win/msgWinPL16_23P]
+= It'll take a lot more than that to
+= take me out! Let's do it again!
+> Il en faudra bien plus pour me
+> mettre KO ! On remet ça !
+
+[pl16win/msgWinPL16_24P]
+= It hurts twice as much when you
+= know that it was your fault!
+> Ça fait deux fois plus mal quand
+> on sait que c'est sa faute !
+
+[pl16win/msgWinPL16_25P]
+= What's going through your mind
+= when we fight? I want to know!
+> À quoi penses-tu quand on se bat ?
+> Je veux savoir !
+
+[pl16win/msgWinPL16_26P]
+= Let's keep fighting until we are
+= both completely satisfied!
+> Battons-nous jusqu'à ce qu'on soit
+> pleinement satisfaits tous les deux !
+
+[pl16win/msgWinPL16_27P]
+= Daddy, you believed in me!
+= That win was for our Dojo!
+> Papa, tu as cru en moi !
+> Cette victoire est pour le dojo !
+
+
+## pl17win -- Q, citations de victoire (8 messages)
+
+[pl17win/msgWinPL17_20P]
+= !.........
+= (No!)
+> !.........
+> (Non !)
+
+[pl17win/msgWinPL17_21P]
+= ?!.........
+= (Seriously?!)
+> ?!.........
+> (Sérieux ?!)
+
+[pl17win/msgWinPL17_22P]
+= .....................
+= (Leave.)
+> .....................
+> (Pars.)
+
+[pl17win/msgWinPL17_23P]
+= .....................
+= (Bye.)
+> .....................
+> (Adieu.)
+
+[pl17win/msgWinPL17_24P]
+= .........
+= (Done.)
+> .........
+> (Fini.)
+
+[pl17win/msgWinPL17_25P]
+= .........!
+= (Never!)
+> .........!
+> (Jamais !)
+
+[pl17win/msgWinPL17_26P]
+= ?.........
+= (Yes?)
+> ?.........
+> (Oui ?)
+
+[pl17win/msgWinPL17_27P]
+= .........?
+= (Again?)
+> .........?
+> (Encore ?)
+
+
+## pl18win -- Twelve, citations de victoire (8 messages)
+
+[pl18win/msgWinPL18_20P]
+= 00100.00101.00001.10100.01000
+> 01101.01111.10010.10100
+
+[pl18win/msgWinPL18_21P]
+= 01011.01001.01100.01100
+> 10100.10101.00101.10010
+
+[pl18win/msgWinPL18_22P]
+= 10000.00001.01001.01110
+> 01101.00001.01100
+
+[pl18win/msgWinPL18_23P]
+= 00110.01001.01110.01001.10011.01000
+> 00110.01001.01110.01001.10010
+
+[pl18win/msgWinPL18_24P]
+= 01011.01111
+> 01011.01111
+
+[pl18win/msgWinPL18_25P]
+= 10100.01000.00101.00101.01110.00100
+> 01100.00001.00110.01001.01110
+
+[pl18win/msgWinPL18_26P]
+= 10100.10111.00101.01100.10110.00101
+> 10100.10111.00101.01100.10110.00101
+
+[pl18win/msgWinPL18_27P]
+= 00101.11010.01010.01111.00010
+> 00110.00001.00011.01001.01100.00101
+
+
+## pl19win -- Remy, citations de victoire (8 messages)
+
+[pl19win/msgWinPL19_20P]
+= Victory, glory, and honor...
+= Those ideas don't excite me a bit.
+> La victoire, la gloire, l'honneur...
+> Rien de tout cela ne m'émeut.
+
+[pl19win/msgWinPL19_21P]
+= In death, you may find the
+= answers that you seek.
+> Dans la mort, tu trouveras peut-être
+> les réponses que tu cherches.
+
+[pl19win/msgWinPL19_22P]
+= I have no intention of beating
+= you up again. Just leave...
+> Je n'ai pas l'intention de te
+> tabasser encore. Va-t'en...
+
+[pl19win/msgWinPL19_23P]
+= Why am I here, anyway?
+> Qu'est-ce que je fais ici, au fond ?
+
+[pl19win/msgWinPL19_24P]
+= Pain is a cheap substitute
+= for a vitality gauge!
+> La douleur est un piètre substitut
+> à une jauge de vie !
+
+[pl19win/msgWinPL19_25P]
+= Don't you realize that the path you
+= are taking will lead you nowhere?!
+> Tu ne vois pas que le chemin que tu
+> prends ne mène nulle part ?!
+
+[pl19win/msgWinPL19_26P]
+= Stay down. Or do you want
+= me to hurt you again?
+> Reste à terre. Ou tu veux que
+> je te fasse encore mal ?
+
+[pl19win/msgWinPL19_27P]
+= I find your cause interesting,
+= but I could never relate to it.
+> Ta cause m'intéresse, mais je ne
+> pourrai jamais y adhérer.
+
+
+## pl00tlk -- Gill, dialogues d'avant-combat (8 messages)
+
+[pl00tlk/msgTlkPL00_01P]
+= I've been waiting for you, Alex.
+> Je t'attendais, Alex.
+
+[pl00tlk/msgTlkPL00_02P]
+= Since the first time we met, I knew
+= that our destinies were intertwined...
+> Dès notre première rencontre, j'ai su
+> que nos destins étaient liés...
+
+[pl00tlk/msgTlkPL00_03P]
+= I knew that you would seek me out to
+= learn the truth...
+> Je savais que tu viendrais me
+> chercher pour connaître la vérité...
+
+[pl00tlk/msgTlkPL00_04P]
+= What you do mean you knew I would
+= come here...?
+> Comment ça, tu savais que je
+> viendrais ici... ?
+
+[pl00tlk/msgTlkPL00_05P]
+= Your visions don't impress me.
+= I just want to beat you down!!
+> Tes visions ne m'impressionnent pas.
+> Je veux juste te démolir !!
+
+[pl00tlk/msgTlkPL00_06P]
+= I know that I'll find what I've been
+= looking for, once I destroy you.
+> Je sais que je trouverai ce que je
+> cherche une fois que je t'aurai vaincu.
+
+[pl00tlk/msgTlkPL00_07P]
+= I knew you would say that...
+= Ha ha ha!
+> Je savais que tu dirais ça...
+> Ha ha ha !
+
+[pl00tlk/msgTlkPL00_08P]
+= Let us embrace our destiny!!
+> Embrassons notre destin !!
+
+
+## pl01tlk -- Alex, dialogues d'avant-combat (4 messages)
+
+[pl01tlk/msgTlkPL01_01P]
+= A karate uniform and headband...
+= You must be Ryu.
+> Un karategi et un bandeau...
+> Tu dois être Ryu.
+
+[pl01tlk/msgTlkPL01_02P]
+= I've heard a lot about you!
+= Now, I'll confirm those rumors.
+> On m'a beaucoup parlé de toi !
+> Je vais vérifier ces rumeurs.
+
+[pl01tlk/msgTlkPL01_03P]
+= Hmm... I can see the
+= power in your eyes...
+> Hmm... Je vois la puissance
+> dans ton regard...
+
+[pl01tlk/msgTlkPL01_04P]
+= Don't hold back!
+= Show me everything you've got!
+> Ne te retiens pas !
+> Montre-moi tout ce que tu as !
+
+
+## pl02tlk -- Ryu, dialogues d'avant-combat (4 messages)
+
+[pl02tlk/msgTlkPL02_01P]
+= You never get bored of this, do you?
+> Tu ne t'en lasses jamais, hein ?
+
+[pl02tlk/msgTlkPL02_02P]
+= I could say the same to you...
+> Je pourrais te dire la même chose...
+
+[pl02tlk/msgTlkPL02_03P]
+= Okay then, I'll make this quick and
+= easy for you. Prepare for defeat!
+> Très bien, je vais faire vite et
+> simple. Prépare-toi à perdre !
+
+[pl02tlk/msgTlkPL02_04P]
+= You may think so, but I've still got
+= the better win record! Stand strong!
+> Peut-être, mais j'ai encore le
+> meilleur palmarès ! Tiens bon !
+
+
+## pl03tlk -- Yun, dialogues d'avant-combat (6 messages)
+
+[pl03tlk/msgTlkPL03_01P]
+= So, you are Gill...
+> Alors c'est toi, Gill...
+
+[pl03tlk/msgTlkPL03_02P]
+= What's up with your plan to conquer
+= the world?! Wake up, already!
+> C'est quoi ce plan de conquête du
+> monde ?! Réveille-toi un peu !
+
+[pl03tlk/msgTlkPL03_03P]
+= Youth tends to be reckless, but it
+= is not my intention to blame you.
+> La jeunesse est imprudente, mais
+> je ne t'en tiens pas rigueur.
+
+[pl03tlk/msgTlkPL03_04P]
+= Just think about it... What is
+= the ideal way for you to live?
+> Réfléchis... Quelle serait la
+> vie idéale, pour toi ?
+
+[pl03tlk/msgTlkPL03_05P]
+= It should be obvious to a boy like
+= you. Just leave everything to me!
+> Un garçon comme toi devrait le voir.
+> Remets-t'en simplement à moi !
+
+[pl03tlk/msgTlkPL03_06P]
+= Arrrgh! Stop preaching to me!
+= Let our fists do the talking!
+> Arrrgh ! Arrête de me sermonner !
+> Que nos poings parlent !
+
+
+## pl04tlk -- Dudley, dialogues d'avant-combat (5 messages)
+
+[pl04tlk/msgTlkPL04_01P]
+= So, you're that famous
+= Samurai fighter, aren't you?
+> Vous êtes donc ce fameux
+> combattant samouraï ?
+
+[pl04tlk/msgTlkPL04_02P]
+= What a coincidence! I've
+= been looking for you, too!
+> Quelle coïncidence ! Moi aussi,
+> je vous cherchais !
+
+[pl04tlk/msgTlkPL04_03P]
+= I'd love a chance to fight with
+= England's #1 perfect boxer!
+> J'aimerais affronter le boxeur
+> numéro 1 d'Angleterre !
+
+[pl04tlk/msgTlkPL04_04P]
+= Good show lad! You behave like a
+= gentleman, yet have great strength!
+> Bien parlé ! Vous avez les manières
+> d'un gentleman et une force rare !
+
+[pl04tlk/msgTlkPL04_05P]
+= This shall be quite enjoyable!
+= Don't you agree?
+> Ce sera fort plaisant !
+> N'êtes-vous pas d'accord ?
+
+
+## pl05tlk -- Necro, dialogues d'avant-combat (4 messages)
+
+[pl05tlk/msgTlkPL05_01P]
+= Stop already! It's time for
+= you to show your true self!
+> Ça suffit ! Il est temps de
+> montrer ton vrai visage !
+
+[pl05tlk/msgTlkPL05_02P]
+= It's clear to me! Gill was the
+= one who sent you, right?!
+> C'est clair ! C'est Gill qui
+> t'envoie, pas vrai ?!
+
+[pl05tlk/msgTlkPL05_04P]
+= I won't lose to a mass production
+= model, even if you are "perfect!"
+> Je ne perdrai pas contre un modèle
+> de série, même "parfait" !
+
+[pl05tlk/msgTlkPL05_05P]
+= I'll put what's left of you into
+= a box that I will send to Gill!
+> Je mettrai ce qui reste de toi dans
+> un carton que j'enverrai à Gill !
+
+
+## pl06tlk -- Hugo, dialogues d'avant-combat (5 messages)
+
+[pl06tlk/msgTlkPL06_01P]
+= So, you must be the one that
+= Poison has been talking about.
+> Tu dois être celui dont
+> Poison m'a parlé.
+
+[pl06tlk/msgTlkPL06_02P]
+= We're recruiting those who have the
+= potential to become great wrestlers.
+> On recrute ceux qui peuvent devenir
+> de grands catcheurs.
+
+[pl06tlk/msgTlkPL06_03P]
+= Now, let's make a deal. Promise me
+= that you will join us if you lose!
+> Passons un marché. Promets-moi de
+> nous rejoindre si tu perds !
+
+[pl06tlk/msgTlkPL06_04P]
+= That's fine... Maybe I can learn
+= something worthwhile from wrestling.
+> D'accord... Le catch a peut-être
+> quelque chose à m'apprendre.
+
+[pl06tlk/msgTlkPL06_05P]
+= However, I won't lose! I'll
+= show you what true strength is!
+> Mais je ne perdrai pas ! Je vais te
+> montrer ce qu'est la vraie force !
+
+
+## pl07tlk -- Ibuki, dialogues d'avant-combat (7 messages)
+
+[pl07tlk/msgTlkPL07_01P]
+= Excuse me, are you a Sennin?
+> Excusez-moi, vous êtes un sennin ?
+
+[pl07tlk/msgTlkPL07_02P]
+= That's right. I'm the great Sennin!
+= What do you want, girl?
+> C'est exact. Je suis le grand sennin !
+> Que veux-tu, petite ?
+
+[pl07tlk/msgTlkPL07_03P]
+= (He's as old as they get, but he is
+= also a master fighter, I guess...)
+> (Il est vieux comme le monde, mais
+> ça doit être un maître, j'imagine...)
+
+[pl07tlk/msgTlkPL07_04P]
+= Well, I know it's unusual, but I'm
+= in the middle of graduation exam.
+> C'est un peu bizarre, mais je suis
+> en plein examen de fin d'études.
+
+[pl07tlk/msgTlkPL07_05P]
+= They won't allow me to pass unless
+= I defeat you in 5 minutes... So...
+> Je ne serai reçue que si je vous
+> bats en 5 minutes... Alors...
+
+[pl07tlk/msgTlkPL07_06P]
+= Fight with me!
+> Battez-vous avec moi !
+
+[pl07tlk/msgTlkPL07_07P]
+= What?! I thought you wanted to go on
+= a date with me! I'm disappointed!
+> Quoi ?! Je croyais que tu voulais
+> un rendez-vous ! Quelle déception !
+
+
+## pl08tlk -- Elena, dialogues d'avant-combat (5 messages)
+
+[pl08tlk/msgTlkPL08_01P]
+= What's wrong with you?! Stop smiling
+= like that! It's creepy!
+> Qu'est-ce qui te prend ?! Arrête de
+> sourire comme ça ! C'est glauque !
+
+[pl08tlk/msgTlkPL08_02P]
+= I'm here for a serious fight! I'll
+= punish you if you make fun of me!
+> Je viens pour un vrai combat ! Tu vas
+> le payer si tu te moques de moi !
+
+[pl08tlk/msgTlkPL08_03P]
+= I just want to be your friend!
+> Je veux juste être ton amie !
+
+[pl08tlk/msgTlkPL08_04P]
+= That's the reason why we fight!
+= So let's enjoy the battle!
+> C'est pour ça qu'on se bat !
+> Alors profitons du combat !
+
+[pl08tlk/msgTlkPL08_05P]
+= Friend?! I don't think I
+= could ever understand you.
+> Amie ?! Je crois que je ne te
+> comprendrai jamais.
+
+
+## pl09tlk -- Oro, dialogues d'avant-combat (6 messages)
+
+[pl09tlk/msgTlkPL09_01P]
+= Wow! You possess an
+= incredible level of Chi!
+> Oh ! Tu possèdes un niveau de
+> chi absolument incroyable !
+
+[pl09tlk/msgTlkPL09_02P]
+= That's what you call... Evil intent?
+= Impressive for a young man like you!
+> C'est ce qu'on appelle... le mal ?
+> Impressionnant, pour un jeune homme !
+
+[pl09tlk/msgTlkPL09_03P]
+= I've heard about you, Sennin.
+> J'ai entendu parler de toi, sennin.
+
+[pl09tlk/msgTlkPL09_04P]
+= Watch your words, or they will
+= reveal your destruction.
+> Surveille tes mots, ou ils
+> annonceront ta destruction.
+
+[pl09tlk/msgTlkPL09_05P]
+= You claim to be the master of
+= fists... This disturbs me...
+> Tu te prétends maître du poing...
+> Cela me trouble...
+
+[pl09tlk/msgTlkPL09_06P]
+= The road to true mastery is much
+= harder. Let us travel it now...
+> La voie de la vraie maîtrise est bien
+> plus rude. Empruntons-la...
+
+
+## pl10tlk -- Yang, dialogues d'avant-combat (6 messages)
+
+[pl10tlk/msgTlkPL10_01P]
+= ...Why do you care about
+= that so much?
+> ...Pourquoi est-ce que ça compte
+> autant pour toi ?
+
+[pl10tlk/msgTlkPL10_02P]
+= It's just a waste of time
+= to determine who is stronger.
+> C'est une perte de temps de
+> savoir qui est le plus fort.
+
+[pl10tlk/msgTlkPL10_03P]
+= I know. I just...
+> Je sais. C'est juste que...
+
+[pl10tlk/msgTlkPL10_04P]
+= I'd like you to see the progress
+= I've made in last couple of weeks.
+> J'aimerais que tu voies les progrès
+> que j'ai faits ces dernières semaines.
+
+[pl10tlk/msgTlkPL10_05P]
+= Okay then.
+= I have no choice but to accept...
+> Très bien.
+> Je n'ai pas le choix, j'accepte...
+
+[pl10tlk/msgTlkPL10_06P]
+= Let me show you what kind of walls
+= will always block your progress!
+> Je vais te montrer quels murs
+> barreront toujours ta route !
+
+
+## pl11tlk -- Ken, dialogues d'avant-combat (5 messages)
+
+[pl11tlk/msgTlkPL11_01P]
+= You're not quite what I expected...
+> Tu n'es pas ce que j'imaginais...
+
+[pl11tlk/msgTlkPL11_02P]
+= But, you sure do have
+= the face of a fighter!
+> Mais tu as bien la tête
+> d'un combattant !
+
+[pl11tlk/msgTlkPL11_03P]
+= Behave yourself... I am destined to
+= become the king of the new century.
+> Tiens-toi bien... Mon destin est de
+> régner sur le siècle nouveau.
+
+[pl11tlk/msgTlkPL11_04P]
+= You should thank me for using
+= you as my entertainment!
+> Remercie-moi de te prendre
+> pour distraction !
+
+[pl11tlk/msgTlkPL11_05P]
+= Keep talking like that, and I'll do
+= much more than just entertain you!
+> Continue comme ça et je ferai bien
+> plus que te distraire !
+
+
+## pl12tlk -- Sean, dialogues d'avant-combat (6 messages)
+
+[pl12tlk/msgTlkPL12_01P]
+= Just as we agreed upon...
+= Toady is the day.
+> Comme convenu...
+> C'est aujourd'hui.
+
+[pl12tlk/msgTlkPL12_02P]
+= Your own special moves... your own
+= strategies... Anything is fine!
+> Tes coups spéciaux... tes propres
+> tactiques... Tout est permis !
+
+[pl12tlk/msgTlkPL12_03P]
+= Just try to impress me! And if you
+= see a chance, try to win a round!
+> Essaie de m'impressionner ! Et si tu
+> vois une ouverture, prends un round !
+
+[pl12tlk/msgTlkPL12_04P]
+= Well, that is... if you can!
+> Enfin... si tu en es capable !
+
+[pl12tlk/msgTlkPL12_05P]
+= Master... I'm not the same
+= person that I was a year ago!
+> Maître... Je ne suis plus celui
+> que j'étais il y a un an !
+
+[pl12tlk/msgTlkPL12_06P]
+= I'll show you what I mean!!
+> Je vais vous le prouver !!
+
+
+## pl13tlk -- Urien, dialogues d'avant-combat (6 messages)
+
+[pl13tlk/msgTlkPL13_01P]
+= I understand your jealousy. There is
+= a huge gap between humans and a god.
+> Je comprends ta jalousie. Un gouffre
+> sépare les hommes d'un dieu.
+
+[pl13tlk/msgTlkPL13_02P]
+= You cannot forgive me
+= because you cannot deny me.
+> Tu ne peux pas me pardonner
+> parce que tu ne peux pas me nier.
+
+[pl13tlk/msgTlkPL13_03P]
+= Let me grant you your death as a
+= show of mercy from your brother!
+> Laisse-moi t'offrir la mort, en
+> guise de pitié fraternelle !
+
+[pl13tlk/msgTlkPL13_04P]
+= When I look into the past,
+= I see dishonor and hatred.
+> Quand je regarde le passé,
+> je vois le déshonneur et la haine.
+
+[pl13tlk/msgTlkPL13_05P]
+= When I look into the future,
+= I am free from the corruption.
+> Quand je regarde l'avenir,
+> je suis libre de toute souillure.
+
+[pl13tlk/msgTlkPL13_06P]
+= How glorious it is...
+= A world without you!
+> Quelle splendeur...
+> Un monde sans toi !
+
+
+## pl15tlk -- Chun-Li, dialogues d'avant-combat (7 messages)
+
+[pl15tlk/msgTlkPL15_01P]
+= I don't know what your
+= scheme is...
+> J'ignore quel est
+> ton stratagème...
+
+[pl15tlk/msgTlkPL15_02P]
+= But I can't let you
+= harm small children!
+> Mais je ne te laisserai pas
+> t'en prendre à des enfants !
+
+[pl15tlk/msgTlkPL15_03P]
+= Where is that girl?
+> Où est cette petite ?
+
+[pl15tlk/msgTlkPL15_04P]
+= How could you ask to see me for such
+= a trifle thing? You must be a fool!
+> Tu me déranges pour si peu ?
+> Il faut être bien sotte !
+
+[pl15tlk/msgTlkPL15_05P]
+= I'll give you the girl, but you
+= must entertain me in return.
+> Je te rendrai la petite, mais tu
+> devras me divertir en retour.
+
+[pl15tlk/msgTlkPL15_06P]
+= Your legendary legs are said to
+= have destroyed "that organization."
+> On dit que tes jambes légendaires
+> ont détruit "cette organisation".
+
+[pl15tlk/msgTlkPL15_07P]
+= Let me find out for myself,
+= if the rumors about you are true...
+> Je vais vérifier moi-même si les
+> rumeurs à ton sujet sont vraies...
+
+
+## pl16tlk -- Makoto, dialogues d'avant-combat (5 messages)
+
+[pl16tlk/msgTlkPL16_01P]
+= I've heard about you...
+= You're Ryu, aren't you?
+> J'ai entendu parler de toi...
+> Tu es Ryu, n'est-ce pas ?
+
+[pl16tlk/msgTlkPL16_02P]
+= Your headband and that all-season
+= Karate uniform! I can't be mistaken!
+> Ce bandeau et ce karategi porté en
+> toute saison ! Aucun doute !
+
+[pl16tlk/msgTlkPL16_03P]
+= Now, accept my challenge!
+> Alors, accepte mon défi !
+
+[pl16tlk/msgTlkPL16_04P]
+= Hmm... Your style is Karate...
+= And you seem to be skilled...
+> Hmm... Tu pratiques le karaté...
+> Et tu sembles douée...
+
+[pl16tlk/msgTlkPL16_05P]
+= Interesting!
+= Show me your best!!
+> Intéressant !
+> Montre-moi ce que tu vaux !!
+
+
+## pl18tlk -- Twelve, dialogues d'avant-combat (5 messages)
+
+[pl18tlk/msgTlkPL18_01P]
+= Why?! Why can't you
+= just leave me alone?!
+> Pourquoi ?! Pourquoi ne pouvez-vous
+> pas me laisser tranquille ?!
+
+[pl18tlk/msgTlkPL18_02P]
+= I'm just a failure, right?!
+= I have nothing you want!
+> Je ne suis qu'un raté, non ?!
+> Je n'ai rien que vous vouliez !
+
+[pl18tlk/msgTlkPL18_03P]
+= Your body is full of dangerous,
+= confidential information.
+> Ton corps regorge d'informations
+> confidentielles et dangereuses.
+
+[pl18tlk/msgTlkPL18_04P]
+= Knowledge of your existence can
+= never be allowed into the world.
+> Le monde ne doit jamais apprendre
+> que tu existes.
+
+[pl18tlk/msgTlkPL18_05P]
+= It's up to each of us to decide
+= whether or not we should exist!
+> C'est à chacun de décider s'il
+> doit exister ou non !
+
+
+## pl19tlk -- Remy, dialogues d'avant-combat (7 messages)
+
+[pl19tlk/msgTlkPL19_01P]
+= Answer me...
+= Why do you fight?
+> Réponds-moi...
+> Pourquoi te bats-tu ?
+
+[pl19tlk/msgTlkPL19_02P]
+= I don't know... I started fighting
+= long before I knew the reasons why.
+> Je ne sais pas... Je me battais bien
+> avant d'en connaître la raison.
+
+[pl19tlk/msgTlkPL19_03P]
+= That selfishness victimizes people,
+= destroys love, and creates hatred!
+> Cet égoïsme fait des victimes, tue
+> l'amour et engendre la haine !
+
+[pl19tlk/msgTlkPL19_04P]
+= I'll never forgive them! Those who
+= call themselves "warriors"...
+> Je ne leur pardonnerai jamais ! Ceux
+> qui se disent "guerriers"...
+
+[pl19tlk/msgTlkPL19_05P]
+= Just like my father, a man who
+= deserted and betrayed his family!
+> Comme mon père, un homme qui a
+> déserté et trahi sa famille !
+
+[pl19tlk/msgTlkPL19_06P]
+= So what? If you need to see a
+= shrink, go somewhere else!
+> Et alors ? Si tu as besoin d'un
+> psy, va voir ailleurs !
+
+[pl19tlk/msgTlkPL19_07P]
+= But, if it's pain that you want,
+= I have plenty to give to you!
+> Mais si c'est de la douleur que tu
+> veux, j'en ai en réserve !
+
+
+## pl00end -- Gill, fins (17 messages)
+
+[pl00end/msgEndPL00_01]
+= You were wrong...
+> Tu avais tort...
+
+[pl00end/msgEndPL00_02]
+= People can't control hatred or love
+= within their minds...
+> Nul ne maîtrise la haine ou l'amour
+> qui l'habitent...
+
+[pl00end/msgEndPL00_03]
+= Every soul feeds and survives upon
+= feelings...
+> Chaque âme se nourrit et survit
+> de ses émotions...
+
+[pl00end/msgEndPL00_04]
+= If you try and ignore certain emotions,
+= people may be damaged or destroyed!
+> Ignorer certaines émotions peut
+> briser ou détruire les êtres !
+
+[pl00end/msgEndPL00_05]
+= Open your mind and accept the truth that
+= one feeling needs the other...
+> Ouvre ton esprit : chaque sentiment
+> a besoin de son contraire...
+
+[pl00end/msgEndPL00_06]
+= Let me lead you...
+> Laisse-moi te guider...
+
+[pl00end/msgEndPL00_07]
+= "...Huh? What is going on...?"
+> "...Hein ? Que se passe-t-il... ?"
+
+[pl00end/msgEndPL00_08]
+= "Something has been taken away... And
+= yet, something new has be added..."
+> "On m'a retiré quelque chose... Et
+> pourtant, quelque chose s'ajoute..."
+
+[pl00end/msgEndPL00_09]
+= Paradise... Everyone dreams of it and
+= searches their entire for it...
+> Le paradis... Tous en rêvent et le
+> cherchent leur vie entière...
+
+[pl00end/msgEndPL00_10]
+= But paradise doesn't exist.
+> Mais le paradis n'existe pas.
+
+[pl00end/msgEndPL00_11]
+= People are blind to the truth...
+> Les hommes sont aveugles à la vérité.
+
+[pl00end/msgEndPL00_12]
+= 2000 years was too long.
+> 2000 ans, c'était trop long.
+
+[pl00end/msgEndPL00_13]
+= I'm going to complete the mission which
+= my predecessor tried to accomplish.
+> Je vais achever la mission que mon
+> prédécesseur avait entreprise.
+
+[pl00end/msgEndPL00_14]
+= The dark future is now over...
+> L'avenir sombre est révolu...
+
+[pl00end/msgEndPL00_15]
+= Now... The road has been shown.
+> Voilà... La voie est tracée.
+
+[pl00end/msgEndPL00_16]
+= This road will lead the pitiful people
+= of this world to evolution...
+> Elle mènera les pauvres hommes de ce
+> monde vers leur évolution...
+
+[pl00end/msgEndPL00_17]
+= Yes... This is the way to the paradise!
+> Oui... Voici le chemin du paradis !
+
+
+## pl01end -- Alex, fins (15 messages)
+
+[pl01end/msgEndPL01_01]
+= Ugh! I couldn't counter even
+= one of his blows!
+> Argh ! Je n'ai pas pu contrer
+> un seul de ses coups !
+
+[pl01end/msgEndPL01_02]
+= (His reputation does not do him
+= justice! He is much stronger!)
+> (Sa réputation ne lui rend pas
+> justice ! Il est bien plus fort !)
+
+[pl01end/msgEndPL01_03]
+= "I'm sorry that I can't go camping.
+= Please give my apologies to Pat."
+> "Désolé, je ne peux pas venir camper.
+> Présente mes excuses à Pat."
+
+[pl01end/msgEndPL01_04]
+= "...I know it sounds crazy, but
+= I just can't control myself."
+> "...Je sais que ça paraît fou, mais
+> je n'arrive pas à me retenir."
+
+[pl01end/msgEndPL01_05]
+= "To see him again and to fight!
+= That's the only thing on my mind!"
+> "Le revoir et me battre ! Je ne
+> pense plus qu'à ça !"
+
+[pl01end/msgEndPL01_06]
+= "I'll be on the road for a while...
+= Tom, I'll catch up with you later!"
+> "Je serai sur les routes un moment...
+> Tom, on se revoit plus tard !"
+
+[pl01end/msgEndPL01_07]
+= (Now, his time has come...)
+> (Son heure est venue...)
+
+[pl01end/msgEndPL01_08]
+= (I guess he thinks that I'm no
+= longer a match for him...)
+> (Il doit se dire que je ne fais
+> plus le poids face à lui...)
+
+[pl01end/msgEndPL01_09]
+= (Alex, when you return, I'll see for
+= myself how strong you've become!)
+> (Alex, à ton retour, je jugerai par
+> moi-même de ta nouvelle force !)
+
+[pl01end/msgEndPL01_10]
+= Dad! Hey, where's Alex, anyway?
+> Papa ! Au fait, où est Alex ?
+
+[pl01end/msgEndPL01_11]
+= We need him to set up our tent
+= by the lake, you know.
+> On a besoin de lui pour monter
+> la tente au bord du lac.
+
+[pl01end/msgEndPL01_12]
+= Hey daddy, are you listening?!
+> Papa, tu m'écoutes ?!
+
+[pl01end/msgEndPL01_13]
+= What's the matter?!
+= Is that all you've got?
+> Qu'est-ce qui t'arrive ?!
+> C'est tout ce que tu as ?
+
+[pl01end/msgEndPL01_14]
+= Ha ha... No way!
+= The show has just begun!
+> Ha ha... Pas du tout !
+> Le spectacle ne fait que commencer !
+
+[pl01end/msgEndPL01_15]
+= Get ready!
+> Prépare-toi !
+
+
+## pl02end -- Ryu, fins (9 messages)
+
+[pl02end/msgEndPL02_01]
+= "What is a true warrior?"
+> "Qu'est-ce qu'un vrai guerrier ?"
+
+[pl02end/msgEndPL02_02]
+= "Why should I be strong?
+= What awaits beyond victory?"
+> "Pourquoi devrais-je être fort ?
+> Qu'y a-t-il au-delà de la victoire ?"
+
+[pl02end/msgEndPL02_03]
+= Since the days of my youth, these
+= thoughts have never left my mind.
+> Depuis ma jeunesse, ces pensées
+> ne m'ont jamais quitté.
+
+[pl02end/msgEndPL02_04]
+= I had to decide... Either to stop
+= asking myself those questions...
+> Il fallait choisir... Cesser de me
+> poser ces questions...
+
+[pl02end/msgEndPL02_05]
+= ...or to struggle to
+= find the answers...
+> ...ou lutter pour en
+> trouver les réponses...
+
+[pl02end/msgEndPL02_07]
+= Hmm. I'm not close. I can't even
+= tell where the leaves will fall...
+> Hmm. J'en suis loin. Je ne sais même
+> pas où les feuilles vont tomber...
+
+[pl02end/msgEndPL02_08]
+= As long as strong opponents and
+= fierce battles excite me...
+> Tant que les adversaires forts et
+> les combats rudes m'exaltent...
+
+[pl02end/msgEndPL02_09]
+= As long as I possess the strength
+= to move even one of my fingers...
+> Tant qu'il me restera la force de
+> bouger ne serait-ce qu'un doigt...
+
+[pl02end/msgEndPL02_10]
+= ...I will keep on fighting!
+> ...je continuerai à me battre !
+
+
+## pl03end -- Yun, fins (20 messages)
+
+[pl03end/msgEndPL03_01]
+= That was a wonderful performance!
+> Quelle magnifique prestation !
+
+[pl03end/msgEndPL03_02]
+= As a token of my respect, I will
+= leave this town in your care.
+> En signe de respect, je te confie
+> cette ville.
+
+[pl03end/msgEndPL03_03]
+= You will also receive the highest
+= privileges with regards to my plan.
+> Tu recevras aussi les plus hauts
+> privilèges dans mon dessein.
+
+[pl03end/msgEndPL03_04]
+= Hey, idiot! Give it up!
+= Your plan is totally worthless!
+> Hé, crétin ! Laisse tomber !
+> Ton plan ne vaut absolument rien !
+
+[pl03end/msgEndPL03_05]
+= Ideal society? Get a clue!
+> Une société idéale ? Réveille-toi !
+
+[pl03end/msgEndPL03_06]
+= I'm proposing the most rational
+= and ideal plan for all people.
+> Je propose le plan le plus rationnel
+> et le plus juste pour tous.
+
+[pl03end/msgEndPL03_07]
+= Of course, I won't force you to
+= follow... It's your choice.
+> Je ne te forcerai pas à me
+> suivre... C'est ton choix.
+
+[pl03end/msgEndPL03_08]
+= But... I have no time to waste...
+> Mais... je n'ai pas de temps à perdre.
+
+[pl03end/msgEndPL03_09]
+= Two opposite powers have been with
+= us since the beginning of time...
+> Deux forces contraires nous
+> accompagnent depuis l'origine...
+
+[pl03end/msgEndPL03_10]
+= Birth and death, production and
+= destruction, love and hate...
+> La naissance et la mort, la création
+> et la destruction, l'amour, la haine.
+
+[pl03end/msgEndPL03_11]
+= The balance between them will
+= collapse in the near future!
+> Leur équilibre va s'effondrer
+> dans un avenir proche !
+
+[pl03end/msgEndPL03_12]
+= In order to insure our survival, I
+= propose the symbiosis of two powers.
+> Pour assurer notre survie, je propose
+> la symbiose de ces deux forces.
+
+[pl03end/msgEndPL03_13]
+= Ha ha ha ha! Now I wonder...
+> Ha ha ha ha ! Je me demande...
+
+[pl03end/msgEndPL03_14]
+= How will those fighters survive
+= the aftermath of destruction...?
+> Comment ces combattants vont-ils
+> survivre à la destruction... ?
+
+[pl03end/msgEndPL03_15]
+= It shall be a small enjoyment
+= for me to find out.
+> Ce sera un petit plaisir
+> que de le découvrir.
+
+[pl03end/msgEndPL03_16]
+= Brother... I have a bad feeling
+= about this.
+> Grand frère... J'ai un mauvais
+> pressentiment.
+
+[pl03end/msgEndPL03_17]
+= His words... They are troubling me.
+> Ses mots... Ils me troublent.
+
+[pl03end/msgEndPL03_18]
+= Hey... Get a grip, Yang!
+= We're the leaders of the town!
+> Hé... Ressaisis-toi, Yang !
+> On est les chefs de cette ville !
+
+[pl03end/msgEndPL03_19]
+= We won't let that wannabe supreme
+= being do as he wishes, right?
+> On ne va pas laisser cet apprenti
+> dieu faire ce qu'il veut, si ?
+
+[pl03end/msgEndPL03_20]
+= Let's head back to the town!
+= We'll make our own dreams come true!
+> Rentrons en ville !
+> On réalisera nos propres rêves !
+
+
+## pl04end -- Dudley, fins (10 messages)
+
+[pl04end/msgEndPL04_01]
+= The subtle beauty of St. Swithun...
+= The aroma of Abraham Darby...
+> La beauté subtile de St. Swithun...
+> Le parfum d'Abraham Darby...
+
+[pl04end/msgEndPL04_02]
+= The lightness of Dainty Bess...
+= The style of Uncle Walter...
+> La légèreté de Dainty Bess...
+> L'allure d'Uncle Walter...
+
+[pl04end/msgEndPL04_03]
+= Dad... You left this majestic
+= rose garden for me...
+> Père... Vous m'avez laissé cette
+> majestueuse roseraie...
+
+[pl04end/msgEndPL04_04]
+= The roses' ever-changing
+= beauty still heals my heart.
+> La beauté sans cesse changeante des
+> roses apaise encore mon coeur.
+
+[pl04end/msgEndPL04_05]
+= Sir Dudley... It's about time...
+> Sir Dudley... Il serait temps...
+
+[pl04end/msgEndPL04_06]
+= Oh, that's right. Today is the day
+= of that important royal match...
+> Ah oui, c'est vrai. C'est aujourd'hui
+> ce grand match royal...
+
+[pl04end/msgEndPL04_07]
+= When does the match start?
+> À quelle heure commence-t-il ?
+
+[pl04end/msgEndPL04_08]
+= It starts at 8:00 PM, sharp.
+> À 20h00 précises, monsieur.
+
+[pl04end/msgEndPL04_09]
+= What...?!
+= We only have five hours left?!
+> Comment... ?!
+> Il ne reste que cinq heures ?!
+
+[pl04end/msgEndPL04_10]
+= We've got to get back to the
+= mansion immediately! Run!!
+> Il faut rentrer au manoir
+> immédiatement ! Courons !!
+
+
+## pl05end -- Necro, fins (14 messages)
+
+[pl05end/msgEndPL05_01]
+= Ahh!
+= We're cornered!!
+> Aaah !
+> On est coincés !!
+
+[pl05end/msgEndPL05_02]
+= Don't say that! We can't stop!!
+= We must never give up! Run!!
+> Ne dis pas ça ! On ne s'arrête pas !!
+> N'abandonne jamais ! Cours !!
+
+[pl05end/msgEndPL05_03]
+= We're about to reach the woods of
+= the country border! Almost there!
+> On arrive aux bois de la frontière !
+> On y est presque !
+
+[pl05end/msgEndPL05_04]
+= They're on the roof!
+> Ils sont sur le toit !
+
+[pl05end/msgEndPL05_05]
+= You! Go to the first car and we'll
+= attack them from both sides!
+> Toi ! Va au premier wagon, on les
+> prendra des deux côtés !
+
+[pl05end/msgEndPL05_06]
+= We can never let them fall
+= into the hands of the enemy!
+> Ils ne doivent jamais tomber
+> aux mains de l'ennemi !
+
+[pl05end/msgEndPL05_07]
+= Their very cells pose
+= a threat to us!
+> Leurs cellules mêmes sont
+> une menace pour nous !
+
+[pl05end/msgEndPL05_08]
+= Is this the end...?
+> C'est donc la fin... ?
+
+[pl05end/msgEndPL05_09]
+= No... Not yet!
+= Come with me, Effie!
+> Non... Pas encore !
+> Viens avec moi, Effie !
+
+[pl05end/msgEndPL05_10]
+= ...Iyaaaaaaaah!
+> ...Iyaaaaaaaah !
+
+[pl05end/msgEndPL05_11]
+= Aaaaah!!
+= Illiaaaaaaaaa!!
+> Aaaaah !!
+> Illiaaaaaaaaa !!
+
+[pl05end/msgEndPL05_12]
+= Effieeeeee!!
+> Effieeeeee !!
+
+[pl05end/msgEndPL05_13]
+= It's a miracle...
+> C'est un miracle...
+
+[pl05end/msgEndPL05_14]
+= For the first time... I feel
+= thankful for this body of mine!
+> Pour la première fois... je suis
+> reconnaissant envers ce corps !
+
+
+## pl06end -- Hugo, fins (13 messages)
+
+[pl06end/msgEndPL06_01]
+= The arena is exploding with
+= excitement tonight!
+> La salle explose de ferveur
+> ce soir !
+
+[pl06end/msgEndPL06_02]
+= The winner has been decided for the
+= world's tag team championship!
+> Le champion du monde par équipes
+> vient d'être désigné !
+
+[pl06end/msgEndPL06_04]
+= Er... Earthquake!!
+> Euh... Un tremblement de terre !!
+
+[pl06end/msgEndPL06_05]
+= Sorry to interrupt, but we have
+= an important announcement...
+> Désolé de couper, mais nous avons
+> une annonce importante...
+
+[pl06end/msgEndPL06_06]
+= We are from the H.W.A.!
+= ...The Huge Wrestling Army!
+> Nous venons de la H.W.A. !
+> ...La Huge Wrestling Army !
+
+[pl06end/msgEndPL06_07]
+= Effective immediately,
+= you belong to us!
+> À compter de maintenant,
+> vous nous appartenez !
+
+[pl06end/msgEndPL06_08]
+= If you have any objections, you
+= must defeat our Hugo, first!
+> Si vous avez une objection, il
+> faudra d'abord battre notre Hugo !
+
+[pl06end/msgEndPL06_09]
+= So far, over 50 have challenged and
+= they have all become our soldiers!
+> Plus de 50 ont déjà essayé et sont
+> tous devenus nos soldats !
+
+[pl06end/msgEndPL06_10]
+= Oh no... Why am I here?
+= Hey... Ryu?!
+> Oh non... Qu'est-ce que je fais là ?
+> Hé... Ryu ?!
+
+[pl06end/msgEndPL06_11]
+= Hmm. This could be exciting. I
+= believe this will be a good test!
+> Hmm. Cela pourrait être exaltant.
+> Voilà une bonne épreuve !
+
+[pl06end/msgEndPL06_12]
+= (Ryu! I can't believe you're having
+= fun in a situation like this!)
+> (Ryu ! Je ne peux pas croire que tu
+> t'amuses dans un moment pareil !)
+
+[pl06end/msgEndPL06_13]
+= What's up? Are you scared
+= of our members, or what?!
+> Alors ? Vous avez peur de nos
+> membres, ou quoi ?!
+
+[pl06end/msgEndPL06_14]
+= No objections? Okay then! This ring
+= will become our base of operations!
+> Pas d'objection ? Parfait ! Ce ring
+> devient notre base d'opérations !
+
+
+## pl07end -- Ibuki, fins (14 messages)
+
+[pl07end/msgEndPL07_01]
+= "Sarusuberi University"...
+= I made it, after all!
+> "Université Sarusuberi"...
+> J'y suis arrivée !
+
+[pl07end/msgEndPL07_02]
+= After a lifetime of training, I can
+= finally live like an ordinary girl!
+> Après une vie d'entraînement, je vais
+> enfin vivre comme une fille normale !
+
+[pl07end/msgEndPL07_03]
+= Exploring the campus... Making new
+= friends... Oh, I'm so excited!
+> Découvrir le campus... Me faire des
+> amis... Je suis tout excitée !
+
+[pl07end/msgEndPL07_04]
+= Hi there, cutie!
+> Salut, jolie demoiselle !
+
+[pl07end/msgEndPL07_05]
+= Why don't you join my club?
+= It's so fun, you'll never leave!
+> Tu ne veux pas rejoindre mon club ?
+> C'est si sympa qu'on n'en part plus !
+
+[pl07end/msgEndPL07_06]
+= (And so, I devoted myself to the fun
+= activities of the club every day...
+> (Et donc je me suis consacrée aux
+> joyeuses activités du club...
+
+[pl07end/msgEndPL07_07]
+= I receive painful endurance training
+= under the senior's guidance...
+> Un entraînement d'endurance atroce
+> sous la houlette des anciens...
+
+[pl07end/msgEndPL07_08]
+= I train on the surface
+= of the water...
+> Je m'entraîne à la surface
+> de l'eau...
+
+[pl07end/msgEndPL07_09]
+= And practice riding on a kite in a
+= raging storm...) Hey! Wait a minute!
+> Et je chevauche un cerf-volant en
+> pleine tempête...) Hé ! Une minute !
+
+[pl07end/msgEndPL07_10]
+= Ha ha ha! Ibuki! You've
+= still got a blind side!
+> Ha ha ha ! Ibuki ! Tu as encore
+> un angle mort !
+
+[pl07end/msgEndPL07_11]
+= If you're careless like that, I'll
+= cut your carotids off next time!
+> Si tu restes aussi négligente, je te
+> tranche la carotide, la prochaine fois !
+
+[pl07end/msgEndPL07_12]
+= Ha ha ha! I can tell that you love
+= the excitement of studying Ninjitsu!
+> Ha ha ha ! Je vois que tu adores
+> les frissons du ninjutsu !
+
+[pl07end/msgEndPL07_13]
+= ...What?
+> ...Quoi ?
+
+[pl07end/msgEndPL07_14]
+= ...This is not what I expected!
+> ...Ce n'est pas ce que j'espérais !
+
+
+## pl08end -- Elena, fins (11 messages)
+
+[pl08end/msgEndPL08_01]
+= My dear Naru-chan,
+> Ma chère Naru-chan,
+
+[pl08end/msgEndPL08_02]
+= How are you?
+= I'm fine as always.
+> Comment vas-tu ?
+> Moi je vais bien, comme toujours.
+
+[pl08end/msgEndPL08_03]
+= I feel lonely, now that the Harvest
+= Festival here in France is over.
+> Je me sens seule, maintenant que la
+> fête des moissons est terminée.
+
+[pl08end/msgEndPL08_04]
+= As I sip my tea, I'm reminded of
+= our happy days of summer in Japan.
+> En buvant mon thé, je repense à nos
+> beaux étés au Japon.
+
+[pl08end/msgEndPL08_05]
+= ...When we went to the festival all
+= dressed up, and saw the fireworks...
+> ...Quand on allait à la fête bien
+> habillées, voir les feux d'artifice...
+
+[pl08end/msgEndPL08_06]
+= Everything was so fun! Fights
+= were especially exciting, too!
+> Tout était si amusant ! Et les
+> combats étaient palpitants !
+
+[pl08end/msgEndPL08_07]
+= I'd like to invite your family to
+= visit the great plain in my country.
+> J'aimerais inviter ta famille à voir
+> la grande plaine de mon pays.
+
+[pl08end/msgEndPL08_08]
+= I'm sure that my
+= family will like you!
+> Je suis sûre que ma famille
+> t'adorera !
+
+[pl08end/msgEndPL08_09]
+= Maybe next winter holiday... I know
+= you're working hard on your exams.
+> Aux vacances d'hiver, peut-être...
+> Je sais que tu révises beaucoup.
+
+[pl08end/msgEndPL08_10]
+= Take good care of your health!
+= See you again soon!
+> Prends bien soin de ta santé !
+> À très bientôt !
+
+[pl08end/msgEndPL08_11]
+= There's a lot of hard work ahead
+= of me! I'll be studying, too!
+> Il me reste beaucoup à faire !
+> Moi aussi je vais travailler !
+
+
+## pl09end -- Oro, fins (11 messages)
+
+[pl09end/msgEndPL09_01]
+= Hee hee hee... It's been 50 years
+= since I've trained this seriously!
+> Hi hi hi... Cela faisait 50 ans que
+> je ne m'étais pas entraîné ainsi !
+
+[pl09end/msgEndPL09_02]
+= Whenever I see that kid,
+= my blood begins to boil again...
+> Chaque fois que je vois ce gamin,
+> mon sang se remet à bouillir...
+
+[pl09end/msgEndPL09_03]
+= He's pretty unique... I guess I
+= won't be bored for the time being!
+> Il est unique en son genre... Je ne
+> vais pas m'ennuyer de sitôt !
+
+[pl09end/msgEndPL09_04]
+= Hmm??
+> Hmm ??
+
+[pl09end/msgEndPL09_05]
+= I thought I heard that
+= strange old man's voice...?
+> J'ai cru entendre la voix de
+> ce drôle de vieillard... ?
+
+[pl09end/msgEndPL09_06]
+= Maybe it was just
+= my imagination...
+> C'était sans doute
+> mon imagination...
+
+[pl09end/msgEndPL09_07]
+= He must be training so
+= hard, this very moment!
+> Il doit s'entraîner d'arrache-pied
+> en ce moment même !
+
+[pl09end/msgEndPL09_08]
+= I hope that he becomes so strong,
+= that I'll have to use both my arms!
+> J'espère qu'il deviendra assez fort
+> pour me faire user de mes deux bras !
+
+[pl09end/msgEndPL09_09]
+= But... It would take at least 15
+= years before that could happen...
+> Mais... il faudra au moins 15 ans
+> avant que cela n'arrive...
+
+[pl09end/msgEndPL09_10]
+= Maybe I should take a rest now...
+> Je devrais peut-être me reposer...
+
+[pl09end/msgEndPL09_11]
+= Whew!
+> Ouf !
+
+
+## pl10end -- Yang, fins (19 messages)
+
+[pl10end/msgEndPL10_01]
+= Stop! Will you two stop your
+= quarreling already!!
+> Arrêtez ! Vous allez cesser de
+> vous chamailler, tous les deux !!
+
+[pl10end/msgEndPL10_02]
+= You're always like this! You should
+= be more concerned about our town!
+> C'est toujours pareil ! Occupez-vous
+> donc un peu de notre ville !
+
+[pl10end/msgEndPL10_03]
+= You've been away for weeks
+= and I've been so worried!
+> Vous êtes partis des semaines
+> et je me suis fait un sang d'encre !
+
+[pl10end/msgEndPL10_04]
+= Maybe you would be better off if you
+= were dead in the middle of nowhere!
+> Vous feriez mieux d'aller crever
+> au milieu de nulle part !
+
+[pl10end/msgEndPL10_05]
+= Watch your mouth! You have no
+= idea what we've been through!
+> Surveille ton langage ! Tu n'as
+> aucune idée de ce qu'on a vécu !
+
+[pl10end/msgEndPL10_06]
+= This town could have been in
+= big trouble if we hadn't fought!
+> Cette ville aurait eu de gros ennuis
+> si on ne s'était pas battus !
+
+[pl10end/msgEndPL10_07]
+= If it happened, no one would be left
+= to care about your lousy fried rice!
+> Et alors plus personne n'aurait rien
+> à faire de ton riz sauté infect !
+
+[pl10end/msgEndPL10_08]
+= What did you say is lousy?!
+= Say that again!
+> Infect, tu as dit ?!
+> Répète un peu !
+
+[pl10end/msgEndPL10_09]
+= Oh no... As I suspected, Hoimei
+= must be in love with my brother...
+> Oh non... Comme je le pensais, Hoimei
+> doit être amoureuse de mon frère...
+
+[pl10end/msgEndPL10_10]
+= I can never win...
+> Je ne gagnerai jamais...
+
+[pl10end/msgEndPL10_11]
+= My sister can be so clumsy...
+> Ma soeur est vraiment maladroite...
+
+[pl10end/msgEndPL10_12]
+= She's been worried. She just has
+= a hard time expressing her relief.
+> Elle s'inquiétait. Elle a du mal à
+> exprimer son soulagement.
+
+[pl10end/msgEndPL10_13]
+= You know, she didn't eat a thing
+= while you two were gone...
+> Tu sais, elle n'a rien avalé
+> pendant votre absence...
+
+[pl10end/msgEndPL10_14]
+= Shaomei...
+> Shaomei...
+
+[pl10end/msgEndPL10_15]
+= Although I care about the town, I
+= care a lot more about you two...
+> Je tiens à la ville, mais je tiens
+> bien plus à vous deux...
+
+[pl10end/msgEndPL10_16]
+= So please...
+= Don't be so reckless, okay?
+> Alors s'il vous plaît...
+> Ne soyez pas si imprudents, d'accord ?
+
+[pl10end/msgEndPL10_17]
+= Yes... I understand. I'm sorry
+= if I caused you to worry.
+> Oui... Je comprends. Désolé de
+> t'avoir inquiétée.
+
+[pl10end/msgEndPL10_18]
+= (It's not just my sister... I must
+= be honest about my feelings, too)
+> (Il n'y a pas que ma soeur... Moi
+> aussi je dois être honnête...)
+
+[pl10end/msgEndPL10_19]
+= (I've got to be brave!)
+> (Il faut que je sois courageux !)
+
+
+## pl11end -- Ken, fins (14 messages)
+
+[pl11end/msgEndPL11_01]
+= Here we go!
+= Sho... Ryuuuu... Kennnn!
+> C'est parti !
+> Sho... Ryuuuu... Kennnn !
+
+[pl11end/msgEndPL11_02]
+= Oh no! He doesn't seem
+= to be getting back up!
+> Oh non ! Il n'a pas l'air
+> de vouloir se relever !
+
+[pl11end/msgEndPL11_03]
+= The battle is over!!
+> Le combat est terminé !!
+
+[pl11end/msgEndPL11_04]
+= Showing the strength that we've
+= come to expect, the winner is Ken!
+> Avec la puissance qu'on lui connaît,
+> le vainqueur est Ken !
+
+[pl11end/msgEndPL11_05]
+= Three U.S. Championships in a row!
+= History has been made!
+> Trois titres américains d'affilée !
+> Une page d'histoire s'écrit !
+
+[pl11end/msgEndPL11_06]
+= This is an exciting moment for Ken,
+= his family, and his friends!
+> Quel moment pour Ken, sa famille
+> et ses amis !
+
+[pl11end/msgEndPL11_07]
+= See? I knocked him out in
+= 30 seconds, as I promised!
+> Tu vois ? Je l'ai mis KO en
+> 30 secondes, comme promis !
+
+[pl11end/msgEndPL11_08]
+= Oh yeah! Here you go, Sean...
+= This is for you!
+> Ah oui ! Tiens, Sean...
+> C'est pour toi !
+
+[pl11end/msgEndPL11_09]
+= The U.S. Championship trophy...
+= You wanted it, right?
+> Le trophée du championnat...
+> Tu le voulais, non ?
+
+[pl11end/msgEndPL11_10]
+= M... Master!
+= That's not what I meant!
+> M... Maître !
+> Ce n'est pas ce que je voulais dire !
+
+[pl11end/msgEndPL11_11]
+= It's meaningless if I did not
+= win it with my own effort!
+> Ça n'a aucune valeur si je ne l'ai
+> pas gagné par mes propres moyens !
+
+[pl11end/msgEndPL11_12]
+= Oh, is that so? You shouldn't
+= be too worried about that.
+> Ah bon ? Ne te tracasse pas
+> trop avec ça.
+
+[pl11end/msgEndPL11_13]
+= At the very least, you must pass
+= the qualifying rounds next time!
+> Au minimum, il faudra passer les
+> qualifications la prochaine fois !
+
+[pl11end/msgEndPL11_14]
+= But... You won't be the winner,
+= since you can't beat me! Ha ha ha!
+> Mais tu ne gagneras pas, puisque tu
+> ne peux pas me battre ! Ha ha ha !
+
+
+## pl12end -- Sean, fins (12 messages)
+
+[pl12end/msgEndPL12_01]
+= Victory!!
+> Victoire !!
+
+[pl12end/msgEndPL12_02]
+= Sean has won the first tournament
+= of his fighting career!
+> Sean remporte le premier tournoi
+> de sa carrière !
+
+[pl12end/msgEndPL12_03]
+= I did it! Finally!
+> J'ai réussi ! Enfin !
+
+[pl12end/msgEndPL12_04]
+= Now... I'm the U.S. Champion!
+> Me voilà champion des États-Unis !
+
+[pl12end/msgEndPL12_05]
+= Now I'm at the same level as my
+= master! It's a dream come true!
+> Je suis au niveau de mon maître !
+> Un rêve qui se réalise !
+
+[pl12end/msgEndPL12_06]
+= ...llo ...Hello? Sean!
+= (...Wh ...What?)
+> ...lut ...Ohé ? Sean !
+> (...Quo ...Quoi ?)
+
+[pl12end/msgEndPL12_07]
+= Are you okay?!
+> Ça va ?!
+
+[pl12end/msgEndPL12_08]
+= Good! You've come to your senses...
+= I think...
+> Bien ! Tu reprends tes esprits...
+> Enfin, je crois...
+
+[pl12end/msgEndPL12_09]
+= It was close... You almost passed
+= the qualifying rounds!
+> C'était juste... Tu as failli passer
+> les qualifications !
+
+[pl12end/msgEndPL12_10]
+= You did not train yourself
+= properly. Try harder next time!
+> Tu ne t'es pas entraîné comme il
+> faut. Fais mieux la prochaine fois !
+
+[pl12end/msgEndPL12_11]
+= Okay then, leave it to me! I'll get
+= my revenge by winning the next one!
+> D'accord, comptez sur moi ! Je
+> prendrai ma revanche au prochain !
+
+[pl12end/msgEndPL12_12]
+= Wha? It was just a dream?!
+= But someday... Someday I will win!
+> Hein ? C'était un rêve ?!
+> Mais un jour... un jour je gagnerai !
+
+
+## pl13end -- Urien, fins (11 messages)
+
+[pl13end/msgEndPL13_01]
+= So those "brains" they've collected
+= for 2000 years are stored here...
+> Voilà donc les "cerveaux" amassés
+> pendant 2000 ans...
+
+[pl13end/msgEndPL13_02]
+= I don't know the value of these,
+= but they are ugly and stupid.
+> J'ignore ce qu'ils valent, mais
+> ils sont laids et stupides.
+
+[pl13end/msgEndPL13_03]
+= ...Just a mass of junk with no
+= ability to take positive action!
+> ...Un tas de rebut incapable de
+> la moindre action utile !
+
+[pl13end/msgEndPL13_04]
+= Brother! What are you looking at
+= now? Can you see the world?
+> Mon frère ! Que regardes-tu donc ?
+> Vois-tu le monde ?
+
+[pl13end/msgEndPL13_05]
+= Are you watching how your
+= ideal world is being built?
+> Regardes-tu comment se bâtit
+> ton monde idéal ?
+
+[pl13end/msgEndPL13_06]
+= Ha... ha ha ha ha ha!
+= Ha ha ha ha ha ha ha ha!!
+> Ha... ha ha ha ha ha !
+> Ha ha ha ha ha ha ha ha !!
+
+[pl13end/msgEndPL13_07]
+= Checking ID... Verified as
+= the legitimate successor...
+> Identité vérifiée... Reconnu comme
+> successeur légitime...
+
+[pl13end/msgEndPL13_08]
+= Enter self-destruction code:
+= A22ST8996HYXW...
+> Code d'autodestruction :
+> A22ST8996HYXW...
+
+[pl13end/msgEndPL13_09]
+= There is no mission or legacy
+= left for me to succeed!
+> Il ne reste ni mission ni héritage
+> dont je doive hériter !
+
+[pl13end/msgEndPL13_10]
+= Now, my own story will
+= unfold from this moment on!
+> Désormais, ma propre histoire
+> commence à cet instant !
+
+[pl13end/msgEndPL13_11]
+= I hereby define this year as the
+= first year of "A.U."(After Urien)!!
+> Je décrète cette année la première
+> de l'ère "A.U." (Après Urien) !!
+
+
+## pl14end -- Akuma, fins (10 messages)
+
+[pl14end/msgEndPL14_01]
+= This is Deep Sea 3000.
+= 150m to the destination... Over.
+> Ici Deep Sea 3000.
+> 150 m avant l'objectif... Terminé.
+
+[pl14end/msgEndPL14_02]
+= We expect to reach the observation
+= point in approximately 40 seconds.
+> Point d'observation atteint dans
+> environ 40 secondes.
+
+[pl14end/msgEndPL14_03]
+= Confirmed visual contact with ship.
+= Switching to phase three... Over.
+> Contact visuel avec l'épave établi.
+> Passage en phase trois... Terminé.
+
+[pl14end/msgEndPL14_04]
+= ...What?!
+> ...Quoi ?!
+
+[pl14end/msgEndPL14_05]
+= Is that... a man?!
+= No... it can't be!
+> C'est... un homme ?!
+> Non... impossible !
+
+[pl14end/msgEndPL14_06]
+= This can't be happening...
+> Ce n'est pas possible...
+
+[pl14end/msgEndPL14_07]
+= What? What did you see?!
+= Respond!! Over!
+> Quoi ? Qu'avez-vous vu ?!
+> Répondez !! Terminé !
+
+[pl14end/msgEndPL14_08]
+= Something is wrong!
+= The radio has been cut... Uwaahh!!
+> Il y a un problème !
+> La radio est coupée... Aaaah !!
+
+[pl14end/msgEndPL14_09]
+= Muuuuuuunn!!
+> Muuuuuuunn !!
+
+[pl14end/msgEndPL14_10]
+= Tenshou Kaireki Jin!!
+> Tenshou Kaireki Jin !!
+
+
+## pl15end -- Chun-Li, fins (13 messages)
+
+[pl15end/msgEndPL15_01]
+= "Miss!"
+> "Mademoiselle !"
+
+[pl15end/msgEndPL15_02]
+= "You're going to be okay now..."
+> "Tout va bien maintenant..."
+
+[pl15end/msgEndPL15_03]
+= ...It's been 6 months since then...
+> ...Six mois ont passé depuis...
+
+[pl15end/msgEndPL15_04]
+= ...When I held in my arms,
+= the girl whose life I had saved...
+> ...Quand j'ai serré dans mes bras
+> la petite que j'avais sauvée...
+
+[pl15end/msgEndPL15_05]
+= I finally realized what my
+= true "fight" should be...
+> j'ai enfin compris quel devait être
+> mon véritable "combat"...
+
+[pl15end/msgEndPL15_06]
+= For our mother country,
+= that my father tried to protect...
+> Pour notre pays, celui que mon
+> père a tenté de protéger...
+
+[pl15end/msgEndPL15_07]
+= Ya!
+= Haah!
+> Ya !
+> Haah !
+
+[pl15end/msgEndPL15_08]
+= For all of the warm-hearted people
+= I've met throughout the world...
+> Pour tous les gens au grand coeur
+> que j'ai croisés de par le monde...
+
+[pl15end/msgEndPL15_09]
+= Ha!
+= Taaah!
+> Ha !
+> Taaah !
+
+[pl15end/msgEndPL15_10]
+= To teach the meaning of true
+= strength and beauty to these kids...
+> Pour enseigner à ces enfants la vraie
+> force et la vraie beauté...
+
+[pl15end/msgEndPL15_11]
+= That is the purpose of my life,
+= and my future.
+> Voilà le but de ma vie,
+> et mon avenir.
+
+[pl15end/msgEndPL15_12]
+= I'll use my fists to
+= create our tomorrow!
+> Je bâtirai notre demain
+> de mes propres poings !
+
+[pl15end/msgEndPL15_13]
+= Iyaaaaahh!!
+> Iyaaaaahh !!
+
+
+## pl16end -- Makoto, fins (17 messages)
+
+[pl16end/msgEndPL16_01]
+= I won...?!
+= I've finally won!!
+> J'ai gagné... ?!
+> J'ai enfin gagné !!
+
+[pl16end/msgEndPL16_02]
+= Now, no one can stand
+= against my moves!
+> Plus personne ne résistera
+> à mes techniques !
+
+[pl16end/msgEndPL16_03]
+= The name of Rindoukan Dojo will
+= resound throughout the country!
+> Le nom du dojo Rindoukan résonnera
+> dans tout le pays !
+
+[pl16end/msgEndPL16_04]
+= News of the dojo's youngest
+= master quickly spreads...
+> La nouvelle de la plus jeune maîtresse
+> du dojo se répand vite...
+
+[pl16end/msgEndPL16_05]
+= As a result, many confident fighters
+= assemble at the Rindoukan Dojo.
+> Et voilà que des combattants sûrs
+> d'eux affluent au dojo Rindoukan.
+
+[pl16end/msgEndPL16_06]
+= Chestoooo!!
+> Chestoooo !!
+
+[pl16end/msgEndPL16_07]
+= Doshaaaaaah!!
+> Doshaaaaaah !!
+
+[pl16end/msgEndPL16_08]
+= Attention, everyone! This is the end
+= of the line. Please wait patiently!
+> Attention ! La file s'arrête ici.
+> Merci de patienter !
+
+[pl16end/msgEndPL16_09]
+= Only 30 challengers will be accepted
+= today. Are you in the right line?!
+> Seuls 30 challengers seront reçus
+> aujourd'hui. Vous êtes bien ici ?!
+
+[pl16end/msgEndPL16_10]
+= Masaru... Our dojo's popularity has
+= skyrocketed since Makoto's return!
+> Masaru... Le dojo est pris d'assaut
+> depuis le retour de Makoto !
+
+[pl16end/msgEndPL16_11]
+= There are more people interested in
+= learning our style than ever before!
+> Jamais autant de gens n'ont voulu
+> apprendre notre style !
+
+[pl16end/msgEndPL16_12]
+= Yes, it's all thanks to her.
+= I'm very proud of her.
+> Oui, tout cela grâce à elle.
+> Je suis très fier d'elle.
+
+[pl16end/msgEndPL16_13]
+= Although I am her senior, I have no
+= martial arts talent in comparison.
+> Je suis son aîné, mais je n'ai aucun
+> talent à côté du sien.
+
+[pl16end/msgEndPL16_14]
+= I can leave the future of our dojo
+= in her hands without worrying.
+> Je peux lui confier l'avenir du dojo
+> sans la moindre inquiétude.
+
+[pl16end/msgEndPL16_15]
+= Grandpa, I'm going on a trip. Take
+= good care of her while I'm gone!
+> Grand-père, je pars en voyage. Prends
+> bien soin d'elle en mon absence !
+
+[pl16end/msgEndPL16_16]
+= Seyaaaaaah!!
+> Seyaaaaaah !!
+
+[pl16end/msgEndPL16_17]
+= I haven't had enough yet!
+= I'm just getting started!!
+> Je n'en ai pas encore assez !
+> Je ne fais que commencer !!
+
+
+## pl17end -- Q, fins (17 messages)
+
+[pl17end/msgEndPL17_01]
+= 13 bizarre cases in the last 10 days
+= at sites located around the world...
+> 13 affaires étranges en 10 jours,
+> un peu partout dans le monde...
+
+[pl17end/msgEndPL17_02]
+= After seeing those on-site pictures,
+= haven't you noticed something?
+> En voyant ces photos prises sur
+> place, vous ne remarquez rien ?
+
+[pl17end/msgEndPL17_03]
+= What's up, Juliana? You don't have
+= to beat around the bush with me!
+> Alors, Juliana ? Pas besoin de
+> tourner autour du pot avec moi !
+
+[pl17end/msgEndPL17_04]
+= Were you going to say that some
+= spooky guy appears in every scene?
+> Vous alliez dire qu'un type louche
+> apparaît sur chaque scène ?
+
+[pl17end/msgEndPL17_05]
+= David... You may have some
+= telepathic talent, after all.
+> David... Vous avez peut-être un don
+> de télépathie, finalement.
+
+[pl17end/msgEndPL17_06]
+= Look here... In every picture,
+= a man in a trench coat appears.
+> Regardez... Sur chaque photo, on
+> voit un homme en trench-coat.
+
+[pl17end/msgEndPL17_07]
+= No way! These cases all happened
+= in different parts of the world!
+> Impossible ! Ces affaires ont eu
+> lieu aux quatre coins du monde !
+
+[pl17end/msgEndPL17_08]
+= It couldn't be the same person!
+> Ce ne peut pas être le même homme !
+
+[pl17end/msgEndPL17_09]
+= Well, they at least have similar
+= taste in clothing...
+> Ils ont au moins les mêmes goûts
+> vestimentaires...
+
+[pl17end/msgEndPL17_10]
+= Anyway, this "mysterious guy" is the
+= common thread in all of the cases.
+> Quoi qu'il en soit, cet "inconnu"
+> relie toutes ces affaires.
+
+[pl17end/msgEndPL17_11]
+= So, have you
+= identified that man?
+> Alors, avez-vous
+> identifié cet homme ?
+
+[pl17end/msgEndPL17_12]
+= Unfortunately, not yet...
+> Malheureusement, pas encore...
+
+[pl17end/msgEndPL17_13]
+= But, we have used photo analysis
+= to synthesize his face.
+> Mais l'analyse des photos nous a
+> permis de reconstituer son visage.
+
+[pl17end/msgEndPL17_14]
+= Well, not exactly his face...
+= But... Anyway, have a look.
+> Enfin, pas exactement son visage...
+> Mais... regardez plutôt.
+
+[pl17end/msgEndPL17_15]
+= What's this?!
+= A mask... An iron mask?
+> Qu'est-ce que c'est ?!
+> Un masque... Un masque de fer ?
+
+[pl17end/msgEndPL17_16]
+= Okay! Send this picture out to each
+= of our branches, security level 4!
+> Bien ! Diffusez cette photo à toutes
+> nos antennes, niveau de sécurité 4 !
+
+[pl17end/msgEndPL17_17]
+= You are to start an investigation
+= on this man immediately. Dismissed!
+> Ouvrez immédiatement une enquête
+> sur cet homme. Rompez !
+
+
+## pl18end -- Twelve, fins (16 messages)
+
+[pl18end/msgEndPL18_01]
+= Internal pressure of the cradle
+= is holding. Situation normal.
+> La pression interne du berceau
+> est stable. Situation normale.
+
+[pl18end/msgEndPL18_02]
+= Supervisor, the doctor is back...
+> Chef, le docteur est de retour...
+
+[pl18end/msgEndPL18_03]
+= Welcome back, Doctor Kure.
+> Bon retour, docteur Kure.
+
+[pl18end/msgEndPL18_04]
+= We've already withdrawn #12 and #14.
+= The process is complete.
+> Nous avons retiré le 12 et le 14.
+> Le processus est terminé.
+
+[pl18end/msgEndPL18_05]
+= ...How is he doing?
+> ...Comment va-t-il ?
+
+[pl18end/msgEndPL18_06]
+= He's absolutely perfect.
+> Il est absolument parfait.
+
+[pl18end/msgEndPL18_07]
+= Every cell of his has been restored
+= to its state before the battle.
+> Chacune de ses cellules a retrouvé
+> son état d'avant le combat.
+
+[pl18end/msgEndPL18_08]
+= Sir Urien's theory of human body
+= reconstruction is simply brilliant!
+> La théorie de reconstruction du corps
+> de sire Urien est géniale !
+
+[pl18end/msgEndPL18_09]
+= With this technology... Eventually,
+= man would never grow old nor die.
+> Avec cette technologie... l'homme ne
+> vieillirait ni ne mourrait plus.
+
+[pl18end/msgEndPL18_10]
+= The only task left is to keep the
+= memory damage levels under 0.0001%.
+> Il ne reste qu'à maintenir la perte
+> de mémoire sous les 0.0001%.
+
+[pl18end/msgEndPL18_11]
+= So... The "never dying warrior"
+= has been born...
+> Ainsi... le "guerrier immortel"
+> est né...
+
+[pl18end/msgEndPL18_12]
+= All of the pain and pleasure will be
+= gone. You will be born once again...
+> Toute douleur, tout plaisir s'efface.
+> Tu vas naître de nouveau...
+
+[pl18end/msgEndPL18_13]
+= In your deep slumber... What kind
+= of dream are you dreaming?
+> Dans ton sommeil profond... quel
+> genre de rêve fais-tu ?
+
+[pl18end/msgEndPL18_14]
+= No... He does not possess
+= such an ability.
+> Non... Il n'en a pas
+> la faculté.
+
+[pl18end/msgEndPL18_15]
+= Because his memory is in a constant
+= state of activity, he cannot dream.
+> Sa mémoire étant sans cesse en
+> activité, il ne peut pas rêver.
+
+[pl18end/msgEndPL18_16]
+= Well, I guess it's not that great to
+= be able to live forever! Ha ha ha!!
+> Ce n'est donc pas si formidable de
+> vivre éternellement ! Ha ha ha !!
+
+
+## pl19end -- Remy, fins (16 messages)
+
+[pl19end/msgEndPL19_01]
+= Whenever I dive into this sea
+= of Bisque, I feel so cold.
+> Chaque fois que je plonge dans cette
+> mer de Bisque, j'ai si froid.
+
+[pl19end/msgEndPL19_02]
+= It is as cold as my heart,
+= which cannot be healed.
+> Aussi froide que mon coeur,
+> que rien ne peut guérir.
+
+[pl19end/msgEndPL19_03]
+= (The tides are increasing in their
+= speed and frequency...)
+> (Les marées gagnent en vitesse
+> et en fréquence...)
+
+[pl19end/msgEndPL19_04]
+= (This will be the last time
+= I visit this place...)
+> (Ce sera la dernière fois que
+> je viens ici...)
+
+[pl19end/msgEndPL19_05]
+= I've been struggling in the
+= darkness for a long time...
+> Je me débats dans les ténèbres
+> depuis bien longtemps...
+
+[pl19end/msgEndPL19_06]
+= I've been trying to paint the
+= darkness with another shadow...
+> J'ai essayé de peindre l'obscurité
+> avec une autre ombre...
+
+[pl19end/msgEndPL19_07]
+= After all... It was the darkness
+= of being a "warrior"...
+> Au fond... c'était les ténèbres
+> du "guerrier"...
+
+[pl19end/msgEndPL19_08]
+= That caused our father to disappear,
+= leaving my sister and me alone...
+> Elles ont fait disparaître notre père
+> et nous ont laissés seuls...
+
+[pl19end/msgEndPL19_09]
+= ...I cannot forgive him yet.
+> ...Je ne peux pas encore lui pardonner.
+
+[pl19end/msgEndPL19_10]
+= But... Nothing would change
+= if I went on like this.
+> Mais... rien ne changerait
+> si je continuais ainsi.
+
+[pl19end/msgEndPL19_11]
+= So... I'll forget everything.
+> Alors... je vais tout oublier.
+
+[pl19end/msgEndPL19_12]
+= I believe that doing so
+= could lead to our happiness.
+> Je crois que c'est ainsi qu'on
+> pourra être heureux.
+
+[pl19end/msgEndPL19_13]
+= Goodbye... My sister!
+> Adieu... ma soeur !
+
+[pl19end/msgEndPL19_14]
+= After saying goodbye, Remy
+= sees a light on his way back.
+> Après ces adieux, Remy aperçoit
+> une lumière sur le chemin du retour.
+
+[pl19end/msgEndPL19_15]
+= He never believed that he would
+= be able to see such a light...
+> Jamais il n'aurait cru pouvoir
+> voir une telle lumière...
+
+[pl19end/msgEndPL19_16]
+= To discover the meaning of the
+= light, Remy begins to walk forth...
+> Pour en découvrir le sens, Remy
+> se met en marche...
+

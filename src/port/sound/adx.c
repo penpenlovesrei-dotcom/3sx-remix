@@ -36,6 +36,9 @@ typedef struct ADXTrack {
 } ADXTrack;
 
 static SDL_AudioStream* stream = NULL;
+// Set while a loose file is loaded, so callers can tell whether a track is already playing and
+// skip restarting it. Cleared by ADX_Stop, which every other start path goes through first.
+static char* current_file_path = NULL;
 static ADXTrack tracks[TRACKS_MAX] = { 0 };
 static int num_tracks = 0;
 static int first_track_index = 0;
@@ -199,6 +202,16 @@ static void track_init(ADXTrack* track, int file_id, void* buf, size_t buf_size,
         fatal_error("Failed to initialize ADX decoder: %s", SDL_GetError());
     }
 
+    // The stream is opened at SAMPLE_RATE, which every track in the AFS archive happens to use.
+    // User-supplied tracks may not, so follow whatever the first track of a batch declares —
+    // seamless entries queued after it share the same rate.
+    if (num_tracks == 1) {
+        const SDL_AudioSpec src_spec = { .format = SDL_AUDIO_S16,
+                                         .channels = N_CHANNELS,
+                                         .freq = (int)track->decoder.header.sample_rate };
+        SDL_SetAudioStreamFormat(stream, &src_spec, NULL);
+    }
+
     SDL_zerop(&track->loop_info);
 
     if (looping_allowed) {
@@ -286,6 +299,9 @@ void ADX_Stop() {
     ADX_Pause(true);
     SDL_ClearAudioStream(stream);
 
+    SDL_free(current_file_path);
+    current_file_path = NULL;
+
     for (int i = 0; i < num_tracks; i++) {
         const int j = (first_track_index + i) % TRACKS_MAX;
         track_destroy(&tracks[j]);
@@ -367,6 +383,31 @@ void ADX_StartAfs(int file_id) {
     track_init(track, file_id, NULL, 0, true);
 }
 
+void ADX_StartFile(const char* path) {
+    if (!audio_available()) {
+        return;
+    }
+
+    size_t size = 0;
+    void* data = SDL_LoadFile(path, &size);
+
+    if (data == NULL) {
+        SDL_Log("Failed to read %s: %s; skipping track", path, SDL_GetError());
+        return;
+    }
+
+    ADX_Stop();
+
+    ADXTrack* track = alloc_track();
+    track_init(track, -1, data, size, true);
+    track->should_free_data_after_use = true; // Unlike ADX_StartMem, we own the buffer we just read
+    current_file_path = SDL_strdup(path);     // After ADX_Stop, which clears it
+}
+
+const char* ADX_GetCurrentFilePath() {
+    return current_file_path;
+}
+
 void ADX_SetOutVol(int volume) {
     if (!audio_available()) {
         return;
@@ -445,6 +486,14 @@ void ADX_EntryAfs(int file_id) {
 
 void ADX_StartAfs(int file_id) {
     // Do nothing
+}
+
+void ADX_StartFile(const char* path) {
+    // Do nothing
+}
+
+const char* ADX_GetCurrentFilePath() {
+    return NULL;
 }
 
 void ADX_ResetEntry() {

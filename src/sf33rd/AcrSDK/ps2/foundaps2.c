@@ -10,6 +10,8 @@
 #include "sf33rd/AcrSDK/ps2/flps2render.h"
 #include "sf33rd/AcrSDK/ps2/flps2vram.h"
 #include "sf33rd/AcrSDK/ps2/ps2PAD.h"
+#include "port/video/art_remix.h"
+#include "port/video/tex_remix.h"
 #include "structs.h"
 
 #include <SDL3/SDL.h>
@@ -48,14 +50,23 @@ static s32 system_work_init() {
     void* temp;
 
     SDL_zero(flPs2State);
-    temp = malloc(0x1800000);
+
+    // Both sizes are the console's, and the texture pool inside the heap is what a replacement page
+    // overruns: 32 KB of indices becoming 4 MB of colour empties it on the spot. Grow both by what
+    // is installed, so a machine with no replacements keeps exactly the footprint it always had.
+    // Both allocators count in s32, hence the ceiling on what a pack may ask for.
+    const s64 asked = TexRemix_ReservedBytes() + ArtRemix_ReservedBytes();
+    const s32 remix_reserve = (s32)SDL_min(asked, 0x20000000);
+    const s32 heap_size = 0x1800000 + remix_reserve;
+    const s32 system_memory_size = 0xA00000 + remix_reserve;
+
+    temp = malloc(heap_size);
 
     if (temp == NULL) {
         return 0;
     }
 
-    fmsInitialize(&flFMS, temp, 0x1800000, 0x40);
-    const int system_memory_size = 0xA00000;
+    fmsInitialize(&flFMS, temp, heap_size, 0x40);
     temp = flAllocMemoryS(system_memory_size);
     mflInit(temp, system_memory_size, 0x40);
 

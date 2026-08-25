@@ -8,6 +8,8 @@
 #include "core/app.h"
 #include "main.h"
 #include "platform/app/sdl/sdl_app.h"
+#include "port/sound/bgm_remix.h"
+#include "port/video/pal_remix.h"
 #include "sf33rd/AcrSDK/common/pad.h"
 #include "sf33rd/Source/Game/animation/appear.h"
 #include "sf33rd/Source/Game/effect/eff04.h"
@@ -42,6 +44,7 @@
 #include "sf33rd/Source/Game/io/gd3rd.h"
 #include "sf33rd/Source/Game/io/pulpul.h"
 #include "sf33rd/Source/Game/io/vm_sub.h"
+#include "sf33rd/Source/Game/menu/col_edit.h"
 #include "sf33rd/Source/Game/menu/dir_data.h"
 #include "sf33rd/Source/Game/menu/ex_data.h"
 #include "sf33rd/Source/Game/message/en/msgtable_en.h"
@@ -73,6 +76,141 @@
 #include "port/sdl/netplay_screen.h"
 #include "sf33rd/Source/Game/menu/netplay_menu.h"
 #endif
+
+/// @name Display page
+/// @{
+/// Its slot in After_Title's jump table
+#define MENU_SCREEN_DISPLAY 22
+/// Row of the option menu that opens it — the one that used to read SCREEN ADJUST
+#define OPTION_ROW_DISPLAY 2
+/// First entry of Menu_Letter_Data holding one of its rows, and of Slide_Pos_Data_61 placing it
+#define DISPLAY_LABEL_FIRST 84
+/// Its rows, in the order the labels are declared
+#define DISPLAY_ROW_SCREEN_ADJUST 0
+/// First row carrying a value; the rows that carry one are contiguous from here
+#define DISPLAY_ROW_RESOLUTION 1
+// DISPLAY_ROW_CHARACTER_COLOR is in eff64.h, beside the buffer it indexes: the loader and the
+// select screen both read that row, and neither has any business including this file.
+#define DISPLAY_ROW_BACKGROUNDS 3
+/// Opens the editor rather than holding a setting, so it carries no value column
+#define DISPLAY_ROW_COLOR_EDIT 6
+#define DISPLAY_ROW_EXIT 7
+/// Effect work ids: the rows reuse the option menu's, the header takes a free slot of its own
+/// because the screen adjust page it opens keeps hold of 0x65.
+///
+/// Eight rows put the labels at 0x50 to 0x57, so the value column starts past that rather than at
+/// 0x57 where seven rows left room for it. Sharing one would have cost an effect silently, the way
+/// two live effects on one work id always do.
+#define DISPLAY_LABEL_WORK 0x50
+#define DISPLAY_VALUE_WORK 0x58
+/// Outside the Custom backgrounds screen's value range: that screen opens on the frame after this
+/// header is told to die, and a work id serving two live effects at once loses one of them
+#define DISPLAY_HEADER_WORK 0x7D
+/// Slide_Pos_Data_64 entries placing this page's value column, reached as row + this. The page
+/// borrows the sound menu's diagonal but not its position entries, so a row here can be nudged
+/// without moving the sound menu's
+#define DISPLAY_VALUE_POS_FIRST 53
+/// @}
+
+/// Which Letter_Data_64 row each Display row shows, how many entries it declares, and which of
+/// them it falls back to. Rows that open a page rather than hold a setting have none.
+static const s8 Display_Value_Type[8] = { -1,
+                                          LETTER_TYPE_RESOLUTION,
+                                          LETTER_TYPE_CHARACTER_COLOR,
+                                          LETTER_TYPE_BACKGROUNDS,
+                                          LETTER_TYPE_SD_HD,
+                                          LETTER_TYPE_SD_HD,
+                                          -1,
+                                          -1 };
+static const s8 Display_Value_Count[8] = { 0, 1, CHAR_COLOR_MODES, 5, 2, 2, 0, 0 };
+/// The character colour row is the one whose live value is not its first: its first is Disabled,
+/// and the way this shipped is Custom — the per-fighter screen, with every fighter left on the
+/// game's own colours, which changes nothing until someone opens it.
+static const s8 Display_Value_Default[8] = { 0, 0, CHAR_COLOR_MODE_CUSTOM, 0, 0, 0, 0, 0 };
+/// Every row of this page is drawn in the large charset
+#define DISPLAY_VALUE_FONT 0x7047
+
+/// @name Custom character colours screen
+/// @{
+/// Its slot in After_Title's jump table
+#define MENU_SCREEN_CHARACTERS 24
+/// First entry of msgSysDirTbl holding a character name. Its Menu_Letter_Data entries, 112-135,
+/// are dead since the labels moved to the message charset
+#define CHARACTER_MSG_FIRST 119
+/// First entry of Slide_Pos_Data_64 placing a set column, reached as row + this
+#define CHARACTER_VALUE_POS_FIRST 59
+/// Twenty characters, nine to a page, so the last one holds only two
+#define CHARACTER_TOTAL 20
+#define CHARACTER_PAGES 3
+/// Entries of LETTER_TYPE_CHARACTER_SET, only the third of which the port can honour
+#define CHARACTER_SETS 4
+/// Effect work ids, reusing those of the pages this screen never coexists with
+/// Nine rows, so the labels reach 0x58 and the values have to start past them
+#define CHARACTER_VALUE_WORK 0x59
+/// None of the three Custom screens carries a banner: each shows which page it is on instead,
+/// with the sprites the System Direction menu uses for the same job — the word, then the digit
+/// whose pattern is the page number. They never coexist, so they share these works.
+#define PAGE_INDICATOR_WORD_WORK 0x7E
+#define PAGE_INDICATOR_NUM_WORK 0x7F
+#define PAGE_INDICATOR_WORD_POS 42
+#define PAGE_INDICATOR_NUM_POS 43
+#define PAGE_INDICATOR_WORD_CG 0x47
+#define PAGE_INDICATOR_WORD_PATTERN 0xB
+#define PAGE_INDICATOR_NUM_CG 0x40
+/// @}
+
+/// @name Custom backgrounds screen
+/// @{
+/// Its slot in After_Title's jump table
+#define MENU_SCREEN_BACKGROUNDS 23
+/// First entry of msgSysDirTbl holding a row, alphabetically by character as the character screen
+/// is. Its Menu_Letter_Data entries, 92-135, are dead.
+///
+/// The buffer behind these rows is indexed by the row's place in this list, not by the stage it
+/// names — the two orders differ, so wiring the setting up will need the mapping.
+#define BACKGROUND_MSG_FIRST 139
+/// Its Menu_Letter_Data entries, holding the bracketed stage and the dotted leader
+#define BACKGROUND_STAGE_FIRST 92
+/// First entry of Slide_Pos_Data_64 placing a set column, reached as row + this
+#define BACKGROUND_VALUE_POS_FIRST 34
+/// One row per stage. Unlike the music, no two stages share a set of assets
+#define BACKGROUND_STAGES 20
+#define BACKGROUND_PAGES 3
+/// Entries of LETTER_TYPE_BACKGROUND_SET, only the first of which the port can honour
+#define BACKGROUND_SETS 4
+/// Effect work ids. The character half needs none, effect_18 placing it without an Order slot
+#define BACKGROUND_VALUE_WORK 0x59
+#define BACKGROUND_STAGE_WORK 0x64
+/// @}
+
+/// @name COLOR EDIT MODE
+/// Two screens: a list to pick whose colours to work on, then the editor itself. Splitting them
+/// keeps the editor free of navigation it would otherwise have to carry, and matches the way the
+/// Custom screens already ask the same question.
+/// @{
+/// Their slots in After_Title's jump table
+#define MENU_SCREEN_COLOR_EDIT 25
+#define MENU_SCREEN_COLOR_CANVAS 26
+/// The list borrows the Custom character screen's shape whole: same names from the message table,
+/// same eight rows a page, same navigation. It only drops the value column.
+#define COLOR_EDIT_PAGE_ROWS CHARACTER_PAGE_ROWS
+#define COLOR_EDIT_PAGES CHARACTER_PAGES
+/// The R, G and B captions under the channel bars, and the works that draw them. Their entries sit
+/// past the end of Menu_Letter_Data so that adding them shifted nothing; the works are the Display
+/// page's label slots, dead while this screen is up.
+#define COL_EDIT_LABEL_FIRST 112
+#define COL_EDIT_LABEL_WORK 0x50
+/// The name of the character being worked on, right of the swatch strip. Its own strings in
+/// Menu_Letter_Data, in engine order and reachable in any charset — the message table has the cast
+/// too, but only in the one effect_18 draws and only alphabetically.
+#define COL_EDIT_NAME_FIRST 115
+#define COL_EDIT_NAME_WORK 0x53
+/// @}
+
+/// Where the Display page should put its cursor and BACKGROUNDS value when it is next entered, so
+/// that leaving the Custom backgrounds screen lands back on the row that opened it.
+static s8 display_entry_row = DISPLAY_ROW_SCREEN_ADJUST;
+static s8 display_entry_value = 0;
 
 void Default_Training_Option();
 void Dummy_Move_Sub(struct _TASK* task_ptr, s16 PL_id, s16 id, s16 type, s16 max);
@@ -111,6 +249,7 @@ void Reset_Replay(struct _TASK* task_ptr);
 void End_Replay_Menu(struct _TASK* task_ptr);
 void Mode_Select(struct _TASK* task_ptr);
 void Option_Select(struct _TASK* task_ptr);
+void Custom_Tracklist(struct _TASK* task_ptr);
 void Training_Mode(struct _TASK* task_ptr);
 void System_Direction(struct _TASK* task_ptr);
 void Load_Replay(struct _TASK* task_ptr);
@@ -118,6 +257,11 @@ void toSelectGame(struct _TASK* task_ptr);
 void Game_Option(struct _TASK* task_ptr);
 void Button_Config(struct _TASK* task_ptr);
 void Screen_Adjust(struct _TASK* task_ptr);
+void Display_Menu(struct _TASK* task_ptr);
+void Background_Custom(struct _TASK* task_ptr);
+void Character_Custom(struct _TASK* task_ptr);
+void Color_Edit_Select(struct _TASK* task_ptr);
+void Color_Edit(struct _TASK* task_ptr);
 void Sound_Test(struct _TASK* task_ptr);
 void Memory_Card(struct _TASK* task_ptr);
 void Extra_Option(struct _TASK* task_ptr);
@@ -236,7 +380,7 @@ void Setup_Pad_or_Stick() {
 }
 
 void After_Title(struct _TASK* task_ptr) {
-    void (*AT_Jmp_Tbl[21])() = { Menu_Init,        Mode_Select,    Option_Select,  Option_Select, Training_Mode,
+    void (*AT_Jmp_Tbl[27])() = { Menu_Init,        Mode_Select,    Option_Select,  Option_Select, Training_Mode,
                                  System_Direction,
 #if NETPLAY_ENABLED
                                  Netplay_Menu,
@@ -245,7 +389,10 @@ void After_Title(struct _TASK* task_ptr) {
 #endif
                                  Option_Select,    toSelectGame,   Game_Option,    Button_Config, Screen_Adjust,
                                  Sound_Test,       Memory_Card,    Extra_Option,   Option_Select, VS_Result,
-                                 Save_Replay,      Direction_Menu, Save_Direction, Load_Direction };
+                                 Save_Replay,      Direction_Menu, Save_Direction, Load_Direction,
+                                 Custom_Tracklist, Display_Menu,   Background_Custom,
+                                 Character_Custom, Color_Edit_Select,
+                                 Color_Edit };
 
     AT_Jmp_Tbl[task_ptr->r_no[1]](task_ptr);
 }
@@ -793,7 +940,11 @@ void Option_Select(struct _TASK* task_ptr) {
         break;
 
     default:
-        Exit_Sub(task_ptr, 1, Menu_Cursor_Y[0] + 9);
+        // Row 2 used to be SCREEN ADJUST; it is now DISPLAY, which owns the screen adjust page.
+        // Every other row keeps the stock cursor-to-jump-table offset.
+        Exit_Sub(task_ptr,
+                 1,
+                 Menu_Cursor_Y[0] == OPTION_ROW_DISPLAY ? MENU_SCREEN_DISPLAY : Menu_Cursor_Y[0] + 9);
         break;
     }
 }
@@ -1311,7 +1462,7 @@ void Setup_Next_Page(struct _TASK* task_ptr, u8 /* unused */) {
 
     for (ix = 0; ix < Menu_Max; ix++, unused_s3 = disp_index += 2) {
         if (mode_type == 0) {
-            effect_18_init(disp_index, ix, 0, 2);
+            effect_18_init(disp_index, ix, 0, 2, 199, -143);
             effect_51_init(ix, ix, 2);
         } else {
             effect_C4_init(0, ix, ix, 2);
@@ -2058,6 +2209,1034 @@ void Return_Option_Mode_Sub(struct _TASK* task_ptr) {
     Cursor_Y_Pos[1][2] = Menu_Cursor_Y[1];
 }
 
+/// Display page: the option menu row that used to jump straight to the screen adjust page now
+/// opens this list, which holds that page plus room for the port's own video settings. Sits at
+/// the same menu depth as the pages it opens (Menu_Suicide level 2), so entering one kills the
+/// other's rows the same way the sound menu and the Custom tracklist swap.
+/// @brief Push a whole-page choice down onto every stage or fighter.
+///
+/// The two Custom screens are the fine-grained way to set these, but the row on this page sets them
+/// all at once, which is what makes a set worth trying at all. A subject the chosen set has no
+/// palette for keeps the game's own, exactly as it would have anyway — the loader falls back — so
+/// writing it down here only makes the Custom screen tell the same story.
+static void Display_Apply_Set(s16 row) {
+    const s8 value = Display_Buff[row];
+    s16 i;
+
+    if (row == DISPLAY_ROW_BACKGROUNDS) {
+        if (value == BACKGROUNDS_VALUE_CUSTOM) {
+            return;   // Custom means "leave the per-stage choices alone"; it opens their screen
+        }
+
+        for (i = 0; i < BACKGROUND_STAGES; i++) {
+            Background_Buff[i] = PalRemix_HasStage(i, value) ? value : PAL_SET_ORIGINAL;
+        }
+    } else if (row == DISPLAY_ROW_CHARACTER_COLOR) {
+        // This row names a way of choosing rather than a set, so there is nothing to push down —
+        // except on Disabled, which has to mean the game as it shipped even for a fighter the
+        // Custom screen was left holding something else for.
+        if (value != CHAR_COLOR_MODE_DISABLED) {
+            return;
+        }
+
+        Character_Palette_Reset();
+
+        for (i = 0; i < CHARACTER_TOTAL; i++) {
+            Character_Buff[i] = PAL_SET_3RD_STRIKE;
+        }
+    }
+}
+
+void Display_Menu(struct _TASK* task_ptr) {
+    s16 ix;
+    s16 value_work;
+
+    switch (task_ptr->r_no[2]) {
+    case 0:
+        FadeOut(1, 0xFF, 8);
+        task_ptr->r_no[2] += 1;
+        task_ptr->timer = 5;
+        Menu_Common_Init();
+        Menu_Cursor_Y[0] = display_entry_row;
+        Menu_Suicide[1] = 1;
+        Menu_Suicide[2] = 0;
+        Order[0x4F] = 4;
+        Order_Timer[0x4F] = 1;
+        Order[0x4E] = 2;
+        Order_Dir[0x4E] = 2;
+        Order_Timer[0x4E] = 1;
+
+        // No DISPLAY banner exists in the character table, so the page runs under the screen
+        // adjust one it inherited
+        effect_57_init(DISPLAY_HEADER_WORK, MENU_HEADER_SCREEN_ADJUST, 0, 0x3F, 2);
+        Order[DISPLAY_HEADER_WORK] = 1;
+        Order_Dir[DISPLAY_HEADER_WORK] = 8;
+        Order_Timer[DISPLAY_HEADER_WORK] = 1;
+        effect_04_init(2, 11, 2, 0x48); // Layout 11: the sound menu's diagonal, evenly stepped
+
+        for (ix = 0; ix <= DISPLAY_ROW_EXIT; ix++) {
+            // Only the row being returned to is forced; the rest keep what they were left on.
+            // Resetting them all showed a default while a different setting was in force — a
+            // character colour chosen here stayed chosen, but the row said otherwise as soon as
+            // the page was reopened, which is indistinguishable from the setting not taking.
+            if (ix == display_entry_row) {
+                Display_Buff[ix] = display_entry_value;
+            }
+
+            effect_61_init(0, ix + DISPLAY_LABEL_WORK, 0, 2, ix + DISPLAY_LABEL_FIRST, ix, 0x7047);
+            Order[ix + DISPLAY_LABEL_WORK] = 1;
+            Order_Dir[ix + DISPLAY_LABEL_WORK] = 4;
+            Order_Timer[ix + DISPLAY_LABEL_WORK] = ix + 0x14;
+
+            if (Display_Value_Count[ix] == 0) {
+                continue;
+            }
+
+            value_work = DISPLAY_VALUE_WORK + ix - DISPLAY_ROW_RESOLUTION;
+            effect_64_init(value_work,
+                           0,
+                           2,
+                           Display_Value_Type[ix],
+                           ix,
+                           DISPLAY_VALUE_FONT,
+                           ix + DISPLAY_VALUE_POS_FIRST,
+                           CONVERT_ID_DISPLAY,
+                           0);
+            Order[value_work] = 1;
+            Order_Dir[value_work] = 4;
+            Order_Timer[value_work] = ix + 0x14;
+        }
+
+        display_entry_row = DISPLAY_ROW_SCREEN_ADJUST;
+        display_entry_value = 0;
+        Menu_Cursor_Move = DISPLAY_ROW_EXIT + 1;
+        break;
+
+    case 1:
+        Menu_Sub_case1(task_ptr);
+        break;
+
+    case 2:
+        if (FadeIn(1, 0x19, 8) != 0) {
+            task_ptr->r_no[2] += 1;
+            Suicide[3] = 0;
+        }
+
+        break;
+
+    case 3: {
+        const u16 sw = Check_Menu_Lever(0, 0);
+        const s16 values = Display_Value_Count[Menu_Cursor_Y[0]];
+
+        if (MC_Move_Sub(sw, 0, DISPLAY_ROW_EXIT, 0xFF) == 0) {
+            MC_Move_Sub(Check_Menu_Lever(1, 0), 0, DISPLAY_ROW_EXIT, 0xFF);
+        }
+
+        // A row may advertise where it is going while it is being looked at; leaving it takes back
+        // anything the port cannot honour. A value it can honour is the player's choice and keeps.
+        for (ix = 0; ix <= DISPLAY_ROW_EXIT; ix++) {
+            if ((ix != Menu_Cursor_Y[0]) && (Display_Value_Count[ix] > 0)
+                && !letter_data_64_selectable(Display_Value_Type[ix], Display_Buff[ix], -1)) {
+                Display_Buff[ix] = Display_Value_Default[ix];
+            }
+        }
+
+        if (values > 1) {
+            if (sw == 4) {
+                Display_Buff[Menu_Cursor_Y[0]] = (Display_Buff[Menu_Cursor_Y[0]] + values - 1) % values;
+                SE_dir_cursor_move();
+                Display_Apply_Set(Menu_Cursor_Y[0]);
+            } else if (sw == 8) {
+                Display_Buff[Menu_Cursor_Y[0]] = (Display_Buff[Menu_Cursor_Y[0]] + 1) % values;
+                SE_dir_cursor_move();
+                Display_Apply_Set(Menu_Cursor_Y[0]);
+            }
+        }
+
+        switch (IO_Result) {
+        case 0x100:
+        case 0x200:
+            break;
+
+        default:
+            return;
+        }
+
+        if (Menu_Cursor_Y[0] == DISPLAY_ROW_EXIT || IO_Result == 0x200) {
+            SE_selected();
+            Return_Option_Mode_Sub(task_ptr);
+            Order[DISPLAY_HEADER_WORK] = 4;
+            Order_Timer[DISPLAY_HEADER_WORK] = 4;
+            break;
+        }
+
+        // Custom is the one value on these two rows that leads somewhere: it opens the per-stage
+        // or per-character screen, the way BGM Type = Custom opens the tracklist.
+        if (Menu_Cursor_Y[0] == DISPLAY_ROW_BACKGROUNDS || Menu_Cursor_Y[0] == DISPLAY_ROW_CHARACTER_COLOR) {
+            const bool backgrounds = Menu_Cursor_Y[0] == DISPLAY_ROW_BACKGROUNDS;
+            const s8 opens = backgrounds ? BACKGROUNDS_VALUE_CUSTOM : CHAR_COLOR_MODE_CUSTOM;
+
+            if (Display_Buff[Menu_Cursor_Y[0]] != opens) {
+                break;
+            }
+
+            SE_selected();
+            Menu_Suicide[1] = 0;
+            Menu_Suicide[2] = 1;
+            task_ptr->r_no[1] = backgrounds ? MENU_SCREEN_BACKGROUNDS : MENU_SCREEN_CHARACTERS;
+            task_ptr->r_no[2] = 0;
+            task_ptr->r_no[3] = 0;
+            task_ptr->free[0] = 0;
+            Order[DISPLAY_HEADER_WORK] = 4;
+            Order_Timer[DISPLAY_HEADER_WORK] = 4;
+            break;
+        }
+
+        if (Menu_Cursor_Y[0] == DISPLAY_ROW_COLOR_EDIT) {
+            SE_selected();
+            Menu_Suicide[1] = 0;
+            Menu_Suicide[2] = 1;
+            task_ptr->r_no[1] = MENU_SCREEN_COLOR_EDIT;
+            task_ptr->r_no[2] = 0;
+            task_ptr->r_no[3] = 0;
+            task_ptr->free[0] = 0;
+            Order[DISPLAY_HEADER_WORK] = 4;
+            Order_Timer[DISPLAY_HEADER_WORK] = 4;
+            break;
+        }
+
+        if (Menu_Cursor_Y[0] != DISPLAY_ROW_SCREEN_ADJUST) {
+            // The other rows are placeholders until the settings behind them exist, and stay
+            // silent so the menu does not claim to have done something
+            break;
+        }
+
+        SE_selected();
+
+        // Hand over to the stock screen adjust page. Killing this page's rows here rather than
+        // through Exit_Sub keeps the swap on one frame, as the Custom tracklist does.
+        Menu_Suicide[1] = 0;
+        Menu_Suicide[2] = 1;
+        task_ptr->r_no[1] = 11;
+        task_ptr->r_no[2] = 0;
+        task_ptr->r_no[3] = 0;
+        task_ptr->free[0] = 0;
+        Order[DISPLAY_HEADER_WORK] = 4;
+        Order_Timer[DISPLAY_HEADER_WORK] = 4;
+        X_Adjust_Buff[0] = X_Adjust;
+        X_Adjust_Buff[1] = X_Adjust;
+        X_Adjust_Buff[2] = X_Adjust;
+        Y_Adjust_Buff[0] = Y_Adjust;
+        Y_Adjust_Buff[1] = Y_Adjust;
+        Y_Adjust_Buff[2] = Y_Adjust;
+        break;
+    }
+    }
+}
+
+/// What My_char held before the preview borrowed it. The palette request reads it to know whose
+/// colours to convert, so the screen has to write it, and the character select is entitled to find
+/// its own choice still there afterwards.
+static u8 color_edit_saved_char;
+/// Which character the preview is showing, as an engine number
+static s16 color_edit_character;
+/// Which page of the list, and which row it was left on, so backing out of the editor lands where
+/// it was entered from rather than at the top
+static s8 color_edit_page;
+static s8 color_edit_row;
+
+static s16 Color_Edit_Rows_On_Page() {
+    const s16 left = CHARACTER_TOTAL - color_edit_page * COLOR_EDIT_PAGE_ROWS;
+
+    return (left < COLOR_EDIT_PAGE_ROWS) ? left : COLOR_EDIT_PAGE_ROWS;
+}
+
+/// Builds one page of the list. The Custom character screen's page without its value column: the
+/// names come from the same message table, in the same alphabetical order, and the navigation is
+/// the same exit-and-arrows the System Direction menu draws.
+static void Setup_Color_Edit_Page() {
+    const s16 rows = Color_Edit_Rows_On_Page();
+    s16 ix;
+
+    Menu_Max = rows;
+
+    for (ix = 0; ix < rows; ix++) {
+        const s16 slot = color_edit_page * COLOR_EDIT_PAGE_ROWS + ix;
+
+        effect_18_init(slot + CHARACTER_MSG_FIRST, ix, 0, 2, 201, -143);
+    }
+
+    Page_Nav_Value = PAGE_NAV_EXIT;
+    effect_40_init(3, 0, 0x48, 0, 2, PAGE_NAV_EXIT);
+    effect_40_init(3, 1, 0x49, 0, 2, PAGE_NAV_EXIT);
+    effect_40_init(3, 2, 0x4A, 0, 2, PAGE_NAV_PREV);
+    effect_40_init(3, 3, 0x4B, 0, 2, PAGE_NAV_NEXT);
+
+    // The page indicator draws against this screen's background rather than the one its outline
+    // was drawn for, so it gets a palette of its own instead of the menus' shared one.
+    {
+        const s16 variant = ColEdit_MenuPaletteVariant();
+
+        effect_66_init(PAGE_INDICATOR_WORD_WORK,
+                       PAGE_INDICATOR_WORD_POS,
+                       2,
+                       0,
+                       PAGE_INDICATOR_WORD_CG,
+                       PAGE_INDICATOR_WORD_PATTERN,
+                       0);
+        if (effect_66_last_work >= 0) {
+            ((WORK*)frw[effect_66_last_work])->my_col_code = variant;
+        }
+        Order[PAGE_INDICATOR_WORD_WORK] = 3;
+        Order_Timer[PAGE_INDICATOR_WORD_WORK] = 1;
+
+        effect_66_init(PAGE_INDICATOR_NUM_WORK,
+                       PAGE_INDICATOR_NUM_POS,
+                       2,
+                       0,
+                       PAGE_INDICATOR_NUM_CG,
+                       color_edit_page + 1,
+                       0);
+        if (effect_66_last_work >= 0) {
+            ((WORK*)frw[effect_66_last_work])->my_col_code = variant;
+        }
+        Order[PAGE_INDICATOR_NUM_WORK] = 3;
+        Order_Timer[PAGE_INDICATOR_NUM_WORK] = 1;
+    }
+
+    Menu_Cursor_Move = 0;
+}
+
+/// COLOR EDIT MODE, first screen: whose colours to work on.
+void Color_Edit_Select(struct _TASK* task_ptr) {
+    Clear_Flash_Sub();
+
+    switch (task_ptr->r_no[2]) {
+    case 0:
+        FadeOut(1, 0xFF, 8);
+        task_ptr->r_no[2] += 1;
+        task_ptr->timer = 5;
+        Clear_Flash_Init(4);
+        Menu_Common_Init();
+        Menu_Cursor_Y[0] = color_edit_row;
+        Menu_Suicide[1] = 1;
+        Menu_Suicide[2] = 0;
+        Order[0x4F] = 4;
+        Order_Timer[0x4F] = 1;
+        Order[0x4E] = 2;
+        Order_Dir[0x4E] = 2;
+        Order_Timer[0x4E] = 1;
+        Setup_Color_Edit_Page();
+        break;
+
+    case 1:
+        Menu_Sub_case1(task_ptr);
+        break;
+
+    case 2:
+        if (FadeIn(1, 0x19, 8) != 0) {
+            task_ptr->r_no[2] += 1;
+            Suicide[3] = 0;
+        }
+
+        break;
+
+    case 3: {
+        const u16 sw = Check_Menu_Lever(0, 0);
+        const s16 rows = Color_Edit_Rows_On_Page();
+        const s16 row = Menu_Cursor_Y[0];
+
+        MC_Move_Sub(sw, 0, rows, 0xFF);
+
+        if (row == rows) {
+            if (sw == 4) {
+                Page_Nav_Value = (Page_Nav_Value + 2) % 3;
+                SE_dir_cursor_move();
+            } else if (sw == 8) {
+                Page_Nav_Value = (Page_Nav_Value + 1) % 3;
+                SE_dir_cursor_move();
+            }
+        }
+
+        // Shoulder buttons turn the page from anywhere on the screen
+        if (IO_Result == 0x80 || IO_Result == 0x800) {
+            SE_dir_selected();
+            color_edit_page = (color_edit_page + COLOR_EDIT_PAGES - 1) % COLOR_EDIT_PAGES;
+            task_ptr->r_no[2] = 4;
+            break;
+        }
+
+        if (IO_Result == 0x40 || IO_Result == 0x400) {
+            SE_dir_selected();
+            color_edit_page = (color_edit_page + 1) % COLOR_EDIT_PAGES;
+            task_ptr->r_no[2] = 4;
+            break;
+        }
+
+        if (IO_Result != 0x100 && IO_Result != 0x200) {
+            break;
+        }
+
+        // Cancel leaves, as does the navigation row when it is showing EXIT
+        if (IO_Result == 0x200 || (row == rows && Page_Nav_Value == PAGE_NAV_EXIT)) {
+            SE_selected();
+            color_edit_page = 0;
+            color_edit_row = 0;
+
+            display_entry_row = DISPLAY_ROW_COLOR_EDIT;
+            display_entry_value = 0;
+            Menu_Suicide[1] = 0;
+            Menu_Suicide[2] = 1;
+            task_ptr->r_no[1] = MENU_SCREEN_DISPLAY;
+            task_ptr->r_no[2] = 0;
+            task_ptr->r_no[3] = 0;
+            task_ptr->free[0] = 0;
+            break;
+        }
+
+        if (row == rows) {
+            SE_selected();
+
+            if (Page_Nav_Value == PAGE_NAV_PREV) {
+                color_edit_page = (color_edit_page + COLOR_EDIT_PAGES - 1) % COLOR_EDIT_PAGES;
+            } else {
+                color_edit_page = (color_edit_page + 1) % COLOR_EDIT_PAGES;
+            }
+
+            task_ptr->r_no[2] = 4;
+            break;
+        }
+
+        // A name was picked: remember where, and hand over to the editor
+        SE_selected();
+        color_edit_row = (s8)row;
+        color_edit_character = Custom_Row_To_Char[color_edit_page * COLOR_EDIT_PAGE_ROWS + row];
+        Menu_Suicide[1] = 0;
+        Menu_Suicide[2] = 1;
+        task_ptr->r_no[1] = MENU_SCREEN_COLOR_CANVAS;
+        task_ptr->r_no[2] = 0;
+        task_ptr->r_no[3] = 0;
+        task_ptr->free[0] = 0;
+        break;
+    }
+
+    // Turning a page: the rows die on this frame and the next one builds the new set
+    case 4:
+        Menu_Suicide[2] = 1;
+        task_ptr->r_no[2] += 1;
+        break;
+
+    case 5:
+        Menu_Suicide[2] = 0;
+        Menu_Cursor_Y[0] = 0;
+        Setup_Color_Edit_Page();
+        task_ptr->r_no[2] = 3;
+        break;
+    }
+}
+
+/// @brief COLOR EDIT MODE — for now, the preview and nothing else.
+///
+/// This is the half of the editor that had to be proven before the rest was worth writing: whether
+/// a fighter can be put on screen from a menu at all. Everything the editor proper needs — reading
+/// a colour, changing it, writing the set back out — is already easy, because a palette lives in
+/// ColorRAM as plain ARGB1555 and a set on disk is a verbatim copy of it. Showing the fighter it
+/// applies to was the only open question.
+///
+/// So the controls here are the ones that answer it. The pose steps, because which pattern is a
+/// good neutral stance is not something the data says and not something that can be worked out
+/// without looking; the character switches, because a preview that only ever shows one proves
+/// less. What is learned from driving this becomes the per-character pose table the editor opens
+/// on.
+void Color_Edit(struct _TASK* task_ptr) {
+    // Drawn every frame it is meant to be seen, fades included, so it sits outside the state
+    // machine rather than inside the state that happens to read the pad.
+    ColEdit_Draw();
+
+    switch (task_ptr->r_no[2]) {
+    case 0:
+        FadeOut(1, 0xFF, 8);
+        task_ptr->r_no[2] += 1;
+        task_ptr->timer = 5;
+        Menu_Common_Init();
+        Menu_Cursor_Y[0] = 0;
+        Menu_Suicide[1] = 1;
+        Menu_Suicide[2] = 0;
+        Order[0x4F] = 4;
+        Order_Timer[0x4F] = 1;
+        Order[0x4E] = 2;
+        Order_Dir[0x4E] = 2;
+        Order_Timer[0x4E] = 1;
+        Menu_Cursor_Move = 0;
+
+        // The three channel captions. Placed rather than slid in, and given a cursor index of 0 so
+        // that effect_61 reads them as the selected row and draws them bright: this screen never
+        // moves Menu_Cursor_Y, so they stay lit.
+        for (s16 ch = 0; ch < COL_EDIT_CHANNELS; ch++) {
+            // sync_bg 2, not the 0 every other menu passes: that puts the caption on the same BG
+            // family as the bars it names. The menus hang their text on family 1 while these
+            // panels are drawn against family 3, and two families are two coordinate spaces —
+            // which is exactly how far the captions sat from their columns before.
+            // 0x70A7 is the menus' small charset, which advances 8px a letter where the large one
+            // takes 14 — a caption for a 12-wide bar has no use for the larger.
+            effect_61_init(0, ch + COL_EDIT_LABEL_WORK, 2, 2, ch + COL_EDIT_LABEL_FIRST, 0, 0x70A7);
+            Order[ch + COL_EDIT_LABEL_WORK] = 3;
+            Order_Dir[ch + COL_EDIT_LABEL_WORK] = 4;
+            Order_Timer[ch + COL_EDIT_LABEL_WORK] = 1;
+        }
+
+        // Whose colours these are, in the same small charset as the channel captions
+        effect_61_init(0, COL_EDIT_NAME_WORK, 2, 2, color_edit_character + COL_EDIT_NAME_FIRST, 0, 0x70A7);
+        Order[COL_EDIT_NAME_WORK] = 3;
+        Order_Dir[COL_EDIT_NAME_WORK] = 4;
+        Order_Timer[COL_EDIT_NAME_WORK] = 1;
+
+        // color_edit_character was set by the list screen that opened this one
+        color_edit_saved_char = My_char[0];
+        ColEdit_Load(color_edit_character);
+        break;
+
+    case 1:
+        Menu_Sub_case1(task_ptr);
+        break;
+
+    case 2:
+        if (FadeIn(1, 0x19, 8) != 0) {
+            task_ptr->r_no[2] += 1;
+            Suicide[3] = 0;
+        }
+
+        break;
+
+    case 3: {
+        const u16 sw = Check_Menu_Lever(0, 0);
+
+        // IO_Result is not set by reading the lever — MC_Move_Sub is what writes it, which is why
+        // every other screen calls it before testing any button. Without it the value stays as the
+        // page before left it and no button here is ever seen, exit included. Menu_Max is 0 for
+        // now: there is nothing to move a cursor over until the editor's rows exist.
+        MC_Move_Sub(sw, 0, 0, 0xFF);
+
+        // The lever drives one of two things. On the grid it walks the sixty-four colours; on the
+        // bars it picks a channel with up and down and changes it with left and right. Confirm
+        // goes from one to the other, cancel comes back — the same two-level shape the reference
+        // screen gets from a COLOR CHANGE row, without needing the row.
+        if (sw == 1 || sw == 2 || sw == 4 || sw == 8) {
+            const s16 dx = (sw == 4) ? -1 : (sw == 8) ? 1 : 0;
+            const s16 dy = (sw == 1) ? -1 : (sw == 2) ? 1 : 0;
+
+            if (ColEdit_Editing()) {
+                // Left and right pick the bar, up and down move it. The bars stand side by side
+                // and fill upward, so this is the way round that matches what is on screen.
+                if (dx != 0) {
+                    ColEdit_SelectChannel(dx);
+                    SE_dir_cursor_move();
+                } else {
+                    ColEdit_Adjust(-dy);
+                }
+            } else {
+                ColEdit_MoveCursor(dx, dy);
+                SE_dir_cursor_move();
+            }
+
+            break;
+        }
+
+        // The shoulders keep the pose step. All twenty offsets are settled, so this is no longer
+        // calibration but the way back if one ever needs revisiting, and it stays off the lever
+        // where it cannot be hit by accident.
+        if (IO_Result == 0x80 || IO_Result == 0x800) {
+            ColEdit_StepPose(-1);
+            break;
+        }
+
+        if (IO_Result == 0x40 || IO_Result == 0x400) {
+            ColEdit_StepPose(1);
+            break;
+        }
+
+        if (IO_Result != 0x100 && IO_Result != 0x200) {
+            break;
+        }
+
+        if (IO_Result == 0x100 && !ColEdit_Editing()) {
+            SE_selected();
+            ColEdit_BeginEdit();
+            break;
+        }
+
+        if (ColEdit_Editing()) {
+            SE_selected();
+            ColEdit_EndEdit();
+            break;
+        }
+
+        SE_selected();
+        ColEdit_Unload();
+        My_char[0] = color_edit_saved_char;
+
+        // Back to the list, which will put its cursor back on the name that opened this
+        Menu_Suicide[1] = 0;
+        Menu_Suicide[2] = 1;
+        task_ptr->r_no[1] = MENU_SCREEN_COLOR_EDIT;
+        task_ptr->r_no[2] = 0;
+        task_ptr->r_no[3] = 0;
+        task_ptr->free[0] = 0;
+        break;
+    }
+    }
+}
+
+/// Custom backgrounds: one row per stage, on the model of the Custom tracklist. Twenty rows rather
+/// than sixteen, because the four locations that appear twice are two distinct sets of assets each
+/// — only the music is shared between those pairs, not the artwork.
+/// Builds one page of the Custom backgrounds screen, on the model of the character one: the labels
+/// are placed rather than slid in, so turning a page must not recreate the banner-less page
+/// indicator's siblings out of order.
+static s16 Background_Rows_On_Page() {
+    const s16 left = BACKGROUND_STAGES - Background_Page * BACKGROUND_PAGE_ROWS;
+
+    return (left < BACKGROUND_PAGE_ROWS) ? left : BACKGROUND_PAGE_ROWS;
+}
+
+static void Setup_Background_Page() {
+    const s16 rows = Background_Rows_On_Page();
+    s16 ix;
+    s16 slot;
+
+    Menu_Max = rows;
+
+    for (ix = 0; ix < rows; ix++) {
+        slot = Background_Page * BACKGROUND_PAGE_ROWS + ix;
+
+        // The character in the condensed charset, as on the character screen, then its stage in
+        // the menu's small one. Both advance 8px a letter, so the stage's x is fixed per row.
+        effect_18_init(slot + BACKGROUND_MSG_FIRST, ix, 0, 2, 201, -143);
+
+        effect_61_init(0, ix + BACKGROUND_STAGE_WORK, 0, 2, slot + BACKGROUND_STAGE_FIRST, ix, 0x70A7);
+        Order[ix + BACKGROUND_STAGE_WORK] = 3;
+        Order_Dir[ix + BACKGROUND_STAGE_WORK] = 4;
+        Order_Timer[ix + BACKGROUND_STAGE_WORK] = 1;
+
+        effect_64_init(ix + BACKGROUND_VALUE_WORK,
+                       0,
+                       2,
+                       LETTER_TYPE_BACKGROUND_SET,
+                       ix,
+                       0x70A7,
+                       ix + BACKGROUND_VALUE_POS_FIRST,
+                       CONVERT_ID_BACKGROUND,
+                       0);
+        Order[ix + BACKGROUND_VALUE_WORK] = 3;
+        Order_Dir[ix + BACKGROUND_VALUE_WORK] = 4;
+        Order_Timer[ix + BACKGROUND_VALUE_WORK] = 1;
+    }
+
+    Page_Nav_Value = PAGE_NAV_EXIT;
+    effect_40_init(3, 0, 0x48, 0, 2, PAGE_NAV_EXIT);
+    effect_40_init(3, 1, 0x49, 0, 2, PAGE_NAV_EXIT);
+    effect_40_init(3, 2, 0x4A, 0, 2, PAGE_NAV_PREV);
+    effect_40_init(3, 3, 0x4B, 0, 2, PAGE_NAV_NEXT);
+
+    effect_66_init(PAGE_INDICATOR_WORD_WORK,
+                   PAGE_INDICATOR_WORD_POS,
+                   2,
+                   0,
+                   PAGE_INDICATOR_WORD_CG,
+                   PAGE_INDICATOR_WORD_PATTERN,
+                   0);
+    Order[PAGE_INDICATOR_WORD_WORK] = 3;
+    Order_Timer[PAGE_INDICATOR_WORD_WORK] = 1;
+
+    effect_66_init(PAGE_INDICATOR_NUM_WORK,
+                   PAGE_INDICATOR_NUM_POS,
+                   2,
+                   0,
+                   PAGE_INDICATOR_NUM_CG,
+                   Background_Page + 1,
+                   0);
+    Order[PAGE_INDICATOR_NUM_WORK] = 3;
+    Order_Timer[PAGE_INDICATOR_NUM_WORK] = 1;
+
+    // The labels are placed, not slid in, so nothing counts this down — and leaving it above zero
+    // would freeze the screen's input
+    Menu_Cursor_Move = 0;
+}
+
+/// Custom backgrounds: every stage, in character order, eight to a page. Twenty of them, so the
+/// last page holds four. Each label carries the character its stage belongs to, which is what tells
+/// the four shared locations apart — only the music is shared between those pairs, not the artwork.
+void Background_Custom(struct _TASK* task_ptr) {
+    s16 ix;
+
+    Clear_Flash_Sub();
+
+    switch (task_ptr->r_no[2]) {
+    case 0:
+        FadeOut(1, 0xFF, 8);
+        task_ptr->r_no[2] += 1;
+        task_ptr->timer = 5;
+        Clear_Flash_Init(4);
+        Menu_Common_Init();
+        Menu_Cursor_Y[0] = 0;
+        Menu_Suicide[1] = 1;
+        Menu_Suicide[2] = 0;
+        Background_Page = 0;
+
+        for (ix = 0; ix < BACKGROUND_STAGES; ix++) {
+            Background_Buff[ix] = 0;
+        }
+
+        Order[0x4F] = 4;
+        Order_Timer[0x4F] = 1;
+        Order[0x4E] = 2;
+        Order_Dir[0x4E] = 2;
+        Order_Timer[0x4E] = 1;
+        Setup_Background_Page();
+        break;
+
+    case 1:
+        Menu_Sub_case1(task_ptr);
+        break;
+
+    case 2:
+        if (FadeIn(1, 0x19, 8) != 0) {
+            task_ptr->r_no[2] += 1;
+            Suicide[3] = 0;
+        }
+
+        break;
+
+    case 3: {
+        const u16 sw = Check_Menu_Lever(0, 0);
+        const s16 rows = Background_Rows_On_Page();
+        const s16 row = Menu_Cursor_Y[0];
+        const s16 values = (row == rows) ? 3 : BACKGROUND_SETS;
+        s8* value;
+
+        MC_Move_Sub(sw, 0, rows, 0xFF);
+
+        // A stage may sit on a set it cannot have while it is being looked at, so the row can show
+        // where it is going; leaving it drops it back to the game's own colours. Only unavailable
+        // values are taken back — a set the stage does have is the player's choice and must keep.
+        for (ix = 0; ix < rows; ix++) {
+            if (ix != Menu_Cursor_Y[0]) {
+                const s16 stage = Custom_Row_To_Char[Background_Page * BACKGROUND_PAGE_ROWS + ix];
+
+                if (!PalRemix_HasStage(stage, Background_Buff[stage])) {
+                    Background_Buff[stage] = PAL_SET_ORIGINAL;
+                }
+            }
+        }
+
+        if (Menu_Cursor_Y[0] == rows) {
+            value = &Page_Nav_Value;
+        } else {
+            value = &Background_Buff[Custom_Row_To_Char[Background_Page * BACKGROUND_PAGE_ROWS + Menu_Cursor_Y[0]]];
+        }
+
+        if (sw == 4) {
+            *value = (*value + values - 1) % values;
+            SE_dir_cursor_move();
+        } else if (sw == 8) {
+            *value = (*value + 1) % values;
+            SE_dir_cursor_move();
+        }
+
+        // Shoulder buttons turn the page from anywhere on the screen
+        if (IO_Result == 0x80 || IO_Result == 0x800) {
+            SE_dir_selected();
+            Background_Page = (Background_Page + BACKGROUND_PAGES - 1) % BACKGROUND_PAGES;
+            task_ptr->r_no[2] = 4;
+            break;
+        }
+
+        if (IO_Result == 0x40 || IO_Result == 0x400) {
+            SE_dir_selected();
+            Background_Page = (Background_Page + 1) % BACKGROUND_PAGES;
+            task_ptr->r_no[2] = 4;
+            break;
+        }
+
+        if (IO_Result != 0x100 && IO_Result != 0x200) {
+            break;
+        }
+
+        // Cancel leaves whatever the navigation row is showing
+        if (IO_Result == 0x200 || (row == rows && Page_Nav_Value == PAGE_NAV_EXIT)) {
+            SE_selected();
+
+            // Back to the Display page, on the row that opened this screen
+            display_entry_row = DISPLAY_ROW_BACKGROUNDS;
+            display_entry_value = BACKGROUNDS_VALUE_CUSTOM;
+            Menu_Suicide[1] = 0;
+            Menu_Suicide[2] = 1;
+            task_ptr->r_no[1] = MENU_SCREEN_DISPLAY;
+            task_ptr->r_no[2] = 0;
+            task_ptr->r_no[3] = 0;
+            task_ptr->free[0] = 0;
+            break;
+        }
+
+        if (row == rows) {
+            SE_selected();
+
+            if (Page_Nav_Value == PAGE_NAV_PREV) {
+                Background_Page = (Background_Page + BACKGROUND_PAGES - 1) % BACKGROUND_PAGES;
+            } else {
+                Background_Page = (Background_Page + 1) % BACKGROUND_PAGES;
+            }
+
+            task_ptr->r_no[2] = 4;
+        }
+
+        break;
+    }
+
+    // Turning a page: the rows die on this frame and the next one builds the new set
+    case 4:
+        Menu_Suicide[2] = 1;
+        task_ptr->r_no[2] += 1;
+        break;
+
+    case 5:
+        Menu_Suicide[2] = 0;
+        Menu_Cursor_Y[0] = 0;
+        Setup_Background_Page();
+        task_ptr->r_no[2] = 3;
+        break;
+    }
+}
+
+/// Builds one page of the Custom character colours screen. Split out of its case 0 because turning
+/// a page rebuilds only the rows: the banner is killed by its Order slot rather than by
+/// Menu_Suicide, so recreating it here would leave two effects sharing one work id.
+static s16 Character_Rows_On_Page() {
+    const s16 left = CHARACTER_TOTAL - Character_Page * CHARACTER_PAGE_ROWS;
+
+    return (left < CHARACTER_PAGE_ROWS) ? left : CHARACTER_PAGE_ROWS;
+}
+
+static void Setup_Character_Page() {
+    const s16 rows = Character_Rows_On_Page();
+    s16 ix;
+    s16 slot;
+
+    // The exit and arrow graphics stand where a navigation row would be, and light up from
+    // Menu_Max, which has to say where that row sits on this page
+    Menu_Max = rows;
+
+    for (ix = 0; ix < rows; ix++) {
+        slot = Character_Page * CHARACTER_PAGE_ROWS + ix;
+
+        // Through the message system, the only way to the condensed charset the System Direction
+        // menu uses. Its rows carry no slide-in, so they need no Order slot. Row zero sits 15
+        // above its value, the offset that menu keeps between its two columns.
+        effect_18_init(slot + CHARACTER_MSG_FIRST, ix, 0, 2, 201, -143);
+
+        effect_64_init(ix + CHARACTER_VALUE_WORK,
+                       0,
+                       2,
+                       LETTER_TYPE_CHARACTER_SET,
+                       ix,
+                       0x70A7,
+                       ix + CHARACTER_VALUE_POS_FIRST,
+                       CONVERT_ID_CHARACTER,
+                       0);
+        // Placed rather than slid in, to match the names beside them
+        Order[ix + CHARACTER_VALUE_WORK] = 3;
+        Order_Dir[ix + CHARACTER_VALUE_WORK] = 4;
+        Order_Timer[ix + CHARACTER_VALUE_WORK] = 1;
+    }
+
+    // Exit and the two page arrows, as the System Direction menu draws them rather than as a row
+    // of text. Passing 3 as the id both picks Page_Nav_Value as their source and drops them by
+    // 44px, which is what leaves the list its nine rows.
+    Page_Nav_Value = PAGE_NAV_EXIT;
+    effect_40_init(3, 0, 0x48, 0, 2, PAGE_NAV_EXIT);
+    effect_40_init(3, 1, 0x49, 0, 2, PAGE_NAV_EXIT);
+    effect_40_init(3, 2, 0x4A, 0, 2, PAGE_NAV_PREV);
+    effect_40_init(3, 3, 0x4B, 0, 2, PAGE_NAV_NEXT);
+
+    // The page indicator stands in for the banner. Both works die with the rows on a page change,
+    // which is what the digit needs: its pattern is fixed when the work is created.
+    effect_66_init(PAGE_INDICATOR_WORD_WORK,
+                   PAGE_INDICATOR_WORD_POS,
+                   2,
+                   0,
+                   PAGE_INDICATOR_WORD_CG,
+                   PAGE_INDICATOR_WORD_PATTERN,
+                   0);
+    Order[PAGE_INDICATOR_WORD_WORK] = 3;
+    Order_Timer[PAGE_INDICATOR_WORD_WORK] = 1;
+
+    effect_66_init(PAGE_INDICATOR_NUM_WORK,
+                   PAGE_INDICATOR_NUM_POS,
+                   2,
+                   0,
+                   PAGE_INDICATOR_NUM_CG,
+                   Character_Page + 1,
+                   0);
+    Order[PAGE_INDICATOR_NUM_WORK] = 3;
+    Order_Timer[PAGE_INDICATOR_NUM_WORK] = 1;
+
+    // No cursor sprite: the rows and the exit graphic light themselves, as they do on the System
+    // Direction menu. A cursor layout could not follow a navigation row whose index moves with the
+    // number of names the page holds.
+    //
+    // Nothing to wait for: only effect_61 counts this down, and the names are drawn by effect_18
+    // now, which places them at once. Leaving it above zero would freeze the screen's input.
+    Menu_Cursor_Move = 0;
+}
+
+/// Custom character colours: every character, alphabetically, five to a page. The large charset
+/// wants 22px between rows and the usable band is 150, so twenty of them cannot share one screen —
+/// hence the paging, borrowed from the System Direction menu.
+void Character_Custom(struct _TASK* task_ptr) {
+    s16 ix;
+
+    Clear_Flash_Sub();
+
+    switch (task_ptr->r_no[2]) {
+    case 0:
+        FadeOut(1, 0xFF, 8);
+        task_ptr->r_no[2] += 1;
+        task_ptr->timer = 5;
+        Clear_Flash_Init(4);
+        Menu_Common_Init();
+        Menu_Cursor_Y[0] = 0;
+        Menu_Suicide[1] = 1;
+        Menu_Suicide[2] = 0;
+        Character_Page = 0;
+
+        // No reset here any more. This screen used to put all twenty back to 3rd Strike on the way
+        // in, which was survivable while the Display row above set them all at once and this was a
+        // detail view of that. Now the per-fighter choice is the whole of what Select Menu means,
+        // and forgetting it every time the screen is opened would leave the mode with nothing to
+        // remember. Same reasoning as the Display page's own rows, fixed earlier for the same bug.
+
+        Order[0x4F] = 4;
+        Order_Timer[0x4F] = 1;
+        Order[0x4E] = 2;
+        Order_Dir[0x4E] = 2;
+        Order_Timer[0x4E] = 1;
+        Setup_Character_Page();
+        break;
+
+    case 1:
+        Menu_Sub_case1(task_ptr);
+        break;
+
+    case 2:
+        if (FadeIn(1, 0x19, 8) != 0) {
+            task_ptr->r_no[2] += 1;
+            Suicide[3] = 0;
+        }
+
+        break;
+
+    case 3: {
+        const u16 sw = Check_Menu_Lever(0, 0);
+        const s16 rows = Character_Rows_On_Page();
+        const s16 row = Menu_Cursor_Y[0];
+        const s16 values = (row == rows) ? 3 : CHARACTER_SETS;
+        s8* value;
+
+        MC_Move_Sub(sw, 0, rows, 0xFF);
+
+        // As on the Display page, a character only advertises a set it cannot have while it is
+        // being looked at
+        for (ix = 0; ix < rows; ix++) {
+            if (ix != Menu_Cursor_Y[0]) {
+                const s16 who = Custom_Row_To_Char[Character_Page * CHARACTER_PAGE_ROWS + ix];
+
+                if (!PalRemix_HasCharacter(who, Character_Buff[who])) {
+                    Character_Buff[who] = PAL_SET_3RD_STRIKE;
+                }
+            }
+        }
+
+        if (Menu_Cursor_Y[0] == rows) {
+            value = &Page_Nav_Value;
+        } else {
+            value = &Character_Buff[Custom_Row_To_Char[Character_Page * CHARACTER_PAGE_ROWS + Menu_Cursor_Y[0]]];
+        }
+
+        if (sw == 4) {
+            *value = (*value + values - 1) % values;
+            SE_dir_cursor_move();
+        } else if (sw == 8) {
+            *value = (*value + 1) % values;
+            SE_dir_cursor_move();
+        }
+
+        // Shoulder buttons turn the page from anywhere on the screen
+        if (IO_Result == 0x80 || IO_Result == 0x800) {
+            SE_dir_selected();
+            Character_Page = (Character_Page + CHARACTER_PAGES - 1) % CHARACTER_PAGES;
+            task_ptr->r_no[2] = 4;
+            break;
+        }
+
+        if (IO_Result == 0x40 || IO_Result == 0x400) {
+            SE_dir_selected();
+            Character_Page = (Character_Page + 1) % CHARACTER_PAGES;
+            task_ptr->r_no[2] = 4;
+            break;
+        }
+
+        if (IO_Result != 0x100 && IO_Result != 0x200) {
+            break;
+        }
+
+        // Cancel leaves whatever the navigation row is showing
+        if (IO_Result == 0x200 || (row == rows && Page_Nav_Value == PAGE_NAV_EXIT)) {
+            SE_selected();
+
+            // Back to the Display page, on the row that opened this screen
+            display_entry_row = DISPLAY_ROW_CHARACTER_COLOR;
+            display_entry_value = CHAR_COLOR_MODE_CUSTOM;
+            Menu_Suicide[1] = 0;
+            Menu_Suicide[2] = 1;
+            task_ptr->r_no[1] = MENU_SCREEN_DISPLAY;
+            task_ptr->r_no[2] = 0;
+            task_ptr->r_no[3] = 0;
+            task_ptr->free[0] = 0;
+            // Nothing to kill by hand: the page indicator dies with the rows, on Menu_Suicide
+            break;
+        }
+
+        if (row == rows) {
+            SE_selected();
+
+            if (Page_Nav_Value == PAGE_NAV_PREV) {
+                Character_Page = (Character_Page + CHARACTER_PAGES - 1) % CHARACTER_PAGES;
+            } else {
+                Character_Page = (Character_Page + 1) % CHARACTER_PAGES;
+            }
+
+            task_ptr->r_no[2] = 4;
+        }
+
+        break;
+    }
+
+    // Turning a page: the rows die on this frame and the next one builds the new set. The banner
+    // is untouched, so it stays put across the change.
+    case 4:
+        Menu_Suicide[2] = 1;
+        task_ptr->r_no[2] += 1;
+        break;
+
+    case 5:
+        Menu_Suicide[2] = 0;
+        Menu_Cursor_Y[0] = 0;
+        Setup_Character_Page();
+        task_ptr->r_no[2] = 3;
+        break;
+    }
+}
+
 void Screen_Adjust(struct _TASK* task_ptr) {
     s16 char_index;
     s16 ix;
@@ -2169,7 +3348,8 @@ void Screen_Exit_Check(struct _TASK* task_ptr, s16 PL_id) {
         if (task_ptr->r_no[0] == 1) {
             task_ptr->r_no[1] = 1;
         } else {
-            task_ptr->r_no[1] = 7;
+            // Reached from the Display page now, not straight from the option menu
+            task_ptr->r_no[1] = MENU_SCREEN_DISPLAY;
             Order[0x65] = 4;
             Order_Timer[0x65] = 4;
         }
@@ -2305,6 +3485,231 @@ void Screen_Move_Sub_LR(u16 sw) {
     Y_Adjust = Y_Adjust_Buff[0] = Y_Adjust_Buff[1] = Y_Adjust_Buff[2];
 }
 
+/// Row of the sound options menu holding the BGM type
+#define SOUND_ITEM_BGM_TYPE 3
+
+/// @name Custom tracklist screen
+/// @{
+/// Its slot in After_Title's jump table
+#define MENU_SCREEN_CUSTOM 21
+/// First entry of msgSysDirTbl holding a row's character, in the condensed charset
+#define CUSTOM_MSG_FIRST 159
+/// First entry of Menu_Letter_Data holding a row's bracketed theme, in the menu's small charset
+#define CUSTOM_THEME_FIRST 68
+/// First entry of Slide_Pos_Data_64 placing a soundtrack column
+#define CUSTOM_VALUE_POS_FIRST 18
+/// Effect work ids, reusing the sound menu's — the two screens never coexist
+#define CUSTOM_THEME_WORK 0x50
+#define CUSTOM_VALUE_WORK 0x60
+/// @}
+
+/// Builds one page of the Custom tracklist. Its rows are sorted by character like the other two
+/// Custom screens, so each one has to look up which theme it stands for.
+static void Setup_Custom_Page() {
+    s16 ix;
+    s16 slot;
+
+    Menu_Max = CUSTOM_PAGE_ROWS;
+
+    for (ix = 0; ix < CUSTOM_PAGE_ROWS; ix++) {
+        slot = Custom_Page * CUSTOM_PAGE_ROWS + ix;
+
+        // Not as far right as the other two Custom screens: this value column holds soundtrack
+        // names of whatever length the packs declare, and -143 would cap them at eleven letters
+        effect_18_init(slot + CUSTOM_MSG_FIRST, ix, 0, 2, 201, -164);
+
+        effect_61_init(0, ix + CUSTOM_THEME_WORK, 0, 2, slot + CUSTOM_THEME_FIRST, ix, 0x70A7);
+        Order[ix + CUSTOM_THEME_WORK] = 3;
+        Order_Dir[ix + CUSTOM_THEME_WORK] = 4;
+        Order_Timer[ix + CUSTOM_THEME_WORK] = 1;
+
+        effect_64_init(ix + CUSTOM_VALUE_WORK,
+                       0,
+                       2,
+                       LETTER_TYPE_SOUNDTRACK,
+                       ix,
+                       0x70A7,
+                       ix + CUSTOM_VALUE_POS_FIRST,
+                       CONVERT_ID_CUSTOM,
+                       0);
+        Order[ix + CUSTOM_VALUE_WORK] = 3;
+        Order_Dir[ix + CUSTOM_VALUE_WORK] = 4;
+        Order_Timer[ix + CUSTOM_VALUE_WORK] = 1;
+    }
+
+    Page_Nav_Value = PAGE_NAV_EXIT;
+    effect_40_init(3, 0, 0x48, 0, 2, PAGE_NAV_EXIT);
+    effect_40_init(3, 1, 0x49, 0, 2, PAGE_NAV_EXIT);
+    effect_40_init(3, 2, 0x4A, 0, 2, PAGE_NAV_PREV);
+    effect_40_init(3, 3, 0x4B, 0, 2, PAGE_NAV_NEXT);
+
+    effect_66_init(PAGE_INDICATOR_WORD_WORK,
+                   PAGE_INDICATOR_WORD_POS,
+                   2,
+                   0,
+                   PAGE_INDICATOR_WORD_CG,
+                   PAGE_INDICATOR_WORD_PATTERN,
+                   0);
+    Order[PAGE_INDICATOR_WORD_WORK] = 3;
+    Order_Timer[PAGE_INDICATOR_WORD_WORK] = 1;
+
+    effect_66_init(PAGE_INDICATOR_NUM_WORK,
+                   PAGE_INDICATOR_NUM_POS,
+                   2,
+                   0,
+                   PAGE_INDICATOR_NUM_CG,
+                   Custom_Page + 1,
+                   0);
+    Order[PAGE_INDICATOR_NUM_WORK] = 3;
+    Order_Timer[PAGE_INDICATOR_NUM_WORK] = 1;
+
+    Menu_Cursor_Move = 0;
+}
+
+void Custom_Tracklist(struct _TASK* task_ptr) {
+    s16 ix;
+
+    Clear_Flash_Sub();
+
+    switch (task_ptr->r_no[2]) {
+    case 0:
+        FadeOut(1, 0xFF, 8);
+        task_ptr->r_no[2] += 1;
+        task_ptr->timer = 5;
+        Clear_Flash_Init(4);
+        Menu_Common_Init();
+        Menu_Cursor_Y[0] = 0;
+        Menu_Suicide[1] = 1;
+        Menu_Suicide[2] = 0;
+        Custom_Page = 0;
+
+        for (ix = 0; ix < BgmRemix_GetStageCount(); ix++) {
+            Custom_Buff[ix] = BgmRemix_GetStageChoice(ix);
+        }
+
+        Order[0x4F] = 4;
+        Order_Timer[0x4F] = 1;
+        Order[0x4E] = 2;
+        Order_Dir[0x4E] = 2;
+        Order_Timer[0x4E] = 1;
+        Setup_Custom_Page();
+        break;
+
+    case 1:
+        Menu_Sub_case1(task_ptr);
+        break;
+
+    case 2:
+        if (FadeIn(1, 0x19, 8) != 0) {
+            task_ptr->r_no[2] += 1;
+            Suicide[3] = 0;
+        }
+
+        break;
+
+    case 3: {
+        const u16 sw = Check_Menu_Lever(0, 0);
+        const s16 last = BgmRemix_GetSoundtrackCount() - 1;
+        const s16 row = Menu_Cursor_Y[0];
+        s8* value;
+
+        MC_Move_Sub(sw, 0, CUSTOM_PAGE_ROWS, 0xFF);
+
+        if (row == CUSTOM_PAGE_ROWS) {
+            value = &Page_Nav_Value;
+
+            if (sw == 4) {
+                Page_Nav_Value = (Page_Nav_Value + 2) % 3;
+                SE_dir_cursor_move();
+            } else if (sw == 8) {
+                Page_Nav_Value = (Page_Nav_Value + 1) % 3;
+                SE_dir_cursor_move();
+            }
+        } else {
+            value = &Custom_Buff[Custom_Row_To_Theme[Custom_Page * CUSTOM_PAGE_ROWS + row]];
+
+            if (sw == 4) {
+                *value -= 1;
+
+                if (*value < 0) {
+                    *value = last;
+                }
+
+                SE_dir_cursor_move();
+            } else if (sw == 8) {
+                *value += 1;
+
+                if (*value > last) {
+                    *value = 0;
+                }
+
+                SE_dir_cursor_move();
+            }
+        }
+
+        // Shoulder buttons turn the page from anywhere on the screen
+        if (IO_Result == 0x80 || IO_Result == 0x800) {
+            SE_dir_selected();
+            Custom_Page ^= 1;
+            task_ptr->r_no[2] = 4;
+            break;
+        }
+
+        if (IO_Result == 0x40 || IO_Result == 0x400) {
+            SE_dir_selected();
+            Custom_Page ^= 1;
+            task_ptr->r_no[2] = 4;
+            break;
+        }
+
+        if (IO_Result != 0x100 && IO_Result != 0x200) {
+            break;
+        }
+
+        if (IO_Result == 0x200 || (row == CUSTOM_PAGE_ROWS && Page_Nav_Value == PAGE_NAV_EXIT)) {
+            SE_selected();
+
+            for (ix = 0; ix < BgmRemix_GetStageCount(); ix++) {
+                BgmRemix_SetStageChoice(ix, Custom_Buff[ix]);
+            }
+
+            BgmRemix_SaveCustom();
+            Apply_bgm_choice();
+
+            // Back to the sound options, where Custom was picked
+            Menu_Suicide[1] = 0;
+            Menu_Suicide[2] = 1;
+            task_ptr->r_no[1] = 12;
+            task_ptr->r_no[2] = 0;
+            task_ptr->r_no[3] = 0;
+            task_ptr->free[0] = 0;
+            break;
+        }
+
+        if (row == CUSTOM_PAGE_ROWS) {
+            SE_selected();
+            Custom_Page ^= 1;
+            task_ptr->r_no[2] = 4;
+        }
+
+        break;
+    }
+
+    // Turning a page: the rows die on this frame and the next one builds the new set
+    case 4:
+        Menu_Suicide[2] = 1;
+        task_ptr->r_no[2] += 1;
+        break;
+
+    case 5:
+        Menu_Suicide[2] = 0;
+        Menu_Cursor_Y[0] = 0;
+        Setup_Custom_Page();
+        task_ptr->r_no[2] = 3;
+        break;
+    }
+}
+
 void Sound_Test(struct _TASK* task_ptr) {
     s16 char_index;
     s16 ix;
@@ -2331,11 +3736,7 @@ void Sound_Test(struct _TASK* task_ptr) {
             Convert_Buff[3][1][0] = 1;
         }
 
-        if (sys_w.bgm_type == BGM_ARRANGED) {
-            Convert_Buff[3][1][3] = 0;
-        } else {
-            Convert_Buff[3][1][3] = 1;
-        }
+        Convert_Buff[3][1][3] = BgmRemix_GetSlotForType(sys_w.bgm_choice);
 
         Convert_Buff[3][1][7] = 1;
         Order[0x4F] = 4;
@@ -2409,7 +3810,7 @@ void Sound_Test(struct _TASK* task_ptr) {
             Convert_Buff[3][1][0] = 0;
             Convert_Buff[3][1][1] = 0xF;
             Convert_Buff[3][1][2] = 0xF;
-            Convert_Buff[3][1][3] = 0;
+            Convert_Buff[3][1][3] = BgmRemix_GetSlotForType(BGM_ARRANGED);
         }
 
         if (bgm_level != (s16)Convert_Buff[3][1][1]) {
@@ -2423,10 +3824,13 @@ void Sound_Test(struct _TASK* task_ptr) {
             setSeVolume(save_w[Present_Mode].SE_Level = Convert_Buff[3][1][2]);
         }
 
-        save_w[Present_Mode].BgmType = Convert_Buff[3][1][3];
+        // The row holds a menu position; the sound engine and the save want the BGM type. What is
+        // stored is the choice, Random included, so it survives a restart as a choice.
+        save_w[Present_Mode].BgmType = BgmRemix_GetSlotType(Convert_Buff[3][1][3]);
 
-        if (sys_w.bgm_type != Convert_Buff[3][1][3]) {
-            sys_w.bgm_type = Convert_Buff[3][1][3];
+        if (sys_w.bgm_choice != save_w[Present_Mode].BgmType) {
+            sys_w.bgm_choice = save_w[Present_Mode].BgmType;
+            Apply_bgm_choice();
             Convert_Buff[3][1][5] = 0;
             BGM_Request_Code_Check(0x41);
         }
@@ -2434,6 +3838,20 @@ void Sound_Test(struct _TASK* task_ptr) {
         Order_Dir[0x7B] = Convert_Buff[3][1][5];
         Setup_Sound_Mode(last_mode);
         Save_Game_Data();
+
+        // Confirming on a BGM Type set to Custom opens the screen that fills it in
+        if ((Menu_Cursor_Y[0] == SOUND_ITEM_BGM_TYPE) && (IO_Result == 0x100) && (sys_w.bgm_choice == BGM_CUSTOM)) {
+            SE_selected();
+            Menu_Suicide[1] = 0;
+            Menu_Suicide[2] = 1;
+            task_ptr->r_no[1] = MENU_SCREEN_CUSTOM;
+            task_ptr->r_no[2] = 0;
+            task_ptr->r_no[3] = 0;
+            task_ptr->free[0] = 0;
+            Order[0x72] = 4;
+            Order_Timer[0x72] = 4;
+            return;
+        }
 
         if (Menu_Cursor_Y[0] == 5) {
             if (IO_Result == 0x100) {
@@ -2486,6 +3904,16 @@ u16 Sound_Cursor_Sub(s16 PL_id) {
 
 const u8 Sound_Data_Max[3][6] = { { 1, 0, 0, 1, 0, 66 }, { 1, 15, 15, 1, 0, 66 }, { 0, 15, 15, 0, 0, 0 } };
 
+/// @brief Bound for a sound option, widened for the BGM type row when a remix pack is installed.
+/// @param row 0 wraps a decrement, 1 caps an increment, 2 is where an increment wraps back to.
+static s16 sound_data_max(s16 row, s16 item) {
+    if ((item == SOUND_ITEM_BGM_TYPE) && (row != 2)) {
+        return BgmRemix_GetSlotCount() - 1;
+    }
+
+    return Sound_Data_Max[row][item];
+}
+
 u16 SD_Move_Sub_LR(u16 sw) {
     u16 rnum;
     s16 max;
@@ -2501,7 +3929,7 @@ u16 SD_Move_Sub_LR(u16 sw) {
 
     switch (sw) {
     case 4:
-        max = Sound_Data_Max[0][Menu_Cursor_Y[0]];
+        max = sound_data_max(0, Menu_Cursor_Y[0]);
 
         while (1) {
             Convert_Buff[3][1][Menu_Cursor_Y[0]] -= 1;
@@ -2522,7 +3950,7 @@ u16 SD_Move_Sub_LR(u16 sw) {
         break;
 
     case 8:
-        max = Sound_Data_Max[1][Menu_Cursor_Y[0]];
+        max = sound_data_max(1, Menu_Cursor_Y[0]);
 
         while (1) {
             Convert_Buff[3][1][Menu_Cursor_Y[0]] += 1;

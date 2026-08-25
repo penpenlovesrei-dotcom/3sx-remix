@@ -13,8 +13,11 @@
 #include "sf33rd/Source/Common/PPGFile.h"
 #include "sf33rd/Source/Game/engine/workuser.h"
 #include "sf33rd/Source/Game/io/gd3rd.h"
+#include "port/video/pal_remix.h"
+#include "sf33rd/Source/Game/effect/eff64.h"
 #include "sf33rd/Source/Game/rendering/dc_ghost.h"
 #include "sf33rd/Source/Game/rendering/meta_col.h"
+#include "sf33rd/Source/Game/stage/bg.h"
 #include "sf33rd/Source/Game/sound/sound3rd.h"
 #include "sf33rd/Source/Game/system/ramcnt.h"
 
@@ -198,8 +201,25 @@ void init_trans_color_ram(s16 id, s16 key, u8 type, u16 data) {
     s32 size;
 
     switch (type) {
-    case 1:
-        plcol[id] = (COL*)Get_ramcnt_address(key);
+    case 1: {
+        // An installed set stands in for the archive entry, with the same layout. Gill is the only
+        // one carrying both banks, so he needs the whole struct where the others need half; a file
+        // shorter than that would be read past its end by the fixed offsets below.
+        s32 over_size = 0;
+        // Not Character_Buff directly: which set dresses this fighter depends on the mode the
+        // CHAR. COLOR row is in, and on what the player picked on the select screen if that mode
+        // is one of the two that ask. Character_Palette_Set is the one place that answers it.
+        const void* over = PalRemix_Character(My_char[id], Character_Palette_Set(id, My_char[id]), &over_size);
+        const s32 needed = (My_char[id] == 0) ? (s32)sizeof(COL) : (s32)sizeof(COL) / 2;
+
+        if ((over != NULL) && (over_size < needed)) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "[palette] character %d set is %d bytes, needs %d", My_char[id],
+                        over_size, needed);
+            over = NULL;
+        }
+
+        plcol[id] = (over != NULL) ? (COL*)over : (COL*)Get_ramcnt_address(key);
+
         if (My_char[id] == 0) {
             for (i = 0; i < 64; i++) {
                 ColorRAM[id * 16][i] = palConvSrcToRam(plcol[id]->col[0][Player_Color[id]][i]);
@@ -246,11 +266,29 @@ void init_trans_color_ram(s16 id, s16 key, u8 type, u16 data) {
             palUpdateGhostCP3(502, 4);
         }
         break;
+    }
 
-    case 2:
-        size = Get_size_data_ramcnt_key(key);
-        size = size / 2;
-        tradrs = (u16*)Get_ramcnt_address(key);
+    case 2: {
+        // Only the stage block is overridable. The other type 2 entries are menu and HUD palettes,
+        // told apart by where they land: a stage always goes to ColorRAM[300].
+        s32 over_size = 0;
+        const void* over =
+            (data == 0x12C) ? PalRemix_Stage(bg_w.stage, Background_Buff[bg_w.stage], &over_size) : NULL;
+
+        if (over != NULL) {
+            size = over_size / 2;
+            tradrs = (u16*)over;
+        } else {
+            size = Get_size_data_ramcnt_key(key);
+            size = size / 2;
+            tradrs = (u16*)Get_ramcnt_address(key);
+        }
+
+        // Whatever the source, it cannot be allowed to write past the end of colour RAM
+        if (size > (s32)((SDL_arraysize(ColorRAM) - data) * 64)) {
+            size = (s32)((SDL_arraysize(ColorRAM) - data) * 64);
+        }
+
         ldadrs = (u16*)&ColorRAM[data];
 
         for (i = 0; i < size; i++) {
@@ -267,6 +305,8 @@ void init_trans_color_ram(s16 id, s16 key, u8 type, u16 data) {
 
         palUpdateGhostCP3(data, size / 64);
         break;
+    }
+
     case 3: {
         COL_x1000* dadr = (COL_x1000*)Get_ramcnt_address(key);
         if (id == 2) {

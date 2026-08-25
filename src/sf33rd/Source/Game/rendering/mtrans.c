@@ -13,6 +13,7 @@
 #include "sf33rd/Source/Game/rendering/chren3rd.h"
 #include "sf33rd/Source/Game/rendering/color3rd.h"
 #include "sf33rd/Source/Game/rendering/dc_ghost.h"
+#include "port/video/tex_remix.h"
 #include "sf33rd/Source/Game/rendering/texcash.h"
 #include "sf33rd/Source/Game/rendering/texgroup.h"
 #include "sf33rd/Source/Game/system/work_sys.h"
@@ -145,6 +146,95 @@ static void search_trsptr(uintptr_t trstbl, s32 i, s32 n, s32 cods, s32 atrs, s3
             tmpptr = unused_s4 + 1;
         }
     }
+}
+
+/// @brief The box a work's chips would cover, in the work's own space, without drawing anything.
+///
+/// Replays the walk `mlt_obj_trans_cp3` makes over the tile map, keeping only the corners. A sprite
+/// here is not one picture but a scatter of chips placed by relative steps, so its extent is not
+/// recorded anywhere and can only be found by following the same steps. The box comes back in the
+/// space `mlt_obj_matrix` sets up, which is where `seqsStoreChip` puts its corners and where
+/// `draw_box` reads its own -- so anything drawn on this box lands exactly where the chips were.
+///
+/// @return `false` if the work has no usable trans data, leaving `box` untouched.
+bool mlt_obj_bounds(WORK* wk, f32 box[4]) {
+    u32* textbl;
+    u16* trsbas;
+    TileMapEntry* trsptr;
+    TEX* texptr;
+    s32 count;
+    s32 flip;
+    s32 n;
+    s32 i;
+    f32 x = 0.0f;
+    f32 y = 0.0f;
+    f32 x0;
+    f32 y0;
+    f32 x1;
+    f32 y1;
+    bool any = false;
+
+    n = wk->cg_number;
+    i = obj_group_table[n];
+
+    if (i == 0 || texgrplds[i].ok == 0) {
+        return false;
+    }
+
+    n -= texgrpdat[i].num_of_1st;
+    trsbas = (u16*)(texgrplds[i].trans_table + ((u32*)texgrplds[i].trans_table)[n]);
+    textbl = (u32*)texgrplds[i].texture_table;
+    count = *trsbas;
+    trsbas++;
+    trsptr = (TileMapEntry*)trsbas;
+    flip = flptbl[wk->cg_flip ^ wk->rl_flag];
+
+    while (count--) {
+        if (flip & 0x8000) {
+            x += trsptr->x;
+        } else {
+            x -= trsptr->x;
+        }
+
+        if (flip & 0x4000) {
+            y -= trsptr->y;
+        } else {
+            y += trsptr->y;
+        }
+
+        texptr = (TEX*)((uintptr_t)textbl + ((u32*)textbl)[trsptr->code]);
+        const f32 dw = (f32)((s32)(texptr->wh & 0xE0) >> 2);
+        const f32 dh = (f32)((texptr->wh & 0x1C) * 2);
+
+        // The corners seqsStoreChip would hand to njCalcPoint for this chip.
+        const f32 cx = x - (dw * BOOL(flip & 0x8000));
+        const f32 cy = y + (dh * BOOL(flip & 0x4000));
+
+        if (!any) {
+            x0 = cx;
+            x1 = cx + dw;
+            y0 = cy - dh;
+            y1 = cy;
+            any = true;
+        } else {
+            x0 = SDL_min(x0, cx);
+            x1 = SDL_max(x1, cx + dw);
+            y0 = SDL_min(y0, cy - dh);
+            y1 = SDL_max(y1, cy);
+        }
+
+        trsptr += 1;
+    }
+
+    if (!any) {
+        return false;
+    }
+
+    box[0] = x0;
+    box[1] = y0;
+    box[2] = x1 - x0;
+    box[3] = y1 - y0;
+    return true;
 }
 
 void mlt_obj_disp(MultiTexture* mt, WORK* wk, s32 base_y) {

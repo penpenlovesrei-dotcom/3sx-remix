@@ -6,6 +6,7 @@
 #include "sf33rd/Source/Game/effect/eff40.h"
 #include "bin2obj/char_table.h"
 #include "common.h"
+#include "sf33rd/Source/Game/effect/eff64.h"
 #include "sf33rd/Source/Game/effect/effect.h"
 #include "sf33rd/Source/Game/engine/charset.h"
 #include "sf33rd/Source/Game/engine/workuser.h"
@@ -28,7 +29,10 @@ void effect_40_move(WORK_Other* ewk) {
         return;
     }
 
-    if (ewk->master_id) {
+    if (ewk->master_id == 3) {
+        // The Custom character colours screen keeps its choice outside the save structures
+        ewk->wu.rl_waza = Page_Nav_Value;
+    } else if (ewk->master_id) {
         ewk->wu.rl_waza = save_w[1].extra_option.contents[Menu_Page_Buff][Menu_Max];
     } else {
         ewk->wu.rl_waza = system_dir[1].contents[Menu_Page_Buff][Menu_Max];
@@ -103,8 +107,9 @@ s32 effect_40_init(s16 id, s16 type, s16 char_ix, s16 sync_bg, s16 master_player
     ewk->wu.position_x = bg_w.bgw[ewk->wu.my_family - 1].wxy[0].disp.pos + Pos_Data_40[type][0];
     ewk->wu.position_y = bg_w.bgw[ewk->wu.my_family - 1].wxy[1].disp.pos + Pos_Data_40[type][1];
 
-    // Display lower when displayed on netplay menu
-    if (id == 2) {
+    // Display lower when displayed on netplay menu, and on the Custom character colours screen,
+    // whose list needs the height the stock position would take from it
+    if (id == 2 || id == 3) {
         ewk->wu.position_y -= 44;
     }
 

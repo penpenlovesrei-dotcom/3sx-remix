@@ -29,7 +29,11 @@ void effect_18_move(WORK_Other_CONN* ewk) {
     sort_push_request3(&ewk->wu);
 }
 
-s32 effect_18_init(s16 disp_index, s16 cursor_id, s16 sync_bg, s16 master_player) {
+/// @param y_base Row zero's height. The System Direction menu's own 199 leaves no room above it,
+/// which the Custom character colours screen needs for its page indicator.
+/// @param x_base Left margin. The Custom tracklist starts further left than the others, its value
+/// column having to hold soundtrack names of any length.
+s32 effect_18_init(s16 disp_index, s16 cursor_id, s16 sync_bg, s16 master_player, s16 y_base, s16 x_base) {
     WORK_Other_CONN* ewk;
     s16 ix;
 
@@ -47,6 +51,8 @@ s32 effect_18_init(s16 disp_index, s16 cursor_id, s16 sync_bg, s16 master_player
     ewk->wu.my_col_code = 428;
     ewk->wu.my_family = sync_bg + 1;
     ewk->wu.type = cursor_id;
+    ewk->wu.dir_step = y_base;
+    ewk->wu.dir_old = x_base;
     ewk->master_player = master_player;
     get_message_conn_data(ewk, 3, 0, disp_index);
     ewk->wu.my_mts = 12;
@@ -55,8 +61,8 @@ s32 effect_18_init(s16 disp_index, s16 cursor_id, s16 sync_bg, s16 master_player
 }
 
 void Setup_Pos_18(WORK_Other_CONN* ewk) {
-    ewk->wu.position_x = bg_w.bgw[ewk->wu.my_family - 1].wxy[0].disp.pos - 143;
-    ewk->wu.position_y = bg_w.bgw[ewk->wu.my_family - 1].wxy[1].disp.pos + 199 - ewk->wu.type * 18;
+    ewk->wu.position_x = bg_w.bgw[ewk->wu.my_family - 1].wxy[0].disp.pos + ewk->wu.dir_old;
+    ewk->wu.position_y = bg_w.bgw[ewk->wu.my_family - 1].wxy[1].disp.pos + ewk->wu.dir_step - ewk->wu.type * 18;
     ewk->wu.position_z = 68;
     Check_TenTen(ewk);
 }

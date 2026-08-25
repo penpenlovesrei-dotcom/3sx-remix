@@ -10,6 +10,7 @@
 #include "structs.h"
 
 #include "core/renderer.h"
+#include "port/video/tex_remix.h"
 
 #include <SDL3/SDL.h>
 
@@ -578,6 +579,7 @@ s32 ppgSetupPalChunk(Palette* pch, u8* adrs, s32 size, s32 ixNum1st, s32 num, s3
             flLogOut("ppgSetupPalChunk: Failed to acquire palette handle");
         }
 
+        TexRemix_NotePalette(pch->handle[i], bits.ptr, col_items, bits.bitdepth);
         bits.ptr = (u8*)bits.ptr + (col_items * bits.bitdepth);
     }
 
@@ -629,6 +631,10 @@ s32 ppgSetupPalChunkDir(Palette* pch, PPLFileHeader* ppl, u8* adrs, s32 ixNum1st
                 goto error_handler;
             }
 
+            // The same count the other setup uses. Deducing it from srcSize is wrong: the context is
+            // only ever sized 16 or 256 wide, so a 64-colour palette reads as 256 and every colour
+            // after the first sixteen lands on the wrong index.
+            TexRemix_NotePalette(pch->handle[i], bits.ptr, pplColorModeWidth[pch->c_mode] + 1, bits.bitdepth);
             adrs = &adrs[pch->srcSize];
         }
 
@@ -1085,7 +1091,16 @@ s32 ppgSetupTexChunk_3rd(Texture* tch, s32 ixNum, u32 attribute) {
 
     ppgChangeDataEndian(mltAdrs, mltSize, ppg->pixel & 4, ppg->formARGB == 0x8888, bits.bitdepth);
     bits.ptr = mltAdrs;
+
+    const TexPageOrigin from = {
+        .index = ixNum,
+        .first = tch->ixNum1st,
+        .entry = hnof->b16[1] & 0xFFF,
+    };
+
+    TexRemix_Substitute(&bits, &from); // May point bits at a larger page, in colour rather than indices
     hnof->b16[0] = flCreateTextureHandle(&bits, attribute);
+    TexRemix_NoteTextureHandle(hnof->b16[0]);
     ppgPushDecBuff(mltAdrs);
 
     if (hnof->b16[0] == 0) {

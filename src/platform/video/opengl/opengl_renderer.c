@@ -3,6 +3,7 @@
 #include "platform/video/opengl/opengl_renderer.h"
 #include "common.h"
 #include "port/utils.h"
+#include "port/video/canvas.h"
 #include "sf33rd/AcrSDK/ps2/flps2etc.h"
 #include "sf33rd/AcrSDK/ps2/flps2render.h"
 #include "sf33rd/AcrSDK/ps2/foundaps2.h"
@@ -495,17 +496,24 @@ static SDL_Window* OpenGLRenderer_Init(const SDLRenderBackendInitInfo* init_info
 
     // Configure canvas
 
+    // A canvas kept at the game's own size lands on window pixels whole, so it is shown point-blank
+    // the way it always was. A larger one no longer divides into the window, and picking nearest
+    // there would drop or double whole rows of an image that has real detail in it.
+    const GLint canvas_filter = (Canvas_Scale() > 1) ? GL_LINEAR : GL_NEAREST;
+
     glGenTextures(1, &canvas_color_tex);
     glBindTexture(GL_TEXTURE_2D, canvas_color_tex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 384, 224, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, canvas_filter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, canvas_filter);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, Canvas_Width(), Canvas_Height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
     glGenTextures(1, &canvas_depth_tex);
     glBindTexture(GL_TEXTURE_2D, canvas_depth_tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 384, 224, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, Canvas_Width(), Canvas_Height(), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL
+    );
 
     glGenFramebuffers(1, &canvas_fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, canvas_fbo);
@@ -632,7 +640,7 @@ static void OpenGLRenderer_RenderFrame(SDL_Rect viewport) {
     // Draw to canvas
 
     glBindFramebuffer(GL_FRAMEBUFFER, canvas_fbo);
-    glViewport(0, 0, 384, 224);
+    glViewport(0, 0, Canvas_Width(), Canvas_Height());
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

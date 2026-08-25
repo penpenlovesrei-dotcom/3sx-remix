@@ -6,7 +6,9 @@
 #include "sf33rd/Source/Game/sound/sound3rd.h"
 #include "common.h"
 #include "main.h"
+#include "port/config/config.h"
 #include "port/sound/adx.h"
+#include "port/sound/bgm_remix.h"
 #include "sf33rd/AcrSDK/MiddleWare/PS2/CapSndEng/cse.h"
 #include "sf33rd/AcrSDK/MiddleWare/PS2/CapSndEng/emlMemMap.h"
 #include "sf33rd/AcrSDK/MiddleWare/PS2/CapSndEng/emlSndDrv.h"
@@ -36,6 +38,8 @@ s16 bgm_fade_ix;
 s16 bgm_half_down;
 s16 current_bgm;
 s16 bgm_seamless_always;
+/// Kept in step with bgm_vol_mix, so the correction always matches the track it corrects
+static s16 bgm_vol_trim;
 BGMFade bgm_fade;
 BGMExecution bgm_exe;
 BGMRequest bgm_req;
@@ -113,8 +117,16 @@ s8* csePHDDataTable[21] = { PHD_SE,   PHD_PL00, PHD_PL01, PHD_PL02, PHD_PL03, PH
 
 u8 adx_NowOnMemoryType = 0xFF;
 
-BGMTableEntry* bgm_table[2] = { bgm_tableDC, bgm_tableAC };
-BGMExecutionData* bgm_exdata[2] = { bgm_exdataDC, bgm_exdataAC };
+// Every remix slot reuses the arranged tables: volumes, seamless layout and AFS file numbers all
+// stay valid, and any code a pack doesn't override plays the arranged track unchanged.
+// The last slot is BGM_RANDOM, which resolves to a real soundtrack before anything reads these --
+// it is filled in only so no index can land on a null table.
+BGMTableEntry* bgm_table[BGM_TYPE_COUNT] = { bgm_tableDC, bgm_tableAC, bgm_tableDC, bgm_tableDC,
+                                             bgm_tableDC, bgm_tableDC, bgm_tableDC, bgm_tableDC,
+                                             bgm_tableDC, bgm_tableDC, bgm_tableDC, bgm_tableDC };
+BGMExecutionData* bgm_exdata[BGM_TYPE_COUNT] = { bgm_exdataDC, bgm_exdataAC, bgm_exdataDC, bgm_exdataDC,
+                                                 bgm_exdataDC, bgm_exdataDC, bgm_exdataDC, bgm_exdataDC,
+                                                 bgm_exdataDC, bgm_exdataDC, bgm_exdataDC, bgm_exdataDC };
 
 // Forward decls
 
@@ -131,6 +143,86 @@ u16 remake_sound_code_for_DC(u16 code, SoundPatchConfig* rmcode);
 
 extern const s16 adx_volume[128];
 
+/// Path of the remix track overriding `code`, or NULL when the regular track should play.
+static const char* bgm_remix_path(s16 code) {
+    if (sys_w.bgm_type < BGM_REMIX) {
+        return NULL;
+    }
+
+    return BgmRemix_GetTrackPath(sys_w.bgm_type - BGM_REMIX, code);
+}
+
+void Resolve_bgm_type(u16 base_code) {
+    switch (sys_w.bgm_choice) {
+    case BGM_RANDOM:
+        sys_w.bgm_type = (BgmType)BgmRemix_PickRandomType(sys_w.bgm_type);
+        break;
+
+    case BGM_CUSTOM: {
+        // Whichever mode is being played, the game asks for the stage's theme -- arcade picks the
+        // stage from the opponent, versus from what the player chose -- so keying off that code
+        // gives "the music follows the scenery" without either mode needing a special case.
+        const int assigned = BgmRemix_GetCustomType(base_code);
+        sys_w.bgm_type = (assigned >= 0) ? (BgmType)assigned : BGM_ARRANGED;
+        break;
+    }
+
+    default:
+        sys_w.bgm_type = sys_w.bgm_choice;
+        break;
+    }
+}
+
+void Apply_bgm_choice() {
+    // No stage in hand yet, so a Custom setting rests on the arranged soundtrack until a fight
+    // names one. This is what the sound test and the menus play.
+    Resolve_bgm_type(0);
+}
+
+/// @brief Level correction to apply while `code` plays, in tenths of a dB.
+///
+/// The game's volume tables are calibrated for how loudly Capcom mastered each of its own
+/// soundtracks, so a pack mastered to a different reference needs correcting on top of them. Only
+/// the tracks the pack supplies do: a code it leaves uncovered plays the game's own file, which
+/// the tables already have right.
+static s16 bgm_remix_trim_for(s16 code) {
+    if (sys_w.bgm_type < BGM_REMIX) {
+        return 0;
+    }
+
+    if (bgm_remix_path(code) == NULL) {
+        return 0;
+    }
+
+    return (s16)BgmRemix_GetVolumeTrim(sys_w.bgm_type - BGM_REMIX);
+}
+
+/// @brief Whether `code` resolves to the remix file that is already streaming.
+///
+/// A pack without per-round mixes maps every round of a stage onto one file. Recognising that
+/// lets the round transition leave the stream alone, so the track plays straight through instead
+/// of restarting from the top. The volume ramp the game applies at round start still lands on it.
+static bool bgm_remix_continues(s16 code) {
+    const char* path = bgm_remix_path(code);
+    const char* playing = ADX_GetCurrentFilePath();
+
+    return (path != NULL) && (playing != NULL) && (SDL_strcmp(path, playing) == 0) && (adx_now_playing() != 0);
+}
+
+/// A remix track is a single looping file, so it can't use the segmented seamless playback the
+/// arranged tracks rely on during a match. Codes the pack doesn't override keep using it.
+static s32 bgm_use_seamless(s16 code) {
+    if (!(bgm_table[sys_w.bgm_type][code].data & 0x4000)) {
+        return 0;
+    }
+
+    if (bgm_separate_check() == 0) {
+        return 0;
+    }
+
+    return bgm_remix_path(code) == NULL;
+}
+
 // Patch the pitch adjustment for voice lines to match arcade
 static void patch_tsb() {
 	TSB_SE[156].pitch = 100; // code: 140 "KO"
@@ -143,16 +235,47 @@ static void patch_tsb() {
 	TSB_SE[180].pitch = 100; // code: 164 "Choose your path!" 
 }
 
+/// @brief Point each remix slot at the tables its pack follows.
+///
+/// A pack declaring `!structure arcade` reads the arcade tables, so the sound test skips the
+/// third-mix codes the arcade never had and the per-round rotation comes from the arcade selector
+/// rather than from the mix 1 fallback.
+static void setup_remix_tables() {
+    for (int p = 0; p < BGM_REMIX_PACKS_MAX; p++) {
+        if (BgmRemix_UsesArcadeTables(p)) {
+            bgm_table[BGM_REMIX + p] = bgm_tableAC;
+            bgm_exdata[BGM_REMIX + p] = bgm_exdataAC;
+            bgm_selector[BGM_REMIX + p] = bgm_selectorAC;
+        }
+    }
+}
+
+/// A starting level from the config, on the sound menu's 0-15 scale. See CFG_KEY_BGM_LEVEL.
+static s16 config_sound_level(const char* key) {
+    const int level = Config_GetInt(key);
+
+    if (level < 0 || level > 15) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "%s = %d is outside 0-15, using Standard", key, level);
+        return 15;
+    }
+
+    return (s16)level;
+}
+
 void Init_sound_system() {
 	patch_tsb();
+    setup_remix_tables();
 
-    se_level = 15;
-    bgm_level = 15;
+    // Out-of-range values would be read straight into the volume maths, so they fall back to
+    // Standard rather than being clamped: a level of 40 is a typo, not a request to be loud.
+    se_level = config_sound_level(CFG_KEY_SE_LEVEL);
+    bgm_level = config_sound_level(CFG_KEY_BGM_LEVEL);
     bgm_half_down = 0;
     current_bgm = 0;
     bgm_seamless_always = 0;
     sys_w.sound_mode = 0;
     sys_w.bgm_type = BGM_ARRANGED;
+    sys_w.bgm_choice = BGM_ARRANGED;
     ADX_Init();
     system_init_level |= 2;
     cseInitSndDrv();
@@ -184,6 +307,13 @@ void checkAdxFileLoaded() {
         return;
     }
 
+    if (sys_w.bgm_type == BGM_REMIX) {
+        // There's no preloaded PPG bank for remixes. Leave whatever is already resident alone --
+        // the VS and Emergency Select themes stream from disk (or from the AFS, when the pack
+        // doesn't override them) instead. Without this the loop below would never terminate.
+        return;
+    }
+
     if (sys_w.bgm_type == BGM_ARRANGED) {
         fnum = 89;
     } else {
@@ -202,6 +332,8 @@ void checkAdxFileLoaded() {
 }
 
 void Exit_sound_system() {
+    BgmRemix_Destroy();
+
     if (system_init_level & 2) {
         ADX_Exit();
         system_init_level &= ~2;
@@ -341,6 +473,7 @@ void BGM_Server() {
 
     if (bgm_exe.code != 0) {
         bgm_vol_mix = bgm_level * bgm_table[sys_w.bgm_type][bgm_exe.code].vol / 15;
+        bgm_vol_trim = bgm_remix_trim_for(bgm_exe.code);
     }
 
     switch (bgm_exe.kind) {
@@ -354,7 +487,7 @@ void BGM_Server() {
     case 2:
         ADX_Stop();
 
-        if ((bgm_table[sys_w.bgm_type][bgm_exe.code].data & 0x4000) && (bgm_separate_check() != 0)) {
+        if (bgm_use_seamless(bgm_exe.code)) {
             bgm_exe.exIndex = bgm_table[sys_w.bgm_type][bgm_exe.code].data & 0xFF;
             bgm_exe.exEntry = bgm_exdata[sys_w.bgm_type][bgm_exe.exIndex].numStart;
             bgm_volume_setup(0);
@@ -400,7 +533,7 @@ void BGM_Server() {
         break;
 
     case 4:
-        if ((bgm_table[sys_w.bgm_type][bgm_exe.code].data & 0x4000) && (bgm_separate_check() != 0)) {
+        if (bgm_use_seamless(bgm_exe.code)) {
             if ((bgm_exe.nowSeamless == 0) || (bgm_exe.code != current_bgm)) {
                 bgm_exe.exIndex = bgm_table[sys_w.bgm_type][bgm_exe.code].data & 0xFF;
                 bgm_exe.exEntry = bgm_exdata[sys_w.bgm_type][bgm_exe.exIndex].numStart;
@@ -418,7 +551,7 @@ void BGM_Server() {
                     ADX_StartSeamless();
                 }
             }
-        } else {
+        } else if (!bgm_remix_continues(bgm_exe.code)) {
             bgm_seamless_clear();
             bgm_volume_setup(0);
 
@@ -494,7 +627,7 @@ void BGM_Server() {
             bgm_fade.in.dex.low = -0x8000;
             bgm_fade.speed = bgm_fade.in.cal / bgm_exe.data;
 
-            if ((bgm_table[sys_w.bgm_type][bgm_exe.code].data & 0x4000) && (bgm_separate_check() != 0)) {
+            if (bgm_use_seamless(bgm_exe.code)) {
                 if ((bgm_exe.nowSeamless == 0) || (bgm_exe.code != current_bgm)) {
                     bgm_exe.exIndex = bgm_table[sys_w.bgm_type][bgm_exe.code].data & 0xFF;
                     bgm_exe.exEntry = bgm_exdata[sys_w.bgm_type][bgm_exe.exIndex].numStart;
@@ -511,7 +644,7 @@ void BGM_Server() {
                         ADX_StartSeamless();
                     }
                 }
-            } else {
+            } else if (!bgm_remix_continues(bgm_exe.code)) {
                 bgm_seamless_clear();
 
                 if (adx_NowOnMemoryType == sys_w.bgm_type) {
@@ -573,6 +706,7 @@ void BGM_Server() {
 
     case 7:
         bgm_vol_mix = bgm_level * bgm_table[sys_w.bgm_type][current_bgm].vol / 15;
+        bgm_vol_trim = bgm_remix_trim_for(current_bgm);
         bgm_volume_setup(bgm_exe.data);
         bgm_exe.kind = 0;
         break;
@@ -603,10 +737,20 @@ void setupAlwaysSeamlessFlag(s16 flag) {
 
 void bgm_play_request(s32 filenum, s32 flag) {
     if (flag == 0) {
+        // Seamless entry: `filenum` is a raw AFS file number, never overridden by a remix pack
         ADX_EntryAfs(filenum);
-    } else {
-        ADX_StartAfs(bgm_table[sys_w.bgm_type][filenum].fnum);
+        return;
     }
+
+    // Whole-track playback: `filenum` is a BGM code, so a remix pack may take over
+    const char* remix_path = bgm_remix_path(filenum);
+
+    if (remix_path != NULL) {
+        ADX_StartFile(remix_path);
+        return;
+    }
+
+    ADX_StartAfs(bgm_table[sys_w.bgm_type][filenum].fnum);
 }
 
 void bgm_seamless_clear() {
@@ -639,7 +783,8 @@ void bgm_volume_setup(s16 data) {
         bgm_vol_now = 0;
     }
 
-    ADX_SetOutVol(adx_volume[bgm_vol_now]);
+    // adx_volume holds tenths of a dB, and so does a pack's trim, so the correction is a plain sum
+    ADX_SetOutVol(adx_volume[bgm_vol_now] + bgm_vol_trim);
 }
 
 s32 adx_now_playing() {
@@ -933,3 +1078,5 @@ const s16 adx_volume[128] = { -999, -608, -576, -544, -512, -480, -448, -416, -4
                               -37,  -36,  -35,  -34,  -33,  -32,  -31,  -30,  -29,  -28,  -27,  -26,  -25,  -24,  -23,
                               -22,  -21,  -20,  -19,  -18,  -17,  -16,  -15,  -14,  -13,  -12,  -11,  -10,  -9,   -8,
                               -7,   -6,   -5,   -4,   -3,   -2,   -1,   0 };
+
+

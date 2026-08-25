@@ -11,6 +11,11 @@ extern SoundEvent* cseTSBDataTable[];
 extern s8* csePHDDataTable[];
 
 void Init_sound_system();
+/// @brief Settle which soundtrack plays the fight ahead, when the choice isn't one already.
+/// @param base_code The stage theme's mix 1 code, which Custom keys on. 0 outside a fight.
+void Resolve_bgm_type(u16 base_code);
+/// Put the player's BGM Type choice into effect, drawing one if that choice is Random
+void Apply_bgm_choice();
 s32 sndCheckVTransStatus(s32 type);
 void sndInitialLoad();
 void checkAdxFileLoaded();

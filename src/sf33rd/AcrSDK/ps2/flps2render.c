@@ -5,6 +5,7 @@
 #include "sf33rd/AcrSDK/ps2/foundaps2.h"
 
 #include "core/renderer.h"
+#include "port/video/tex_remix.h"
 
 void flPS2SetClearColor(u32 col);
 s32 flPS2SendTextureRegister(u32 th);
@@ -20,6 +21,11 @@ s32 flSetRenderState(enum _FLSETRENDERSTATE func, u32 value) {
         th = value;
 
         if (func == FLRENDER_TEXSTAGE0) {
+            // Every drawn thing passes through here, whatever drew it, and this value is the one
+            // place a page and the palette it is being read through are named together. The dump
+            // needs exactly that: a page holds indices and nothing else, so recovering the picture
+            // means catching the pairing as it happens.
+            TexRemix_NotePair(th);
             flPS2SendTextureRegister(th);
         }
 

@@ -4,6 +4,7 @@
 #include "common.h"
 #include "port/config/config.h"
 #include "port/utils.h"
+#include "port/video/canvas.h"
 #include "sf33rd/AcrSDK/ps2/flps2etc.h"
 #include "sf33rd/AcrSDK/ps2/foundaps2.h"
 
@@ -16,8 +17,6 @@
 #include <libgraph.h>
 
 #define QUADS_MAX 1024
-#define CANVAS_WIDTH 384
-#define CANVAS_HEIGHT 224
 #define CANVAS_TEXTURE_FORMAT SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM
 
 typedef enum _PaletteType : Uint8 {
@@ -101,6 +100,7 @@ static SDL_GPUGraphicsPipeline* palette_8_pipeline = NULL;
 static SDL_GPUGraphicsPipeline* screen_pipeline = NULL;
 static SDL_GPUGraphicsPipeline* scanline_pipeline = NULL;
 static SDL_GPUSampler* sampler = NULL;
+static SDL_GPUSampler* screen_sampler = NULL;
 static SDL_GPUTexture* canvas_texture = NULL;
 static SDL_GPUTexture* depth_texture = NULL;
 static SDL_GPUTextureFormat depth_texture_format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT;
@@ -615,8 +615,8 @@ static SDL_Window* SDLGPURenderer_Init(const SDLRenderBackendInitInfo* init_info
             .type = SDL_GPU_TEXTURETYPE_2D,
             .format = CANVAS_TEXTURE_FORMAT,
             .usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER,
-            .width = CANVAS_WIDTH,
-            .height = CANVAS_HEIGHT,
+            .width = Canvas_Width(),
+            .height = Canvas_Height(),
             .layer_count_or_depth = 1,
             .num_levels = 1,
         }
@@ -628,8 +628,8 @@ static SDL_Window* SDLGPURenderer_Init(const SDLRenderBackendInitInfo* init_info
             .type = SDL_GPU_TEXTURETYPE_2D,
             .format = depth_texture_format,
             .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
-            .width = CANVAS_WIDTH,
-            .height = CANVAS_HEIGHT,
+            .width = Canvas_Width(),
+            .height = Canvas_Height(),
             .layer_count_or_depth = 1,
             .num_levels = 1,
         }
@@ -750,6 +750,24 @@ static SDL_Window* SDLGPURenderer_Init(const SDLRenderBackendInitInfo* init_info
         }
     );
 
+    // Only the canvas is read with this one. At the game's own size it divides into the window
+    // whole, so it stays point-blank; a larger canvas does not, and nearest would then eat rows out
+    // of a picture that has detail to lose. The textures the game draws with keep the sampler above
+    // whatever the canvas is: they are pixel art and must never be smeared.
+    const SDL_GPUFilter screen_filter = (Canvas_Scale() > 1) ? SDL_GPU_FILTER_LINEAR : SDL_GPU_FILTER_NEAREST;
+
+    screen_sampler = SDL_CreateGPUSampler(
+        device,
+        &(SDL_GPUSamplerCreateInfo) {
+            .min_filter = screen_filter,
+            .mag_filter = screen_filter,
+            .mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
+            .address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+            .address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+            .address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+        }
+    );
+
     // Upload up-front data
 
     SDL_GPUCommandBuffer* upload_cmd_buf = SDL_AcquireGPUCommandBuffer(device);
@@ -818,6 +836,7 @@ static void SDLGPURenderer_Quit() {
     SDL_ReleaseGPUBuffer(device, index_buffer);
     SDL_ReleaseGPUBuffer(device, screen_vertex_buffer);
     SDL_ReleaseGPUSampler(device, sampler);
+    SDL_ReleaseGPUSampler(device, screen_sampler);
     SDL_ReleaseGPUTexture(device, canvas_texture);
     SDL_ReleaseGPUTexture(device, depth_texture);
 
@@ -1131,7 +1150,7 @@ static void SDLGPURenderer_RenderFrame(SDL_Rect viewport) {
             (SDL_GPUTextureSamplerBinding[]) {
                 {
                     .texture = canvas_texture,
-                    .sampler = sampler,
+                    .sampler = screen_sampler,
                 },
             },
             1

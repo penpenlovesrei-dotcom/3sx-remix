@@ -15,6 +15,8 @@
 #include "sf33rd/Source/Game/screen/sel_data.h"
 #include "sf33rd/Source/Game/stage/bg.h"
 
+#include <SDL3/SDL.h>
+
 void EFF66_WAIT(WORK_Other* ewk);
 void EFF66_SUSPEND(WORK_Other* ewk);
 void EFF66_SLIDE_IN(WORK_Other* ewk);
@@ -233,14 +235,19 @@ void Setup_Pos_66(WORK_Other* ewk) {
     set_char_move_init2(&ewk->wu, 0, ewk->wu.char_index, ewk->wu.dir_step + 1, 0);
 }
 
+s16 effect_66_last_work = -1;
+
 s32 effect_66_init(s16 order_index, s16 id, s16 master_player, s16 target_bg, s16 char_ix, s16 char_ix2, s16 option) {
     WORK_Other* ewk;
     s16 ix;
     s16 cg_type;
 
     if ((ix = pull_effect_work(4)) == -1) {
+        effect_66_last_work = -1;
         return -1;
     }
+
+    effect_66_last_work = ix;
 
     ewk = (WORK_Other*)frw[ix];
     ewk->wu.be_flag = 1;

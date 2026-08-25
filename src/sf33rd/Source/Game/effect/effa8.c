@@ -5,6 +5,7 @@
 
 #include "sf33rd/Source/Game/effect/effa8.h"
 #include "common.h"
+#include "port/sound/bgm_remix.h"
 #include "sf33rd/Source/Game/effect/effect.h"
 #include "sf33rd/Source/Game/engine/workuser.h"
 #include "sf33rd/Source/Game/rendering/aboutspr.h"
@@ -157,7 +158,32 @@ const s8* Letter_Data_A8AC[69] = { "-PLAY(  )",
                                    "50. Player Select -LET'S GET IT ON(VERSUS)-",
                                    "51. Capcom Logo" };
 
-const s8** Letter_Data_A8[2] = { Letter_Data_A8DC, Letter_Data_A8AC };
+// Remix slots fall back to the arranged labels for any code their pack doesn't name
+const s8** Letter_Data_A8[BGM_TYPE_COUNT] = { Letter_Data_A8DC, Letter_Data_A8AC, Letter_Data_A8DC, Letter_Data_A8DC,
+                                              Letter_Data_A8DC, Letter_Data_A8DC, Letter_Data_A8DC, Letter_Data_A8DC,
+                                              Letter_Data_A8DC, Letter_Data_A8DC, Letter_Data_A8DC, Letter_Data_A8DC };
+
+/// @brief Sound test label for a row of the track list.
+/// @param index 0 and 1 are the PLAY/STOP headers; from 2 up it's BGM code `index - 1`.
+static const s8* letter_data_A8_at(s16 index) {
+    if (sys_w.bgm_type >= BGM_REMIX) {
+        const s16 pack = sys_w.bgm_type - BGM_REMIX;
+
+        if (index >= 2) {
+            const char* name = BgmRemix_GetTrackName(pack, index - 1);
+
+            if (name != NULL) {
+                return (const s8*)name;
+            }
+        }
+
+        // An arcade-layout pack lists the arcade track names, blanks included, so the rows line up
+        // with the codes that pack actually covers
+        return BgmRemix_UsesArcadeTables(pack) ? Letter_Data_A8AC[index] : Letter_Data_A8DC[index];
+    }
+
+    return Letter_Data_A8[sys_w.bgm_type][index];
+}
 
 void effect_A8_move(WORK_Other_CONN* ewk) {
     s16 ix;
@@ -258,7 +284,7 @@ void Setup_A8_Sub(WORK_Other_CONN* ewk) {
         offset_x = 14;
     }
 
-    ptr = (u8*)Letter_Data_A8[sys_w.bgm_type][Order_Dir[ewk->wu.dir_old] + ewk->master_id];
+    ptr = (u8*)letter_data_A8_at(Order_Dir[ewk->wu.dir_old] + ewk->master_id);
     ix = 0;
     x = 0;
 
@@ -280,3 +306,4 @@ void Setup_A8_Sub(WORK_Other_CONN* ewk) {
 
     ewk->num_of_conn = ix;
 }
+
