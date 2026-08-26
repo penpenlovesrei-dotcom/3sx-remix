@@ -68,6 +68,9 @@ Language Get_Default_Language() {
         if (SDL_strcmp(locales[i]->language, "ja") == 0) {
             language = LANG_JAPANESE;
             break;
+        } else if (SDL_strcmp(locales[i]->language, "fr") == 0) {
+            language = LANG_FRENCH;
+            break;
         } else if (SDL_strcmp(locales[i]->language, "en") == 0) {
             language = LANG_ENGLISH;
             break;

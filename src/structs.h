@@ -30,9 +30,12 @@ typedef struct {
 typedef enum Language : u8 {
     LANG_ENGLISH,
     LANG_JAPANESE,
+    LANG_FRENCH,
+    LANG_COUNT,
 } Language;
 
-#define Language_Toggle(lang) ((lang) == LANG_ENGLISH ? LANG_JAPANESE : LANG_ENGLISH)
+/// Cycle plutot que bascule : les deux sens du menu appellent la meme macro, comme avant.
+#define Language_Toggle(lang) ((Language)(((lang) + 1) % LANG_COUNT))
 
 typedef struct {
     FMS_FRAME fmsFrame;

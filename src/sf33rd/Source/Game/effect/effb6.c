@@ -7,7 +7,9 @@
 #include "common.h"
 #include "sf33rd/Source/Game/debug/OTESTDAT.h"
 #include "sf33rd/Source/Game/effect/effect.h"
+#include "main.h"
 #include "sf33rd/Source/Game/message/en/msgtable_en.h"
+#include "sf33rd/Source/Game/message/fr/msgtable_fr.h"
 #include "sf33rd/Source/Game/rendering/aboutspr.h"
 
 #include <string.h>
@@ -85,16 +87,22 @@ const s8* src_han_alpha[128] = {
     "\x5E\x5F", "\x5E\x5F"
 };
 
+// Lettres latines accentuees. Les jetons sont du code, pas de la donnee : seul l'indice
+// compte, il designe l'objet j + 256 + 0x7F30. Les tetes d'origine etaient % ) ( , et
+// elles figurent dans les textes anglais : "(ALEX)" se serait mis a commencer par un A
+// accent grave. Elles ont donc ete remplacees par des octets qu'aucun texte n'emploie,
+// verifie sur les 58 fichiers de personnages plus msgsysdir, msgextra et msgmenu :
+//   ` grave   * aigu   ^ circonflexe   = trema   ~ tilde   ; cedille
 const s8* src_han_alpha2[128] = {
     "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F",
     "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F",
-    "\x5E\x5F", "\x5E\x5F", "\x25\x41", "\x29\x41", "\x28\x41", "\x5E\x41", "\x5E\x5F", "\x7E\x41", "\x5E\x5F",
-    "\x2C\x43", "\x25\x45", "\x29\x45", "\x28\x45", "\x5E\x45", "\x25\x49", "\x29\x49", "\x28\x49", "\x5E\x49",
-    "\x5E\x5F", "\x7E\x4E", "\x25\x4F", "\x29\x4F", "\x28\x4F", "\x5E\x4F", "\x7E\x4F", "\x5E\x5F", "\x25\x55",
-    "\x29\x55", "\x28\x55", "\x5E\x55", "\x5E\x5F", "\x25\x61", "\x29\x61", "\x28\x61", "\x5E\x61", "\x5E\x5F",
-    "\x7E\x61", "\x5E\x5F", "\x2C\x63", "\x25\x65", "\x29\x65", "\x28\x65", "\x5E\x65", "\x25\x69", "\x29\x69",
-    "\x28\x69", "\x5E\x69", "\x5E\x5F", "\x7E\x6E", "\x5E\x5F", "\x25\x6F", "\x29\x6F", "\x28\x6F", "\x5E\x6F",
-    "\x7E\x6F", "\x5E\x5F", "\x25\x75", "\x29\x75", "\x28\x75", "\x5E\x75", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F",
+    "\x5E\x5F", "\x5E\x5F", "\x3D\x41", "\x2A\x41", "\x60\x41", "\x5E\x41", "\x5E\x5F", "\x7E\x41", "\x5E\x5F",
+    "\x3B\x43", "\x3D\x45", "\x2A\x45", "\x60\x45", "\x5E\x45", "\x3D\x49", "\x2A\x49", "\x60\x49", "\x5E\x49",
+    "\x5E\x5F", "\x7E\x4E", "\x3D\x4F", "\x2A\x4F", "\x60\x4F", "\x5E\x4F", "\x7E\x4F", "\x5E\x5F", "\x3D\x55",
+    "\x2A\x55", "\x60\x55", "\x5E\x55", "\x5E\x5F", "\x3D\x61", "\x2A\x61", "\x60\x61", "\x5E\x61", "\x5E\x5F",
+    "\x7E\x61", "\x5E\x5F", "\x3B\x63", "\x3D\x65", "\x2A\x65", "\x60\x65", "\x5E\x65", "\x3D\x69", "\x2A\x69",
+    "\x60\x69", "\x5E\x69", "\x5E\x5F", "\x7E\x6E", "\x5E\x5F", "\x3D\x6F", "\x2A\x6F", "\x60\x6F", "\x5E\x6F",
+    "\x7E\x6F", "\x5E\x5F", "\x3D\x75", "\x2A\x75", "\x60\x75", "\x5E\x75", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F",
     "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F",
     "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F",
     "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F", "\x5E\x5F",
@@ -303,6 +311,11 @@ const s8* src_zen_kan7[128] = {
 
 MessageTable** mess_tables[6] = { pl_mes_tbl, pl_tlk_tbl, pl_end_tbl, msgSysDirTbl, msgExtraTbl, msgMenuTbl };
 
+/// Seuls les trois premiers jeux sont traduits : citations, dialogues d'avant-combat et
+/// fins. Les tables systeme, extra et menu restent celles de l'anglais.
+MessageTable** mess_tables_fr[6] = { pl_mes_tbl_fr, pl_tlk_tbl_fr,  pl_end_tbl_fr,
+                                     msgSysDirTbl,  msgExtraTbl,    msgMenuTbl };
+
 const s8** han_adrs[3] = { src_han_kata, src_han_alpha, src_han_alpha2 };
 
 const s8** zen_adrs[11] = { src_zen_comm, src_zen_hira, src_zen_kata, src_zen_kan0, src_zen_kan1, src_zen_kan2,
@@ -385,8 +398,10 @@ void get_message_conn_data(WORK_Other_CONN* ewk, s16 kind, s16 pl, s16 msg) {
         return;
     }
 
-    msghead = (u8**)mess_tables[kind][pl]->msgAdr[msg];
-    msgline = mess_tables[kind][pl]->msgNum[msg];
+    MessageTable*** tables = (mpp_w.language == LANG_FRENCH) ? mess_tables_fr : mess_tables;
+
+    msghead = (u8**)tables[kind][pl]->msgAdr[msg];
+    msgline = tables[kind][pl]->msgNum[msg];
 
     for (i = 0; i < msgline; i++) {
         for (msgtbl = msghead[i]; *msgtbl; msgtbl += bytes) {
@@ -477,20 +492,37 @@ s32 msgConvertObjNum(u8* moji, s32* spc, s32* hz, u16* num, u8 hzSel) {
         goto three;
     }
 
-    if (moji[0] == 0x5E) {
+    if (moji[0] == ' ') {
+        goto one;
+    }
+
+    // Un jeton de deux octets d'abord, sur les trois tables : `^D` du jeu d'origine et les
+    // lettres accentuees de src_han_alpha2. Une entree d'un seul caractere ne peut pas
+    // egaler une chaine de deux, donc rien ne se confond. Si la paire n'existe dans aucune
+    // table on relit l'octet seul, ce qui laisse les textes anglais inchanges : aucune de
+    // leurs paires ne figure dans src_han_alpha2.
+    if (moji[1] != 0) {
         tmpstr[0] = moji[0];
         tmpstr[1] = moji[1];
         tmpstr[2] = 0;
-        rnum = 2;
-    } else {
-        tmpstr[0] = moji[0];
-        tmpstr[1] = 0;
-        rnum = 1;
+
+        for (i = 0; i < 3; i++) {
+            for (j = 0; j < 128; j++) {
+                if (strcmp(&tmpstr[0], han_adrs[i][j]) != 0) {
+                    continue;
+                }
+
+                *hz = 0;
+                *spc = 0;
+                *num = j + (i * 128) + 0x7F30;
+                return 2;
+            }
+        }
     }
 
-    if (tmpstr[0] == ' ') {
-        goto one;
-    }
+    tmpstr[0] = moji[0];
+    tmpstr[1] = 0;
+    rnum = 1;
 
     for (i = 0; i < 2; i++) {
         for (j = 0; j < 128; j++) {
