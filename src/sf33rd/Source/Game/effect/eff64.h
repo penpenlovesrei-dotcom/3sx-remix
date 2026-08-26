@@ -42,15 +42,9 @@
 ///
 /// Not a set of its own — it is the fourth stop of the Start button's cycle, and it defers rather
 /// than deciding, so that the per-fighter screen keeps working underneath the per-player choice.
-/// Sits past the four real sets so it can never collide with one.
-#define PAL_SET_PER_CHARACTER 4
-
-/// @brief The colour editor's own palette, as a stop on the Start button's cycle.
-///
-/// Nothing behind it yet: the editor can change a palette but cannot save one, so there is no set
-/// on disk for this to name. It cycles into view greyed rather than being hidden, which is how
-/// every other unfinished value in these menus behaves — the row shows where it is going.
-#define PAL_SET_COLOR_EDIT 5
+/// Sits past the real sets — PAL_SET_COLOR_EDIT included, which is one — so it can never collide
+/// with one.
+#define PAL_SET_PER_CHARACTER 5
 
 /// Row of the Display page holding that mode. Named here, beside the buffer it indexes, because
 /// the setting is read from the select screen and from the palette loader — both a long way from

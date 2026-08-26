@@ -58,6 +58,16 @@ u16 colPalBuffDC[1024];
 u16 ColorRAM[512][64];
 Col3rd_W col3rd_w;
 COL* plcol[2];
+
+/// @brief A whole player palette entry, kept for the colour editor to write back out.
+///
+/// Neither of the two obvious sources will do. ColorRAM holds eleven of the twenty-eight rows —
+/// the coloris in play, the six effect palettes and the four the portrait uses — so a file rebuilt
+/// from it would lose the other fifteen coloris outright. And plcol points into the archive buffer,
+/// whose key is released a few lines after it is read, so it is only good for the length of the
+/// call that set it.
+static COL player_source[2];
+static s32 player_source_size[2];
 PixelFormat palFormRam;
 PixelFormat palFormSrc;
 s32 palFormConv;
@@ -219,6 +229,13 @@ void init_trans_color_ram(s16 id, s16 key, u8 type, u16 data) {
         }
 
         plcol[id] = (over != NULL) ? (COL*)over : (COL*)Get_ramcnt_address(key);
+
+        // The archive's own entry, deliberately, and not whatever plcol ended up pointing at. An
+        // installed set is a file the colour editor can read again whenever it likes; the game's
+        // own palettes are readable exactly here, between the key being pulled and released a few
+        // lines down, and nowhere else. So this keeps the one that cannot be fetched twice.
+        SDL_memcpy(&player_source[id], (const void*)Get_ramcnt_address(key), (size_t)needed);
+        player_source_size[id] = needed;
 
         if (My_char[id] == 0) {
             for (i = 0; i < 64; i++) {
@@ -464,6 +481,15 @@ void palCopyGhostDC(s32 ofs, s32 cnt, void* data) {
     col3rd_w.upBits = col3rd_w.upBits | (1 << (ofs / 64));
 }
 
+const void* palGetPlayerSource(s16 id, s32* size) {
+    if ((id < 0) || (id > 1) || (player_source_size[id] == 0)) {
+        return NULL;
+    }
+
+    *size = player_source_size[id];
+    return &player_source[id];
+}
+
 u16 palConvSrcToRam(u16 col) {
     u8 cA;
     u8 cR;
@@ -479,6 +505,26 @@ u16 palConvSrcToRam(u16 col) {
     cG = palFormSrc.gm & (col >> palFormSrc.gs);
     cB = palFormSrc.bm & (col >> palFormSrc.bs);
     return (cA << palFormRam.as) | (cR << palFormRam.rs) | (cG << palFormRam.gs) | (cB << palFormRam.bs);
+}
+
+u16 palConvRamToSrc(u16 col) {
+    u8 cA;
+    u8 cR;
+    u8 cG;
+    u8 cB;
+
+    if (palFormConv == 0) {
+        return col;
+    }
+
+    // The same function with the two descriptions exchanged. They differ only in where red and
+    // blue sit, so this is its own inverse in practice — written out rather than assumed, because
+    // the day one of the two formats changes, an assumed symmetry is what silently stops holding.
+    cA = palFormRam.am & (col >> palFormRam.as);
+    cR = palFormRam.rm & (col >> palFormRam.rs);
+    cG = palFormRam.gm & (col >> palFormRam.gs);
+    cB = palFormRam.bm & (col >> palFormRam.bs);
+    return (cA << palFormSrc.as) | (cR << palFormSrc.rs) | (cG << palFormSrc.gs) | (cB << palFormSrc.bs);
 }
 
 void palCreateGhost() {

@@ -155,7 +155,7 @@ const u8 Random_Stage_Data[2][32] = {
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 2, 3, 4, 5, 6, 7, 8, 11, 12, 15, 16, 19, 0 }
 };
 
-const s16 Slide_Pos_Data_61[135][2] = {
+const s16 Slide_Pos_Data_61[173][2] = {
     { -120, 156 }, { -104, 135 }, { -88, 114 },  { -72, 93 },   { -56, 72 },   { -40, 51 },   { -24, 30 },
     { -120, 164 }, { -104, 142 }, { -88, 120 },  { -72, 98 },   { -56, 76 },   { -40, 54 },   { -24, 32 },
     { -144, 164 }, { -124, 142 }, { -104, 120 }, { -84, 98 },   { -64, 76 },   { -44, 54 },   { -24, 32 },
@@ -193,10 +193,36 @@ const s16 Slide_Pos_Data_61[135][2] = {
     // Rows 115-134: the colour editor's name line, one per character in engine order. All the same
     // spot — only one is ever drawn, and this table is indexed by the string rather than by where
     // it goes, so each name needs its own copy of the position.
-    { 46, 60 }, { 46, 60 }, { 46, 60 }, { 46, 60 }, { 46, 60 },
-    { 46, 60 }, { 46, 60 }, { 46, 60 }, { 46, 60 }, { 46, 60 },
-    { 46, 60 }, { 46, 60 }, { 46, 60 }, { 46, 60 }, { 46, 60 },
-    { 46, 60 }, { 46, 60 }, { 46, 60 }, { 46, 60 }, { 46, 60 }
+    //
+    // 72, under the right-hand panel, which bottoms out at 84. A y here is the top of the glyphs
+    // rather than their baseline — which the R and G and B captions above settle, sitting 10 below
+    // the bars they name — so this leaves a clear gap between the panel and the block of text.
+    { 46, 72 }, { 46, 72 }, { 46, 72 }, { 46, 72 }, { 46, 72 },
+    { 46, 72 }, { 46, 72 }, { 46, 72 }, { 46, 72 }, { 46, 72 },
+    { 46, 72 }, { 46, 72 }, { 46, 72 }, { 46, 72 }, { 46, 72 },
+    { 46, 72 }, { 46, 72 }, { 46, 72 }, { 46, 72 }, { 46, 72 },
+    // Rows 135-136: that screen's two menu rows, in the column the name starts. Fifteen apart
+    // rather than the eighteen other menus use, which is what buys the gap under the panel without
+    // pushing SAVE off the bottom: its glyphs already reach down to 26, and the swatch grid's own
+    // last row ends there too. A third row is not a matter of finding three more pixels.
+    { 46, 57 }, { 46, 42 },
+    // Rows 137-140: the COLOR row's value, right of its label. "COLOR" is five letters of the
+    // narrow charset from x 46, so the column starts at 94 and the longest name ends at 174 —
+    // inside the right edge, which is what the label was shortened to buy.
+    { 94, 57 }, { 94, 57 }, { 94, 57 }, { 94, 57 },
+    // Rows 141-156: the button naming the row being edited, beside the character's name. Past the
+    // longest name and past the room the coloris number used to take. The widest of them is eight
+    // letters, which from 118 ends at 182 and clears the right edge.
+    { 118, 72 }, { 118, 72 }, { 118, 72 }, { 118, 72 },
+    { 118, 72 }, { 118, 72 }, { 118, 72 }, { 118, 72 },
+    { 118, 72 }, { 118, 72 }, { 118, 72 }, { 118, 72 },
+    { 118, 72 }, { 118, 72 }, { 118, 72 }, { 118, 72 },
+    // Rows 157-172: the same sixteen beside SAVE, which is four letters from 46, so its value
+    // starts in the same column as the COLOR row's above it.
+    { 94, 42 }, { 94, 42 }, { 94, 42 }, { 94, 42 },
+    { 94, 42 }, { 94, 42 }, { 94, 42 }, { 94, 42 },
+    { 94, 42 }, { 94, 42 }, { 94, 42 }, { 94, 42 },
+    { 94, 42 }, { 94, 42 }, { 94, 42 }, { 94, 42 }
 };
 
 const s16 Slide_Pos_Data_63[5][2] = { { 40, 164 }, { 60, 142 }, { 80, 120 }, { 100, 98 }, { 120, 76 } };

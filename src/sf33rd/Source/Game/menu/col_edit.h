@@ -37,9 +37,9 @@ void ColEdit_Draw(void);
 
 /// @brief Draws a fighter. Slot 28 of the effect move table, which was a dummy.
 ///
-/// Two works share this entry — the one being edited and the untouched reference beside him — and
-/// they are told apart by pointer, not by a field, because every field that could carry the
-/// distinction is already spoken for by the sprite path.
+/// Two works share this entry — the fighter being edited and the mask beside him — and they are
+/// told apart by pointer, not by a field, because every field that could carry the distinction is
+/// already spoken for by the sprite path.
 ///
 /// The sprite cannot be pushed from the menu task, which is where the screen's own code runs. A
 /// character's multitexture is one of the streaming ones — `mts_base[3].mode` carries 0x2000 — so
@@ -72,14 +72,12 @@ u16 ColEdit_Color(void);
 
 /// @name The palette the character arrived in
 ///
-/// Taken once, the frame the load lands, before anything can have been changed. Three things want
-/// it and none of them can be answered without it: the right-hand panel, which stands the
-/// untouched fighter next to the edited one; DEFAULT COLOR, which puts a colour or the whole
-/// palette back; and SAVE, which has to know what actually changed before it writes a set out.
+/// Taken once, the frame the load lands, before anything can have been changed. Two things want it
+/// and neither can be answered without it: DEFAULT COLOR, which puts a colour or the whole palette
+/// back, and SAVE, which has to know what actually changed before it writes a set out.
 ///
-/// It is kept twice — as a plain array to compare against, and mirrored into player two's
-/// ColorRAM slots, which no menu has a fighter in, so that the reference fighter has a live
-/// palette of his own to draw from.
+/// The mask on the right-hand panel reads it too, but only for its alpha bits: an entry that is
+/// transparent in play must stay transparent there rather than be reported as a use.
 /// @{
 /// The colour under the cursor as the character arrived in it.
 u16 ColEdit_OriginalColor(void);
@@ -89,6 +87,16 @@ bool ColEdit_Modified(void);
 void ColEdit_RevertColor(void);
 /// Put all sixty-four back.
 void ColEdit_RevertAll(void);
+
+/// @brief Write the character's palette out as a set the loader can dress him in.
+///
+/// The file is the archive entry, rewritten with the edited colours in the row they came from and
+/// every other row left exactly as it was read. That is what makes a saved palette the same kind
+/// of thing as a captured one: the loader has no idea which is which, and neither screen needs a
+/// second path for it.
+///
+/// @return Whether it reached the disk.
+bool ColEdit_Save(void);
 /// @}
 
 /// @brief A private copy of the menu palette, so one sprite can be recoloured on its own.
@@ -124,6 +132,51 @@ void ColEdit_SelectChannel(s16 delta);
 /// Change the selected channel, clamped to 0-31 rather than wrapped: a colour dragged to an end
 /// should stay there while the lever is held, not jump to the other extreme.
 void ColEdit_Adjust(s16 delta);
+/// @}
+
+/// @name Which set is being worked on
+///
+/// The editor opened on whatever the character was wearing and could reach nothing else, which
+/// left three quarters of the installed colours unreachable from the one screen built to look at
+/// them. The set is now a choice of its own, and changing it rereads the entry — from the file for
+/// an installed set, and from the copy of the archive kept at load time for the game's own.
+///
+/// A set with no file for this character is stepped over rather than offered: it would show the
+/// game's own colours under someone else's name.
+/// @{
+/// Position in the COLOR row's value list, which is not the PAL_SET_* numbering.
+s16 ColEdit_SetIndex(void);
+/// @return Whether it moved. False means nothing else is installed for this character.
+bool ColEdit_StepSet(s16 delta);
+/// @}
+
+/// @name Where SAVE writes
+///
+/// Not necessarily the row being edited. A colour worked out on one button is often wanted on
+/// another — that is most of what a colour editor is for — and the row a palette came from says
+/// nothing about where its author wants it.
+/// @{
+s16 ColEdit_SaveRow(void);
+void ColEdit_StepSaveRow(s16 delta);
+/// @}
+
+/// @name The coloris
+///
+/// Which of the entry's sixteen palette rows is being worked on — the one the colour button picks
+/// at the character select. The editor opened on whichever the last fight left, which in practice
+/// meant the first, and the first is often the one an earlier game did not change: comparing New
+/// Generation with 3rd Strike on it shows nothing while the other five differ.
+///
+/// All sixteen are offered. A set fills as many as its game had — six for New Generation, seven for
+/// 2nd Impact — and where a given file stops is per file, so drawing a boundary would mean deciding
+/// it from the data. That is the same call already made for the padding at the end of the swatch
+/// grid, and it is the entry's own shape either way.
+///
+/// Stepping discards unsaved changes to the row being left: the palette is reread from the file,
+/// which is what makes the mask and DEFAULT COLOR mean the new row rather than the old one.
+/// @{
+s16 ColEdit_Coloris(void);
+void ColEdit_StepColoris(s16 delta);
 /// @}
 
 /// @name The pose

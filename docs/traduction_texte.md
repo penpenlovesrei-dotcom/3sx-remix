@@ -10,7 +10,9 @@ le périmètre s'arrête là, voir [traduction_police.md](traduction_police.md).
 tous ses contrôles — 0 erreur, 0 alerte, 1158 lignes anglaises inchangées, 986 lignes
 françaises relues sans faute, 118 fichiers compilés avec les flags du projet.
 
-Jamais lancé dans le jeu : il reste à brancher la langue (voir plus bas) et à regarder.
+La langue est branchée et le build de test tourne — `C:\3sx-fr`, raccourci **3SX francais**
+sur le bureau, voir la dernière section. **Le texte n'a encore été vu par personne à
+l'écran** : le jeu se lance, c'est tout ce qui est vérifié.
 
 ## L'idée
 
@@ -180,3 +182,32 @@ travail doit partir de l'amont, et la traduction a sa place dans une PR vers
 | `tools/msg_build.py` | catalogue → `message/<lang>/`, avec les contrôles |
 | `tools/msg_patch_effb6.py` | le changement de `effb6.c` |
 | `tools/msg_verifier.py` | rejoue les deux lecteurs et compare |
+
+## Le build de test
+
+`C:\3sx-fr` — clone de l'amont `513380f9`, les deux patches appliqués, `message/fr/` généré,
+compilé en Release avec clang. Lancement par le raccourci **3SX francais** sur le bureau, ou
+par `C:\3sx-fr\3SX-francais.cmd`.
+
+La langue s'ajoute pour de bon plutôt que d'être forcée en dur : la ligne
+`Options > Screen Adjust > LANGUAGE` fait maintenant défiler **EN, JP, FR**. Sur une machine
+en français, `Get_Default_Language` lit la locale du système et FR est déjà choisi au
+démarrage.
+
+**Ce build a son propre profil**, dans `C:\3sx-fr\profil`. Ce n'est pas un détail de
+confort : le choix de langue est écrit dans la sauvegarde, et `C:\3sx-up` ne connaît que EN
+et JP. S'il relisait la valeur FR, il irait chercher `Letter_Data_64[9][2]`, qui vaut `NULL`
+chez lui. Les resources sont partagées par une jonction, donc il n'y a toujours qu'une seule
+copie de `SF33RD.AFS` sur le disque. Contrepartie : la sauvegarde du build de test est
+vierge.
+
+Les deux patches sont dans `traduction\` et s'appliquent à n'importe quel clone de la même
+base :
+
+| | |
+|---|---|
+| `effb6-accents.patch` | rend les lettres accentuées atteignables |
+| `langue-fr.patch` | ajoute `LANG_FRENCH`, la ligne de menu, et le choix des tables |
+
+`tools/msg_patch_effb6.py` et `tools/msg_patch_langue.py` les régénèrent, ou les appliquent
+directement avec `--ecrire-dans <clone>`.

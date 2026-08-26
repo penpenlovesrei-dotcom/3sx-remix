@@ -31,6 +31,7 @@ static const char* const character_dirs[] = {
     [PAL_SET_2ND_IMPACT] = "2nd-impact",
     [PAL_SET_3RD_STRIKE] = NULL,
     [PAL_SET_CHARACTER_RANDOM] = NULL,
+    [PAL_SET_COLOR_EDIT] = "color-edit",
 };
 
 static const char* const background_dirs[] = {
@@ -174,6 +175,61 @@ const void* PalRemix_Character(s16 character, s16 set, s32* size) {
 
     return set_file(&character_sets[set], character_dirs[set], "char", character,
                     &character_sets[set].characters[character], size);
+}
+
+bool PalRemix_SaveCharacter(s16 character, const void* data, s32 size) {
+    if ((character < 0) || (character >= CHARACTER_TOTAL) || (data == NULL) || (size <= 0)) {
+        return false;
+    }
+
+    char* path = set_file_path(character_dirs[PAL_SET_COLOR_EDIT], "char", character);
+
+    if (path == NULL) {
+        return false;
+    }
+
+    // The set's folder is made on the way rather than at startup: an installation that never
+    // saves anything has no reason to carry an empty one, and the loader offers a set only when
+    // it holds a file.
+    {
+        char* dir;
+        SDL_asprintf(&dir, "%s/%s", SETS_DIR, character_dirs[PAL_SET_COLOR_EDIT]);
+
+        if (dir != NULL) {
+            char* full = Resources_GetPath(dir);
+
+            if (full != NULL) {
+                SDL_CreateDirectory(full);
+                SDL_free(full);
+            }
+
+            SDL_free(dir);
+        }
+    }
+
+    const bool written = SDL_SaveFile(path, data, (size_t)size);
+
+    if (written) {
+        _log(SDL_LOG_PRIORITY_INFO, "%s: wrote %d palette(s)", path, size / 128);
+    } else {
+        _log(SDL_LOG_PRIORITY_ERROR, "%s: %s", path, SDL_GetError());
+    }
+
+    SDL_free(path);
+
+    // The slot may hold a miss remembered from before this file existed, and scan_set may have
+    // decided the whole set was empty. Both answers are now wrong.
+    if (written) {
+        PalFile* slot = &character_sets[PAL_SET_COLOR_EDIT].characters[character];
+
+        SDL_free(slot->data);
+        slot->data = NULL;
+        slot->size = 0;
+        slot->tried = false;
+        character_sets[PAL_SET_COLOR_EDIT].scanned = false;
+    }
+
+    return written;
 }
 
 const void* PalRemix_Stage(s16 stage, s16 set, s32* size) {

@@ -21,6 +21,8 @@
 #include "sf33rd/Source/Game/stage/bg_data.h"
 #include "sf33rd/Source/Game/system/ramcnt.h"
 #include "sf33rd/Source/Game/system/work_sys.h"
+#include "port/video/pal_remix.h"
+#include "sf33rd/Source/Game/effect/eff64.h"
 #include "structs.h"
 
 #include <SDL3/SDL.h>
@@ -37,19 +39,35 @@
 /// menu, so the preview reuses player one's. Must stay under 16: colPalBuffDC holds no more, and
 /// the streaming path masks the colour code with 0xF before using it as a slot.
 #define PREVIEW_GHOST_SLOT 0
-/// @name The reference fighter
+/// @name The mask
 ///
-/// The same character, the same pose, drawn a second time from the palette he arrived in. Player
-/// two's slots hold it: a menu has no second fighter loaded, the next fight overwrites them
-/// anyway, and using them keeps the reference on exactly the same footing as the fighter being
-/// edited rather than on a special case.
+/// The same character in the same pose, drawn a second time from a palette of this screen's own
+/// making: every entry black but the one under the cursor, which is white. What comes out is the
+/// fighter as a black silhouette on a black panel — invisible — with only the pixels that one
+/// colour actually paints showing up.
+///
+/// That is the question a bank of sixty-four cannot answer on its own. Many entries are near
+/// neighbours, a good number are padding nothing draws, and moving a channel on the wrong one
+/// looks exactly like moving it on an unused one. The mask says **where** an entry is used before
+/// a single slider is touched.
+///
+/// Player two's slots hold the palette: a menu has no second fighter loaded, the next fight
+/// overwrites them anyway, and using them keeps the mask on exactly the same footing as the
+/// fighter beside it rather than on a special case.
 ///
 /// Only the first bank is filled. The mirrored one exists for fighters the sprite path flips, and
 /// it reaches it by ORing 8 into a colour code whose work_id says it belongs to a player — which
 /// this one's does not, deliberately, for the reason given where it is set.
 /// @{
-#define REFERENCE_COLOR_RAM 16
-#define REFERENCE_GHOST_SLOT 8
+#define MASK_COLOR_RAM 16
+#define MASK_GHOST_SLOT 8
+/// Every channel at full in the layout ColorRAM uses, which is the same number whichever way round
+/// red and blue sit
+#define MASK_LIT 0x7FFF
+/// The bit palFormRam puts the archive's alpha in. Carried over rather than forced, so an entry
+/// that is transparent in play stays transparent here: those pixels genuinely are not drawn, and
+/// painting them white would report a use that does not happen.
+#define MASK_ALPHA 0x8000
 /// @}
 /// The BG the menus hang their effects on, as a family — effect_66 reaches it as target_bg 2
 #define PREVIEW_FAMILY 3
@@ -81,10 +99,11 @@
 #define BACKDROP_GAP 8
 #define BACKDROP2_X (BACKDROP_X + BACKDROP_W + BACKDROP_GAP)
 #define BACKDROP_COLOR 0xFF000000
-/// The reference fighter stands on the right panel where the edited one stands on the left, so his
-/// x is the same offset from his own panel: PREVIEW_X measured from BACKDROP_X.
-#define REFERENCE_X (BACKDROP2_X + (PREVIEW_X - BACKDROP_X))
-#define REFERENCE_Y PREVIEW_Y
+/// The mask stands on the right panel where the fighter stands on the left, so its x is the same
+/// offset from its own panel: PREVIEW_X measured from BACKDROP_X. The two have to line up for the
+/// eye to carry a shape from one to the other.
+#define MASK_X (BACKDROP2_X + (PREVIEW_X - BACKDROP_X))
+#define MASK_Y PREVIEW_Y
 /// @}
 
 /// @name The swatch grid
@@ -122,7 +141,6 @@
 #define BAR_ORIGIN_X (-180)
 #define BAR_ORIGIN_Y 142
 #define BAR_TRACK_COLOR 0xC0202020
-#define BAR_IDLE_COLOR 0xFF808080
 #define BAR_MAX 31
 /// The value above each bar, and the R, G or B caption below it. The captions are drawn by the
 /// menu's own charset from Menu_Letter_Data; the values cannot be, so they are quads — see
@@ -151,6 +169,25 @@
 #define CHIP_Y 96
 /// @}
 
+/// @name The shape of a palette entry
+/// Twenty-eight palettes of sixty-four colours to a bank: sixteen coloris, six the character's own
+/// effects draw from, and four the portrait uses. Gill is the only one carrying a second bank.
+/// @{
+#define PAL_ROWS_PER_BANK 28
+#define PAL_ROW_COLORS 64
+#define PAL_BANK_U16 (PAL_ROWS_PER_BANK * PAL_ROW_COLORS)
+#define COLORIS_TOTAL 16
+/// @brief How many of the sixteen a button can actually reach, and so how far the editor steps.
+///
+/// Thirteen: the six attack buttons, LP+HP+MK, and Start held with each of the six. What a file
+/// holds past that is whatever it was built with — a captured set leaves it at zero, the archive
+/// leaves it at whatever was in the entry — and no gesture in the game brings it out. Offering
+/// them let a fighter be dressed in colours nobody could ever wear.
+#define COLORIS_REACHABLE 13
+/// How many sets the COLOR row offers
+#define COL_EDIT_SETS 4
+/// @}
+
 /// Slot this module occupies in the effect move table, which held a dummy before it
 #define COL_EDIT_EFFECT_ID 28
 /// Effect list to hang it on. The menus use list 4, and Basic_Sub runs it.
@@ -158,11 +195,24 @@
 
 /// Index into frw of the live preview work, or -1 when there is none
 static s16 preview_ix = -1;
-/// The same, for the untouched fighter on the right-hand panel
-static s16 reference_ix = -1;
+/// The same, for the mask on the right-hand panel
+static s16 mask_ix = -1;
 /// The sixty-four colours the character arrived in, taken before anything could change them
 static u16 original_pal[64];
 static bool original_saved;
+/// @name The entry being worked on
+///
+/// A copy, held here for as long as the screen is up. Everything the editor does needs the whole
+/// of it rather than the one row ColorRAM carries: showing another coloris, writing a set out, and
+/// changing set at all.
+/// @{
+static u16 work_entry[2 * 28 * 64];
+static s32 work_size;
+/// Which set it was read from, as a PAL_SET_* value
+static s16 edit_set;
+/// Which of the sixteen rows SAVE will write to, which need not be the one being edited
+static s16 save_row;
+/// @}
 static s16 loaded_character = -1;
 static s16 pending_character = -1;
 static s16 pose;
@@ -173,10 +223,18 @@ static s16 channel;
 static bool editing;
 /// Whether this module was the one to bring the multitexture up, and so should take it back down
 static bool made_texcash;
+/// What Player_Color held before the editor borrowed it. The load reads it to know which of the
+/// sixteen rows to convert, so the editor has to write it, and the next fight is entitled to find
+/// the colour that fight's player chose.
+static s8 saved_coloris;
+static bool coloris_borrowed;
 /// One-shot guard on the draw diagnostic, so it costs one line and not one per frame
 static bool logged_draw;
 
 static void _log(SDL_PRINTF_FORMAT_STRING const char* fmt, ...) SDL_PRINTF_VARARG_FUNC(1);
+/// Declared ahead of use: the coloris selector needs it and sits with the rest of the coloris code
+/// rather than after the load, which is where taking the snapshot belongs.
+static void save_original(void);
 
 static void _log(const char* fmt, ...) {
     char message[256];
@@ -225,6 +283,130 @@ static const s8 pose_offset[CHARACTER_TOTAL] = {
 
 s16 ColEdit_Pose(void) {
     return pose;
+}
+
+s16 ColEdit_Coloris(void) {
+    return (s16)Player_Color[PREVIEW_PLAYER];
+}
+
+/// @brief Read one of the entry's sixteen palette rows into the slots the preview draws from.
+///
+/// The same conversion the loader does, from the same bytes: palGetPlayerSource kept the whole
+/// entry precisely because ColorRAM holds one row of the sixteen and the archive buffer is long
+/// gone. Doing it here rather than asking for the character again keeps the textures where they
+/// are — only the colours change, and a reload would cost a fade and a queue round trip.
+static void load_coloris(void) {
+    const s16 row = (s16)Player_Color[PREVIEW_PLAYER];
+    s32 mirror;
+    s16 i;
+
+    if (work_size == 0) {
+        return;
+    }
+
+    // Gill is the one with a second bank, and his mirrored side is a different palette rather than
+    // a copy. Everyone else has half an entry, and the loader fills both of their ColorRAM slots
+    // from the one bank — which is what makes writing to both in ColEdit_Adjust correct.
+    mirror = (work_size >= (s32)(2 * PAL_BANK_U16 * (s32)sizeof(u16))) ? PAL_BANK_U16 : 0;
+
+    for (i = 0; i < PAL_ROW_COLORS; i++) {
+        ColorRAM[PREVIEW_COLOR_RAM][i] = palConvSrcToRam(work_entry[row * PAL_ROW_COLORS + i]);
+        ColorRAM[PREVIEW_COLOR_RAM + 8][i] = palConvSrcToRam(work_entry[mirror + row * PAL_ROW_COLORS + i]);
+    }
+}
+
+/// The four sets the COLOR row offers, in the order its value list names them. The game's own
+/// palettes first, because that is what a character wears until someone says otherwise.
+static const s16 set_order[COL_EDIT_SETS] = { PAL_SET_3RD_STRIKE, PAL_SET_NEW_GENERATION, PAL_SET_2ND_IMPACT,
+                                              PAL_SET_COLOR_EDIT };
+
+s16 ColEdit_SetIndex(void) {
+    s16 i;
+
+    for (i = 0; i < COL_EDIT_SETS; i++) {
+        if (set_order[i] == edit_set) {
+            return i;
+        }
+    }
+
+    return 0;
+}
+
+/// @brief Read one set's entry into the working copy, and show its current row.
+///
+/// The game's own palettes come from the snapshot color3rd took while the archive buffer was still
+/// alive; everything else is a file, which can be read again whenever. Failing leaves the working
+/// copy alone, so a set with nothing for this character cannot empty the screen.
+static bool load_entry(s16 set) {
+    s32 size = 0;
+    const void* src = (set == PAL_SET_3RD_STRIKE) ? palGetPlayerSource(PREVIEW_PLAYER, &size)
+                                                  : PalRemix_Character(loaded_character, set, &size);
+
+    if ((src == NULL) || (size <= 0)) {
+        return false;
+    }
+
+    if (size > (s32)sizeof(work_entry)) {
+        size = (s32)sizeof(work_entry);
+    }
+
+    SDL_memcpy(work_entry, src, (size_t)size);
+    work_size = size;
+    edit_set = set;
+
+    load_coloris();
+    save_original();
+    _log("set %d for character %d, %d bytes", set, loaded_character, size);
+    return true;
+}
+
+bool ColEdit_StepSet(s16 delta) {
+    const s16 from = ColEdit_SetIndex();
+    s16 i;
+
+    if (loaded_character < 0) {
+        return false;
+    }
+
+    // Walk until something loads. Stopping on the first step would leave the row sitting on a set
+    // that has no file for this fighter, showing the colours of the one before it under the wrong
+    // name; going round instead means the row only ever names what it is actually showing.
+    for (i = 1; i < COL_EDIT_SETS; i++) {
+        const s16 next = (s16)(((from + i * delta) % COL_EDIT_SETS + COL_EDIT_SETS) % COL_EDIT_SETS);
+
+        if (load_entry(set_order[next])) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+s16 ColEdit_SaveRow(void) {
+    return save_row;
+}
+
+void ColEdit_StepSaveRow(s16 delta) {
+    save_row = (s16)(((save_row + delta) % COLORIS_REACHABLE + COLORIS_REACHABLE) % COLORIS_REACHABLE);
+}
+
+void ColEdit_StepColoris(s16 delta) {
+    if (loaded_character < 0) {
+        return;
+    }
+
+    Player_Color[PREVIEW_PLAYER] = (s8)(((Player_Color[PREVIEW_PLAYER] + delta) % COLORIS_REACHABLE
+                                         + COLORIS_REACHABLE)
+                                        % COLORIS_REACHABLE);
+
+    load_coloris();
+    save_row = (s16)Player_Color[PREVIEW_PLAYER];
+
+    // The row just read is what this character now arrived in, so the mask reads its alpha and
+    // DEFAULT COLOR comes back to it. Whatever was being edited on the row just left is gone,
+    // which is the honest reading of having reread the file.
+    save_original();
+    _log("coloris %d of character %d", Player_Color[PREVIEW_PLAYER], loaded_character);
 }
 
 /// First pattern of the loaded character's group, and how many it holds. Groups 1 to 20 are the
@@ -288,16 +470,17 @@ static void setup_fighter_work(s16 ix, s16 ghost_slot) {
     wk->position_z = PREVIEW_Z;
 }
 
-/// @brief Take the palette the character arrived in, and give the reference fighter his own copy.
+/// @brief Take the palette the character arrived in.
 ///
-/// The copy goes to ColorRAM rather than only to the array because a sprite cannot be drawn from
-/// an array: the reference fighter reads a ghost slot, and a ghost slot is filled from ColorRAM.
+/// Wanted by two things with nothing to do with the mask: DEFAULT COLOR, which puts a colour or the
+/// whole palette back, and SAVE, which has to know what changed. The mask builds its own palette
+/// every frame and needs no copy of this one — only its alpha bits, which say which entries are
+/// drawn at all.
 static void save_original(void) {
     s16 i;
 
     for (i = 0; i < 64; i++) {
         original_pal[i] = ColorRAM[PREVIEW_COLOR_RAM][i];
-        ColorRAM[REFERENCE_COLOR_RAM][i] = original_pal[i];
     }
 
     original_saved = true;
@@ -318,6 +501,12 @@ void ColEdit_Load(s16 character) {
     // The palette request reads My_char to know whose colours to convert, and Character_Buff to
     // know which set they should come from, so the character has to be in place before the ask.
     My_char[PREVIEW_PLAYER] = (u8)character;
+
+    if (!coloris_borrowed) {
+        saved_coloris = Player_Color[PREVIEW_PLAYER];
+        coloris_borrowed = true;
+    }
+
     pending_character = character;
     Push_LDREQ_Queue_Player(PREVIEW_PLAYER, character);
 }
@@ -353,19 +542,23 @@ bool ColEdit_Ready(void) {
 
     setup_fighter_work(preview_ix, PREVIEW_GHOST_SLOT);
 
-    // Taken here rather than on entering the screen: this is the first frame at which the load has
-    // landed and ColorRAM holds the character's own colours. A frame earlier it still holds the
-    // one before him, and the reference panel would stand the wrong fighter's palette next to him.
-    save_original();
+    // Here rather than on entering the screen: this is the first frame at which the load has landed.
+    // The working copy is read from whichever set the character is actually wearing, so that what
+    // the COLOR row names and what is on the panel are the same thing from the very first frame.
+    save_row = (s16)Player_Color[PREVIEW_PLAYER];
 
-    // Optional. Without a free work the reference panel simply stays black, which is where it
+    if (!load_entry(Character_Palette_Set(PREVIEW_PLAYER, loaded_character))) {
+        load_entry(PAL_SET_3RD_STRIKE);
+    }
+
+    // Optional. Without a free work the right panel simply stays black, which is where it
     // started; the fighter being edited is not worth losing over it.
-    reference_ix = pull_effect_work(COL_EDIT_EFFECT_LIST);
+    mask_ix = pull_effect_work(COL_EDIT_EFFECT_LIST);
 
-    if (reference_ix == -1) {
-        _log("no free effect work for the reference fighter");
+    if (mask_ix == -1) {
+        _log("no free effect work for the mask");
     } else {
-        setup_fighter_work(reference_ix, REFERENCE_GHOST_SLOT);
+        setup_fighter_work(mask_ix, MASK_GHOST_SLOT);
     }
 
     log_state("loaded");
@@ -470,8 +663,22 @@ void ColEdit_MoveCursor(s16 dx, s16 dy) {
 /// How far each channel is shifted in a ColorRAM entry. Red low, blue high — the order
 /// palConvSrcToRam leaves behind, which is not the archive's.
 static const u8 channel_shift[COL_EDIT_CHANNELS] = { 0, 5, 10 };
-/// What each bar is drawn in when it is the one being changed
-static const u32 channel_color[COL_EDIT_CHANNELS] = { 0xFFFF4040, 0xFF40FF40, 0xFF4040FF };
+/// @name What each bar is drawn in
+///
+/// Its own channel's colour, always — the red one red, the green one green, the blue one blue. A
+/// bar left grey until the lever lands on it makes the caption underneath load-bearing, when the
+/// colour alone would have said it.
+///
+/// Which one the lever is driving is then the difference between the two rows: that bar is at full
+/// strength and the other two are held at roughly a third, which puts them behind without taking
+/// their hue away.
+/// @{
+/// Red is the one carrying no second channel at all. The other two keep a little of the rest,
+/// which lifts them off the dark track; red read as salmon with the same lift, because a pure red
+/// is the darkest of the three to begin with and has the least room to spare.
+static const u32 channel_color[COL_EDIT_CHANNELS] = { 0xFFFF0000, 0xFF40FF40, 0xFF4040FF };
+static const u32 channel_color_idle[COL_EDIT_CHANNELS] = { 0xFF700000, 0xFF1C701C, 0xFF1C1C70 };
+/// @}
 
 bool ColEdit_Editing(void) {
     return editing;
@@ -545,6 +752,63 @@ void ColEdit_RevertColor(void) {
     if (original_saved) {
         restore(cursor);
     }
+}
+
+bool ColEdit_Save(void) {
+    const s32 size = work_size;
+    const s16 row = save_row;
+    u16* out;
+    s16 banks;
+    bool written;
+    s16 i;
+
+    if ((loaded_character < 0) || (size == 0)) {
+        _log("nothing loaded to save");
+        return false;
+    }
+
+    // A copy on the heap rather than in a local: an entry is three and a half kilobytes, seven for
+    // Gill, and this runs on the menu task's own stack. Taken as a flat run of colours because the
+    // struct behind it lives in color3rd.c and is not worth exporting for one write.
+    out = (u16*)SDL_malloc((size_t)size);
+
+    if (out == NULL) {
+        _log("out of memory saving character %d", loaded_character);
+        return false;
+    }
+
+    SDL_memcpy(out, work_entry, (size_t)size);
+    banks = (s16)(size / (PAL_BANK_U16 * (s32)sizeof(u16)));
+
+    // The row SAVE was pointed at, which is not always the one being edited: a colour worked out on
+    // one button is often wanted on another. It follows the edited row until someone moves it.
+    for (i = 0; i < PAL_ROW_COLORS; i++) {
+        out[row * PAL_ROW_COLORS + i] = palConvRamToSrc(ColorRAM[PREVIEW_COLOR_RAM][i]);
+    }
+
+    // Gill's second bank is what the sprite path reads when he is mirrored, so a change written to
+    // one bank only would show on one side of the screen. Everyone else has no second bank.
+    if (banks > 1) {
+        for (i = 0; i < PAL_ROW_COLORS; i++) {
+            out[PAL_BANK_U16 + row * PAL_ROW_COLORS + i] = palConvRamToSrc(ColorRAM[PREVIEW_COLOR_RAM + 8][i]);
+        }
+    }
+
+    written = PalRemix_SaveCharacter(loaded_character, out, size);
+    SDL_free(out);
+
+    if (written) {
+        // What was just written is now what this character arrived in, so a second SAVE with
+        // nothing changed in between has nothing to report, and DEFAULT COLOR comes back to here
+        // rather than to the palette of two edits ago.
+        save_original();
+        // The working copy has to carry the change too, or the next SAVE would write the file's old
+        // contents back over what was just put there.
+        SDL_memcpy(work_entry, out, (size_t)size);
+        _log("saved character %d into row %d, %d bank(s)", loaded_character, row, banks);
+    }
+
+    return written;
 }
 
 void ColEdit_RevertAll(void) {
@@ -631,9 +895,10 @@ static void draw_quad(f32 px, f32 py, f32 sx, f32 sy, u32 col, s16 z) {
     njDrawPolygon2D(&quad, 4, PrioBase[z], SWATCH_ATTR);
 }
 
-/// The two panels, behind the fighters rather than over them. The left one carries the fighter
-/// being edited and the right one the same fighter in the palette he was loaded in, so that a
-/// change is judged against what it replaced rather than against memory.
+/// The two panels, behind what stands on them rather than over it. The left one carries the fighter
+/// being edited; the right one carries him again as a mask, showing which of his pixels the colour
+/// under the cursor paints. Both are black, which is what lets the mask read as a shape rather than
+/// as a second fighter.
 static void draw_backdrop(void) {
     panel_matrix(BACKDROP_X, BACKDROP_Y, BACKDROP_Z);
     draw_quad(0.0f, 0.0f, BACKDROP_W, BACKDROP_H, BACKDROP_COLOR, BACKDROP_Z);
@@ -662,18 +927,21 @@ static const u8 digit_font[10][5] = {
 
 /// One digit, its lower-left corner at x,y. Rows are listed top first while y climbs, hence the
 /// flip on the row index.
-static void draw_digit(f32 x, f32 y, s16 value, u32 col) {
+static void draw_digit_sized(f32 x, f32 y, s16 value, u32 col, s16 pixel) {
     s16 row;
     s16 bit;
 
     for (row = 0; row < 5; row++) {
         for (bit = 0; bit < 3; bit++) {
             if (digit_font[value][row] & (4 >> bit)) {
-                draw_quad(x + (f32)(bit * DIGIT_PIXEL), y + (f32)((4 - row) * DIGIT_PIXEL), DIGIT_PIXEL, DIGIT_PIXEL,
-                          col, PANEL_Z);
+                draw_quad(x + (f32)(bit * pixel), y + (f32)((4 - row) * pixel), pixel, pixel, col, PANEL_Z);
             }
         }
     }
+}
+
+static void draw_digit(f32 x, f32 y, s16 value, u32 col) {
+    draw_digit_sized(x, y, value, col, DIGIT_PIXEL);
 }
 
 /// A channel's value, always two digits so the three columns stay aligned as values cross ten.
@@ -692,8 +960,8 @@ static void draw_bars(void) {
     for (i = 0; i < COL_EDIT_CHANNELS; i++) {
         const f32 x = (f32)(i * BAR_STEP);
         const s16 filled = (s16)((channel_value(ram, i) * BAR_HEIGHT) / BAR_MAX);
-        // Grey until the lever is on it, so which channel is live reads at a glance
-        const u32 fill = (editing && i == channel) ? channel_color[i] : BAR_IDLE_COLOR;
+        // Its own colour either way; only the strength says which one the lever is driving
+        const u32 fill = (editing && i == channel) ? channel_color[i] : channel_color_idle[i];
 
         draw_quad(x, 0.0f, BAR_WIDTH, BAR_HEIGHT, BAR_TRACK_COLOR, PANEL_Z);
 
@@ -730,11 +998,26 @@ static void draw_swatches(void) {
               SWATCH_CURSOR_COLOR, PANEL_Z);
 }
 
+/// @brief Fill the mask's palette: black everywhere, white on the entry under the cursor.
+///
+/// Rebuilt every frame rather than when the cursor moves. It is sixty-four writes on a frame that
+/// already redraws sixty-four swatches, and a palette that cannot go stale is worth more than the
+/// saving — the cursor is moved from more than one place.
+static void build_mask(void) {
+    s16 i;
+
+    for (i = 0; i < 64; i++) {
+        const u16 alpha = (u16)(original_pal[i] & MASK_ALPHA);
+
+        ColorRAM[MASK_COLOR_RAM][i] = (i == cursor) ? (u16)(alpha | MASK_LIT) : alpha;
+    }
+}
+
 void ColEdit_Move(WORK* wk) {
     // Both fighters run through here, sharing the one effect table entry. Which is which is
     // settled by pointer: every WORK field that could have carried a flag is read by the sprite
     // path for something else, and the two are otherwise identical.
-    const bool is_reference = (reference_ix != -1) && (wk == (WORK*)frw[reference_ix]);
+    const bool is_mask = (mask_ix != -1) && (wk == (WORK*)frw[mask_ix]);
 
     if (loaded_character < 0) {
         return;
@@ -746,11 +1029,14 @@ void ColEdit_Move(WORK* wk) {
     // the game outright rather than drawing it wrong. Done every frame so that editing a colour
     // shows up on the next one.
     //
-    // The reference's copy is pushed every frame too, though its source never changes: the DC
-    // ghost is a buffer the whole game shares, and leaving a slot filled once and trusting it to
-    // stay is how a palette goes stale the first time anything else writes there.
-    push_color_trans_req(is_reference ? REFERENCE_COLOR_RAM : PREVIEW_COLOR_RAM,
-                         is_reference ? REFERENCE_GHOST_SLOT : PREVIEW_GHOST_SLOT);
+    // The mask's palette is built first: it follows the cursor, so it is as live as the edited one
+    // and pushing a slot filled on some earlier frame would light the wrong entry.
+    if (is_mask) {
+        build_mask();
+    }
+
+    push_color_trans_req(is_mask ? MASK_COLOR_RAM : PREVIEW_COLOR_RAM,
+                         is_mask ? MASK_GHOST_SLOT : PREVIEW_GHOST_SLOT);
 
     wk->cg_number = (u16)pose;
 
@@ -758,13 +1044,13 @@ void ColEdit_Move(WORK* wk) {
     // and a position taken down when the screen opened would drift with it. These are offsets from
     // that BG's origin, not screen coordinates — see PREVIEW_X.
     wk->position_x =
-        (s16)(bg_w.bgw[PREVIEW_FAMILY - 1].wxy[0].disp.pos + (is_reference ? REFERENCE_X : PREVIEW_X));
+        (s16)(bg_w.bgw[PREVIEW_FAMILY - 1].wxy[0].disp.pos + (is_mask ? MASK_X : PREVIEW_X));
     wk->position_y =
-        (s16)(bg_w.bgw[PREVIEW_FAMILY - 1].wxy[1].disp.pos + (is_reference ? REFERENCE_Y : PREVIEW_Y));
+        (s16)(bg_w.bgw[PREVIEW_FAMILY - 1].wxy[1].disp.pos + (is_mask ? MASK_Y : PREVIEW_Y));
 
     // The panels belong to the screen, not to either fighter, so they are drawn once — by the
     // edited one, who is the one guaranteed to exist.
-    if (!is_reference) {
+    if (!is_mask) {
         draw_backdrop();
     }
 
@@ -776,7 +1062,7 @@ void ColEdit_Move(WORK* wk) {
         sort_push_request(wk);
     }
 
-    if (is_reference) {
+    if (is_mask) {
         return;
     }
 
@@ -785,8 +1071,8 @@ void ColEdit_Move(WORK* wk) {
 
     if (!logged_draw) {
         logged_draw = true;
-        _log("drawing at %d,%d, reference at %d", wk->position_x, wk->position_y,
-             bg_w.bgw[PREVIEW_FAMILY - 1].wxy[0].disp.pos + REFERENCE_X);
+        _log("drawing at %d,%d, mask at %d", wk->position_x, wk->position_y,
+             bg_w.bgw[PREVIEW_FAMILY - 1].wxy[0].disp.pos + MASK_X);
     }
 }
 
@@ -802,9 +1088,9 @@ void ColEdit_Unload(void) {
         preview_ix = -1;
     }
 
-    if (reference_ix != -1) {
-        push_effect_work((WORK*)frw[reference_ix]);
-        reference_ix = -1;
+    if (mask_ix != -1) {
+        push_effect_work((WORK*)frw[mask_ix]);
+        mask_ix = -1;
     }
 
     if (loaded_character >= 0) {
@@ -823,9 +1109,17 @@ void ColEdit_Unload(void) {
         made_texcash = false;
     }
 
+    if (coloris_borrowed) {
+        Player_Color[PREVIEW_PLAYER] = saved_coloris;
+        coloris_borrowed = false;
+    }
+
     loaded_character = -1;
     pending_character = -1;
     pose = 0;
+    work_size = 0;
+    edit_set = PAL_SET_3RD_STRIKE;
+    save_row = 0;
     logged_draw = false;
     // Dropped with the character it belongs to: a stale one would answer ColEdit_Modified for the
     // next fighter, and SAVE reads that answer.

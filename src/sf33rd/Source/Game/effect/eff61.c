@@ -17,7 +17,7 @@ void EFF61_SLIDE_IN(WORK_Other_CONN* ewk);
 void EFF61_SLIDE_OUT(WORK_Other_CONN* /* unused */);
 void EFF61_SUDDENLY(WORK_Other_CONN* ewk);
 
-const s8* Menu_Letter_Data[135] = { "ARCADE",
+const s8* Menu_Letter_Data[173] = { "ARCADE",
                                    "VERSUS",
                                    "TRAINING",
                                    "SYSTEM DIRECTION",
@@ -187,7 +187,66 @@ const s8* Menu_Letter_Data[135] = { "ARCADE",
                                    "MAKOTO",
                                    "Q",
                                    "TWELVE",
-                                   "REMY" };
+                                   "REMY",
+                                   // The colour editor's two menu rows, under the name. Drawn by
+                                   // effect_61 rather than effect_18, which every other menu row
+                                   // uses: effect_18 draws in the wide charset, where "DEFAULT
+                                   // COLOR" runs 182px from an x of 46 and off the right edge.
+                                   // The narrow one takes 8px a letter and fits.
+                                   "COLOR",
+                                   "SAVE",
+                                   // 137-140: which set the editor is working on, as the value of
+                                   // the COLOR row. Abbreviated where the full name would not fit
+                                   // beside its label: the column runs from x 94 to the right edge,
+                                   // which is eighteen letters of this charset.
+                                   "3RD STRIKE",
+                                   "NEW GEN",
+                                   "2ND IMPACT",
+                                   "COLOR EDIT",
+                                   // 141-172: the button that picks each of the sixteen palette
+                                   // rows, named as Setup_PL_Color reads it at the character
+                                   // select: the six attack buttons take rows 0-5, LP+HP+MK takes
+                                   // the seventh, and Start held with each of the six takes 7-12.
+                                   // The last three are named for nothing — no gesture reaches
+                                   // them, and what a file holds there is whatever it was built
+                                   // with.
+                                   //
+                                   // Twice over, 141-156 beside the character's name for the row
+                                   // being edited and 157-172 beside SAVE for the row about to be
+                                   // written: Slide_Pos_Data_61 is indexed by the string, so two
+                                   // places on screen mean two copies of the list.
+                                   "LP",
+                                   "MP",
+                                   "HP",
+                                   "LK",
+                                   "MK",
+                                   "HK",
+                                   "LP+HP+MK",
+                                   "ST+LP",
+                                   "ST+MP",
+                                   "ST+HP",
+                                   "ST+LK",
+                                   "ST+MK",
+                                   "ST+HK",
+                                   "-",
+                                   "-",
+                                   "-",
+                                   "LP",
+                                   "MP",
+                                   "HP",
+                                   "LK",
+                                   "MK",
+                                   "HK",
+                                   "LP+HP+MK",
+                                   "ST+LP",
+                                   "ST+MP",
+                                   "ST+HP",
+                                   "ST+LK",
+                                   "ST+MK",
+                                   "ST+HK",
+                                   "-",
+                                   "-",
+                                   "-" };
 
 void (*const EFF61_Jmp_Tbl[4])() = { EFF61_WAIT, EFF61_SLIDE_IN, EFF61_SLIDE_OUT, EFF61_SUDDENLY };
 
@@ -321,6 +380,11 @@ s32 Check_Die_61(WORK_Other* ewk) {
     return Menu_Suicide[ewk->master_player];
 }
 
+// Where the last line built by effect_61_init went, on the model of effect_66's own. A caller that
+// has to take a line back down again — a value that changes, so its sprite must be rebuilt — has no
+// other way to name it: Menu_Suicide kills every line sharing a master_player, which is all of them.
+s16 effect_61_last_work = -1;
+
 s32 effect_61_init(s16 master, u8 dir_old, s16 sync_bg, s16 master_player, s16 char_ix, s16 cursor_index,
                    u16 letter_type) {
     WORK_Other_CONN* ewk;
@@ -330,9 +394,11 @@ s32 effect_61_init(s16 master, u8 dir_old, s16 sync_bg, s16 master_player, s16 c
     const u8* ptr;
 
     if ((ix = pull_effect_work(4)) == -1) {
+        effect_61_last_work = -1;
         return -1;
     }
 
+    effect_61_last_work = ix;
     ewk = (WORK_Other_CONN*)frw[ix];
     ewk->wu.be_flag = 1;
     ewk->wu.id = 61;

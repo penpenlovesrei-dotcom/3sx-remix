@@ -224,13 +224,6 @@ s16 Character_Palette_Set(s16 player, s16 character) {
     default:
         set = Player_Pal_Set[player];
 
-        // Named in the cycle but not backed by anything yet. Spelled out rather than left to the
-        // range check below, so that the day it does mean something there is one place to change
-        // and not a silent fallback to explain.
-        if (set == PAL_SET_COLOR_EDIT) {
-            return PAL_SET_3RD_STRIKE;
-        }
-
         if (set == PAL_SET_PER_CHARACTER) {
             set = Character_Buff[character];
         }
@@ -250,7 +243,14 @@ void Character_Palette_Cycle(s16 player) {
 }
 
 bool Character_Palette_Selectable(s16 player) {
-    return Player_Pal_Set[player] != PAL_SET_COLOR_EDIT;
+    // The editor's set is the one stop that can be empty: it exists only once something has been
+    // saved into it. So the answer is the folder's, not a constant — the line stops being dim the
+    // moment there is a palette behind it.
+    if (Player_Pal_Set[player] == PAL_SET_COLOR_EDIT) {
+        return PalRemix_HasCharacterSet(PAL_SET_COLOR_EDIT);
+    }
+
+    return true;
 }
 
 const s8* Character_Palette_Name(s16 player) {

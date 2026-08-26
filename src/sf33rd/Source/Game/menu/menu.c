@@ -205,6 +205,54 @@ static const s8 Display_Value_Default[8] = { 0, 0, CHAR_COLOR_MODE_CUSTOM, 0, 0,
 /// too, but only in the one effect_18 draws and only alphabetically.
 #define COL_EDIT_NAME_FIRST 115
 #define COL_EDIT_NAME_WORK 0x53
+/// @name The editor's two menu rows
+///
+/// DEFAULT COLOR and SAVE, under the name, in the same narrow charset. Their strings and positions
+/// were appended past the end of both tables, so no index before them moved.
+///
+/// effect_61 lights the row whose cursor index matches `Menu_Cursor_Y` and dims the rest, which is
+/// exactly what rows want and the reason they are drawn with it rather than given a cursor sprite
+/// of their own. It is also why the captions and the name had to move off cursor 0: they were
+/// relying on this screen never moving that cursor, and now it does.
+/// @{
+#define COL_EDIT_ROW_FIRST 135
+#define COL_EDIT_ROW_WORK 0x54
+#define COL_EDIT_ROW_COLOR 0
+#define COL_EDIT_ROW_SAVE 1
+#define COL_EDIT_ROWS 2
+/// @name The three values these rows carry
+///
+/// A value that changes cannot be one effect_61 sprite left standing: that effect walks its string
+/// once and bakes a sprite per letter. So each of the three is torn down and built again whenever
+/// it changes, which is what effect_61_last_work exists for — Menu_Suicide would take the captions
+/// with it.
+/// @{
+/// First of the four set names, and of the two runs of sixteen button names — one run placed
+/// beside the character's name for the row being edited, the other beside SAVE for its target
+#define COL_EDIT_SET_FIRST 137
+#define COL_EDIT_BUTTON_FIRST 141
+#define COL_EDIT_SAVE_BUTTON_FIRST 157
+#define COL_EDIT_VALUE_WORK 0x56
+#define COL_EDIT_VALUE_BUTTON 0
+#define COL_EDIT_VALUE_SET 1
+#define COL_EDIT_VALUE_SAVE 2
+#define COL_EDIT_VALUES 3
+/// @}
+/// Cursor value while the lever is somewhere else, so that no row is lit. Any number no row uses.
+#define COL_EDIT_ROW_NONE 99
+/// The cursor the fixed labels watch instead — one this screen sets to 0 and never touches again,
+/// which is what keeps them bright while the rows below them light and dim.
+#define COL_EDIT_LABEL_CURSOR 1
+/// @}
+
+/// @name Where the lever is
+/// Three levels, walked with Confirm and Cancel: the sixty-four swatches, the three channel bars,
+/// and the rows. Cancel from the rows leaves the screen.
+/// @{
+#define COL_EDIT_FOCUS_ROWS 0
+#define COL_EDIT_FOCUS_GRID 1
+#define COL_EDIT_FOCUS_BARS 2
+/// @}
 /// @}
 
 /// Where the Display page should put its cursor and BACKGROUNDS value when it is next entered, so
@@ -2444,6 +2492,11 @@ static s16 color_edit_character;
 /// it was entered from rather than at the top
 static s8 color_edit_page;
 static s8 color_edit_row;
+/// Which of the editor's own rows is picked, and which of the three levels the lever is driving
+static s8 color_edit_row_sel;
+static s8 color_edit_focus;
+/// Where each value's line currently lives in frw, so it can be taken down before being rebuilt
+static s16 color_edit_value_work[COL_EDIT_VALUES];
 
 static s16 Color_Edit_Rows_On_Page() {
     const s16 left = CHARACTER_TOTAL - color_edit_page * COLOR_EDIT_PAGE_ROWS;
@@ -2505,6 +2558,38 @@ static void Setup_Color_Edit_Page() {
     }
 
     Menu_Cursor_Move = 0;
+}
+
+/// @brief Rebuild one value line, having taken down the one it replaces.
+///
+/// @param which     Which of the three, as COL_EDIT_VALUE_*.
+/// @param string_ix Its text, an index into Menu_Letter_Data — which also places it, the position
+///                  table being indexed by the same number. That is why the button names appear
+///                  twice: the same word in two places on screen needs two entries.
+/// @param master    Whose cursor decides if it is lit. The two row values follow the lever, on
+///                  cursor 0; the one beside the character's name never dims.
+/// @param cursor_ix Which position of that cursor lights it.
+static void Color_Edit_Value(s16 which, s16 string_ix, s16 master, s16 cursor_ix) {
+    const s16 work = COL_EDIT_VALUE_WORK + which;
+
+    if (color_edit_value_work[which] >= 0) {
+        push_effect_work((WORK*)frw[color_edit_value_work[which]]);
+        color_edit_value_work[which] = -1;
+    }
+
+    effect_61_init(master, (u8)work, 2, 2, string_ix, cursor_ix, 0x70A7);
+    color_edit_value_work[which] = effect_61_last_work;
+    Order[work] = 3;
+    Order_Dir[work] = 4;
+    Order_Timer[work] = 1;
+}
+
+/// All three at once. Any one of them changing is rare enough that telling them apart would only
+/// be a way to get it wrong.
+static void Color_Edit_Values() {
+    Color_Edit_Value(COL_EDIT_VALUE_BUTTON, COL_EDIT_BUTTON_FIRST + ColEdit_Coloris(), COL_EDIT_LABEL_CURSOR, 0);
+    Color_Edit_Value(COL_EDIT_VALUE_SET, COL_EDIT_SET_FIRST + ColEdit_SetIndex(), 0, COL_EDIT_ROW_COLOR);
+    Color_Edit_Value(COL_EDIT_VALUE_SAVE, COL_EDIT_SAVE_BUTTON_FIRST + ColEdit_SaveRow(), 0, COL_EDIT_ROW_SAVE);
 }
 
 /// COLOR EDIT MODE, first screen: whose colours to work on.
@@ -2672,6 +2757,20 @@ void Color_Edit(struct _TASK* task_ptr) {
         // The three channel captions. Placed rather than slid in, and given a cursor index of 0 so
         // that effect_61 reads them as the selected row and draws them bright: this screen never
         // moves Menu_Cursor_Y, so they stay lit.
+        // The cursor the fixed labels watch. Set once and never moved, which is what keeps them
+        // lit while Menu_Cursor_Y[0] walks the rows below them and dims whatever it is not on.
+        Menu_Cursor_Y[COL_EDIT_LABEL_CURSOR] = 0;
+        color_edit_row_sel = COL_EDIT_ROW_COLOR;
+
+        // Menu_Suicide took the last visit's lines with it, so nothing here is still standing.
+        for (s16 vw = 0; vw < COL_EDIT_VALUES; vw++) {
+            color_edit_value_work[vw] = -1;
+        }
+
+        // The grid, as before. Cancel from there now reaches the rows rather than leaving at once,
+        // which is the only way in to them without spending one of the two on getting back here.
+        color_edit_focus = COL_EDIT_FOCUS_GRID;
+
         for (s16 ch = 0; ch < COL_EDIT_CHANNELS; ch++) {
             // sync_bg 2, not the 0 every other menu passes: that puts the caption on the same BG
             // family as the bars it names. The menus hang their text on family 1 while these
@@ -2679,21 +2778,35 @@ void Color_Edit(struct _TASK* task_ptr) {
             // which is exactly how far the captions sat from their columns before.
             // 0x70A7 is the menus' small charset, which advances 8px a letter where the large one
             // takes 14 — a caption for a 12-wide bar has no use for the larger.
-            effect_61_init(0, ch + COL_EDIT_LABEL_WORK, 2, 2, ch + COL_EDIT_LABEL_FIRST, 0, 0x70A7);
+            effect_61_init(COL_EDIT_LABEL_CURSOR, ch + COL_EDIT_LABEL_WORK, 2, 2, ch + COL_EDIT_LABEL_FIRST, 0,
+                           0x70A7);
             Order[ch + COL_EDIT_LABEL_WORK] = 3;
             Order_Dir[ch + COL_EDIT_LABEL_WORK] = 4;
             Order_Timer[ch + COL_EDIT_LABEL_WORK] = 1;
         }
 
         // Whose colours these are, in the same small charset as the channel captions
-        effect_61_init(0, COL_EDIT_NAME_WORK, 2, 2, color_edit_character + COL_EDIT_NAME_FIRST, 0, 0x70A7);
+        effect_61_init(COL_EDIT_LABEL_CURSOR, COL_EDIT_NAME_WORK, 2, 2, color_edit_character + COL_EDIT_NAME_FIRST, 0,
+                       0x70A7);
         Order[COL_EDIT_NAME_WORK] = 3;
         Order_Dir[COL_EDIT_NAME_WORK] = 4;
         Order_Timer[COL_EDIT_NAME_WORK] = 1;
 
+        // The two rows, on cursor 0 — the one the lever moves — so effect_61 lights whichever is
+        // picked and dims the other, without a cursor sprite to place or a table to add it to.
+        for (s16 rw = 0; rw < COL_EDIT_ROWS; rw++) {
+            effect_61_init(0, rw + COL_EDIT_ROW_WORK, 2, 2, rw + COL_EDIT_ROW_FIRST, rw, 0x70A7);
+            Order[rw + COL_EDIT_ROW_WORK] = 3;
+            Order_Dir[rw + COL_EDIT_ROW_WORK] = 4;
+            Order_Timer[rw + COL_EDIT_ROW_WORK] = 1;
+        }
+
         // color_edit_character was set by the list screen that opened this one
         color_edit_saved_char = My_char[0];
         ColEdit_Load(color_edit_character);
+
+        // The three values cannot be built yet: what they say comes from the entry, and the load
+        // has not landed. Case 2 builds them once it has.
         break;
 
     case 1:
@@ -2710,22 +2823,67 @@ void Color_Edit(struct _TASK* task_ptr) {
 
     case 3: {
         const u16 sw = Check_Menu_Lever(0, 0);
+        const bool on_rows = color_edit_focus == COL_EDIT_FOCUS_ROWS;
+
+        // Built on the first frame the entry is readable rather than in case 0, where it is not
+        // yet. ColEdit_Ready is what makes it so, and ColEdit_Draw above has been calling it.
+        if (color_edit_value_work[COL_EDIT_VALUE_SET] < 0) {
+            if (!ColEdit_Ready()) {
+                break;
+            }
+
+            Color_Edit_Values();
+        }
 
         // IO_Result is not set by reading the lever — MC_Move_Sub is what writes it, which is why
         // every other screen calls it before testing any button. Without it the value stays as the
-        // page before left it and no button here is ever seen, exit included. Menu_Max is 0 for
-        // now: there is nothing to move a cursor over until the editor's rows exist.
-        MC_Move_Sub(sw, 0, 0, 0xFF);
+        // page before left it and no button here is ever seen, exit included.
+        //
+        // It moves a cursor only while the rows have the lever; everywhere else the maximum is 0
+        // and the call is there for IO_Result alone. Menu_Cursor_Y[0] is handed to it and taken
+        // back rather than left there, because between the two the rows read it to decide which of
+        // them is lit, and a value they cannot match is what leaves them all dim.
+        if (on_rows) {
+            Menu_Cursor_Y[0] = color_edit_row_sel;
+        }
 
-        // The lever drives one of two things. On the grid it walks the sixty-four colours; on the
-        // bars it picks a channel with up and down and changes it with left and right. Confirm
-        // goes from one to the other, cancel comes back — the same two-level shape the reference
-        // screen gets from a COLOR CHANGE row, without needing the row.
-        if (sw == 1 || sw == 2 || sw == 4 || sw == 8) {
+        MC_Move_Sub(sw, 0, on_rows ? (COL_EDIT_ROWS - 1) : 0, 0xFF);
+
+        if (on_rows) {
+            color_edit_row_sel = (s8)Menu_Cursor_Y[0];
+        } else {
+            Menu_Cursor_Y[0] = COL_EDIT_ROW_NONE;
+        }
+
+        // On the rows, left and right change what the picked row carries: which set is being
+        // worked on, or which button SAVE will write to. Up and down were MC_Move_Sub's business
+        // just above, so only the two horizontals are left to read here.
+        if (on_rows && (sw == 4 || sw == 8)) {
+            const s16 dx = (sw == 4) ? -1 : 1;
+
+            if (color_edit_row_sel == COL_EDIT_ROW_COLOR) {
+                if (ColEdit_StepSet(dx)) {
+                    SE_dir_cursor_move();
+                    Color_Edit_Values();
+                }
+            } else {
+                ColEdit_StepSaveRow(dx);
+                SE_dir_cursor_move();
+                Color_Edit_Values();
+            }
+
+            break;
+        }
+
+        // The lever drives one of three things. On the grid it walks the sixty-four colours; on
+        // the bars it picks a channel with left and right and changes it with up and down; on the
+        // rows the two lines above have already dealt with it. Confirm goes down a level, cancel
+        // comes back up.
+        if (!on_rows && (sw == 1 || sw == 2 || sw == 4 || sw == 8)) {
             const s16 dx = (sw == 4) ? -1 : (sw == 8) ? 1 : 0;
             const s16 dy = (sw == 1) ? -1 : (sw == 2) ? 1 : 0;
 
-            if (ColEdit_Editing()) {
+            if (color_edit_focus == COL_EDIT_FOCUS_BARS) {
                 // Left and right pick the bar, up and down move it. The bars stand side by side
                 // and fill upward, so this is the way round that matches what is on screen.
                 if (dx != 0) {
@@ -2742,15 +2900,26 @@ void Color_Edit(struct _TASK* task_ptr) {
             break;
         }
 
-        // The shoulders keep the pose step. All twenty offsets are settled, so this is no longer
-        // calibration but the way back if one ever needs revisiting, and it stays off the lever
-        // where it cannot be hit by accident.
-        if (IO_Result == 0x80 || IO_Result == 0x800) {
+        // Shoulders step the coloris, triggers step the pose. Both stay off the lever, which has
+        // three levels to walk already; splitting them this way costs nothing, since the two pairs
+        // used to do the same thing, and it puts the one that changes what is being edited on the
+        // buttons nearer the hand.
+        if (IO_Result == 0x80 || IO_Result == 0x40) {
+            ColEdit_StepColoris((IO_Result == 0x80) ? -1 : 1);
+            // SAVE follows the row being edited until someone points it elsewhere, so both value
+            // lines can have moved.
+            Color_Edit_Values();
+            break;
+        }
+
+        // All twenty pose offsets are settled, so this is no longer calibration but the way back
+        // if one ever needs revisiting.
+        if (IO_Result == 0x800) {
             ColEdit_StepPose(-1);
             break;
         }
 
-        if (IO_Result == 0x40 || IO_Result == 0x400) {
+        if (IO_Result == 0x400) {
             ColEdit_StepPose(1);
             break;
         }
@@ -2759,15 +2928,47 @@ void Color_Edit(struct _TASK* task_ptr) {
             break;
         }
 
-        if (IO_Result == 0x100 && !ColEdit_Editing()) {
+        if (IO_Result == 0x100) {
             SE_selected();
-            ColEdit_BeginEdit();
+
+            switch (color_edit_focus) {
+            case COL_EDIT_FOCUS_GRID:
+                ColEdit_BeginEdit();
+                color_edit_focus = COL_EDIT_FOCUS_BARS;
+                break;
+
+            case COL_EDIT_FOCUS_BARS:
+                ColEdit_EndEdit();
+                color_edit_focus = COL_EDIT_FOCUS_GRID;
+                break;
+
+            // COLOR is the way in. Its value is changed with left and right like any other value
+            // row, so Confirm is free — and it has to lead somewhere, because Cancel from here
+            // leaves the screen and the rows would otherwise be a level with no way back down to
+            // the colours they name.
+            default:
+                if (color_edit_row_sel == COL_EDIT_ROW_SAVE) {
+                    ColEdit_Save();
+                } else {
+                    color_edit_focus = COL_EDIT_FOCUS_GRID;
+                }
+
+                break;
+            }
+
             break;
         }
 
-        if (ColEdit_Editing()) {
+        if (color_edit_focus == COL_EDIT_FOCUS_BARS) {
             SE_selected();
             ColEdit_EndEdit();
+            color_edit_focus = COL_EDIT_FOCUS_GRID;
+            break;
+        }
+
+        if (color_edit_focus == COL_EDIT_FOCUS_GRID) {
+            SE_selected();
+            color_edit_focus = COL_EDIT_FOCUS_ROWS;
             break;
         }
 

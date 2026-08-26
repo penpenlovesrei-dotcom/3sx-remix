@@ -13,6 +13,9 @@
 #define PAL_SET_2ND_IMPACT 1
 #define PAL_SET_3RD_STRIKE 2
 #define PAL_SET_CHARACTER_RANDOM 3
+/// What the in-game colour editor saves. A folder like any other, so nothing else has to know
+/// where its contents came from.
+#define PAL_SET_COLOR_EDIT 4
 /// @}
 
 /// @name Palette sets a background row can be set to
@@ -57,6 +60,19 @@ bool PalRemix_HasBackgroundSet(s16 set);
 /// the screen honest about which fighters those games ever had.
 bool PalRemix_HasCharacter(s16 character, s16 set);
 bool PalRemix_HasStage(s16 stage, s16 set);
+
+/// @brief Write one character's palette into the colour editor's set.
+///
+/// The payload is the archive entry as the loader would have read it, which is what every other
+/// file in these folders already is — so a saved palette is indistinguishable from a captured one
+/// and needs no second code path anywhere.
+///
+/// Whatever the set held for this character is dropped afterwards, so the next fight reads the
+/// file just written rather than the one cached from before it existed.
+///
+/// @param character Engine character number, as `constants.h` numbers them.
+/// @return Whether the file reached the disk.
+bool PalRemix_SaveCharacter(s16 character, const void* data, s32 size);
 
 /// Drop everything held, so the next lookup re-reads the folders.
 void PalRemix_Destroy(void);

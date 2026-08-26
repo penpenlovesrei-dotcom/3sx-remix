@@ -4,6 +4,10 @@
 #include "structs.h"
 #include "types.h"
 
+/// Index into frw of the line effect_61_init built last, or -1 if it could not. For a caller that
+/// has to rebuild a line whose text changes; see the note where it is set.
+extern s16 effect_61_last_work;
+
 void effect_61_move(WORK_Other_CONN* ewk);
 s32 Check_Die_61(WORK_Other* ewk);
 s32 effect_61_init(s16 master, u8 dir_old, s16 sync_bg, s16 master_player, s16 char_ix, s16 cursor_index,
