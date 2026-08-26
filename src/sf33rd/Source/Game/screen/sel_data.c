@@ -155,7 +155,7 @@ const u8 Random_Stage_Data[2][32] = {
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 2, 3, 4, 5, 6, 7, 8, 11, 12, 15, 16, 19, 0 }
 };
 
-const s16 Slide_Pos_Data_61[172][2] = {
+const s16 Slide_Pos_Data_61[183][2] = {
     { -120, 156 }, { -104, 135 }, { -88, 114 },  { -72, 93 },   { -56, 72 },   { -40, 51 },   { -24, 30 },
     { -120, 164 }, { -101, 138 }, { -82, 111 },  { -62, 85 },   { -56, 76 },   { -43, 58 },   { -24, 32 },
     { -144, 164 }, { -124, 142 }, { -104, 120 }, { -84, 98 },   { -64, 76 },   { -44, 54 },   { -24, 32 },
@@ -163,7 +163,7 @@ const s16 Slide_Pos_Data_61[172][2] = {
     { -104, 130 }, { -96, 117 },  { -88, 104 },  { -80, 91 },   { -72, 78 },   { -64, 65 },   { -56, 52 },
     { -48, 39 },   { -40, 26 },   { -144, 88 },  { -168, 64 },  { -120, 40 },  { 48, 88 },    { 24, 64 },
     { 72, 40 },    { -72, 92 },   { -56, 92 },   { -40, 60 },   { -24, 52 },   { -104, 156 }, { -88, 132 },
-    { -72, 108 },  { -56, 84 },   { -40, 60 },   { -24, 36 },   { -112, 132 }, { -88, 92 },   { -24, 52 },
+    { -72, 108 },  { -56, 84 },   { -40, 60 },   { -24, 36 },   { -112, 132 }, { -96, 105 }, { -24, 52 },
     { -40, 100 },  { -19, 76 },   { -19, 52 },   { -160, 163 }, { -144, 139 }, { -128, 115 }, { -112, 91 },
     { -96, 68 },   { -76, 28 },   { -112, 132 }, { -88, 92 },
     // Rows 68-83: the Custom tracklist's bracketed theme, in the menu's small charset. Its x follows
@@ -222,7 +222,16 @@ const s16 Slide_Pos_Data_61[172][2] = {
     { 94, 42 }, { 94, 42 }, { 94, 42 }, { 94, 42 },
     { 94, 42 }, { 94, 42 }, { 94, 42 }, { 94, 42 },
     { 94, 42 }, { 94, 42 }, { 94, 42 }, { 94, 42 },
-    { 94, 42 }, { 94, 42 }, { 94, 42 }, { 94, 42 }
+    { 94, 42 }, { 94, 42 }, { 94, 42 }, { 94, 42 },
+    // 172: the training menu's PARRY THE BALL row, on the diagonal its two neighbours walk. They
+    // used to step 40 apart with EXIT detached below; four rows in the same height means 27, so
+    // NORMAL TRAINING and EXIT stay where they were and PARRYING TRAINING moves up to make room.
+    { -96, 78 },
+    // 173-182: the level beside it, in the narrow charset. The row starts at -96 rather than
+    // continuing its diagonal to -80, which is what buys the value its column: sixteen wide
+    // letters end at 128, so LVL 10 runs 136 to 184 and clears the edge.
+    { 136, 78 }, { 136, 78 }, { 136, 78 }, { 136, 78 }, { 136, 78 },
+    { 136, 78 }, { 136, 78 }, { 136, 78 }, { 136, 78 }, { 136, 78 }
 };
 
 const s16 Slide_Pos_Data_63[5][2] = { { 40, 164 }, { 60, 142 }, { 80, 120 }, { 100, 98 }, { 120, 76 } };

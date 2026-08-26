@@ -30,6 +30,7 @@
 #include "sf33rd/Source/Game/effect/effa5.h"
 #include "sf33rd/Source/Game/effect/effd8.h"
 #include "sf33rd/Source/Game/effect/effk6.h"
+#include "sf33rd/Source/Game/engine/bbbscom.h"
 #include "sf33rd/Source/Game/engine/grade.h"
 #include "sf33rd/Source/Game/engine/plcnt.h"
 #include "sf33rd/Source/Game/engine/pls02.h"
@@ -1685,7 +1686,13 @@ void Exit_2nd() {
         }
 #endif
 
-        Push_LDREQ_Queue_BG(bg_w.stage);
+        // No stage from here when PARRY THE BALL is on. Check_Bonus_Stage asks for the bonus one
+        // a moment later, on the arcade's own path, and two requests fill the CG cache rather than
+        // one replacing the other.
+        if (!Parry_The_Ball_Requested()) {
+            Push_LDREQ_Queue_BG(bg_w.stage);
+        }
+
         return;
     }
 

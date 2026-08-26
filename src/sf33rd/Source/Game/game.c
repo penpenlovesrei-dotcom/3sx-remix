@@ -357,7 +357,22 @@ void Game01() {
             Make_texcash_of_list(3);
 
             if (Demo_Flag) {
-                G_No[1] = 2;
+                // Straight to the stage, doing by hand the one thing Game05 would have done for
+                // it. Game05 cannot be borrowed here: it opens with Basic_Sub, which draws every
+                // effect still standing, and it is reached in an arcade run from a finished fight
+                // whose texture list holds the menu charset. Arriving from a character select it
+                // does not, and the renderer stops on a draw request for a multitexture that was
+                // never brought up. Game09 opens with System_all_clear_Level_B instead, which
+                // clears those works before anything is asked to draw.
+                // Only the name and the route. Setup_Next_Fighter has already put Sean and the
+                // bonus stage in place and asked for both, on the arcade's own path, so there is
+                // nothing left here to load -- and asking again is what made every earlier attempt
+                // fail, once as a duplicate transfer and once as a second stage over the first.
+                if (Parry_The_Ball_Requested()) {
+                    Bonus_Type = PARRY_THE_BALL_STAGE;
+                }
+
+                G_No[1] = Parry_The_Ball_Requested() ? 9 : 2;
                 G_No[2] = 0;
                 G_No[3] = 0;
                 E_No[0] = 4;
@@ -1269,6 +1284,102 @@ void Game08() {
     move_effect_work(4);
 }
 
+/// @name The menu that ends PARRY THE BALL
+///
+/// A stage asked for by name has nowhere to hand back to: nobody started a run, so carrying on
+/// into one is not a continuation but a non sequitur. It stops on a menu instead.
+///
+/// Drawn with SSPutStr rather than the menus' own machinery, for the same reason the palette lines
+/// on the character select are: it needs no charset brought up and no effect work, so it can be
+/// put on screen from inside the game task without anything being loaded for it.
+/// @{
+#define BALL_MENU_ROWS 3
+#define BALL_MENU_RETRY 0
+#define BALL_MENU_LEVEL 1
+#define BALL_MENU_EXIT 2
+/// Cell columns and rows of the 384x224 picture, SSPutStr counting in eights
+#define BALL_MENU_X 16
+#define BALL_MENU_Y 14
+#define BALL_MENU_STEP 2
+/// The blue bank the PRESS START lines use
+#define BALL_MENU_ATTR 9
+#define BALL_MENU_PRIORITY TopHUDPriority
+#define BALL_MENU_LIT 0xFFFFFFFF
+#define BALL_MENU_DIM 0xFF707070
+
+static s16 ball_menu_row;
+
+static const s8* const ball_menu_label[BALL_MENU_ROWS] = { "RETRY", "LEVEL", "EXIT" };
+
+/// @brief The three rows, and the level beside the middle one.
+///
+/// Redrawn every frame, which is what SSPutStr expects: it pushes quads rather than leaving
+/// anything standing.
+static void Ball_Menu_Draw() {
+    s16 i;
+
+    for (i = 0; i < BALL_MENU_ROWS; i++) {
+        const u32 col = (i == ball_menu_row) ? BALL_MENU_LIT : BALL_MENU_DIM;
+
+        SSPutStrCol(BALL_MENU_X, BALL_MENU_Y + i * BALL_MENU_STEP, BALL_MENU_ATTR, col, ball_menu_label[i],
+                    BALL_MENU_PRIORITY);
+    }
+
+    {
+        // Two digits so the row does not shuffle as the number crosses ten, and one past the label
+        // so the two read as a pair. The level is one-based on screen and zero-based underneath,
+        // which is the numbering set_bonus_game_nando already uses.
+        const s16 shown = (s16)(Parry_The_Ball_Level() + 1);
+        s8 text[4];
+
+        text[0] = (s8)('0' + (shown / 10));
+        text[1] = (s8)('0' + (shown % 10));
+        text[2] = 0;
+
+        SSPutStrCol(BALL_MENU_X + 7, BALL_MENU_Y + BALL_MENU_LEVEL * BALL_MENU_STEP, BALL_MENU_ATTR,
+                    (ball_menu_row == BALL_MENU_LEVEL) ? BALL_MENU_LIT : BALL_MENU_DIM, text, BALL_MENU_PRIORITY);
+    }
+}
+
+/// What Ball_Menu_Move answers
+#define BALL_MENU_CHOSE_NOTHING 0
+#define BALL_MENU_CHOSE_AGAIN 1
+#define BALL_MENU_CHOSE_EXIT 2
+
+/// @return One of BALL_MENU_CHOSE_*.
+static s32 Ball_Menu_Move() {
+    const u16 edge = (u16)(~p1sw_1 & p1sw_0);
+
+    Ball_Menu_Draw();
+
+    if (edge & SWK_UP) {
+        ball_menu_row = (s16)((ball_menu_row + BALL_MENU_ROWS - 1) % BALL_MENU_ROWS);
+        SE_dir_cursor_move();
+    } else if (edge & SWK_DOWN) {
+        ball_menu_row = (s16)((ball_menu_row + 1) % BALL_MENU_ROWS);
+        SE_dir_cursor_move();
+    } else if ((ball_menu_row == BALL_MENU_LEVEL) && (edge & (SWK_LEFT | SWK_RIGHT))) {
+        Parry_The_Ball_Step_Level((edge & SWK_LEFT) ? -1 : 1);
+        SE_dir_cursor_move();
+    }
+
+    if (!(edge & SWK_ATTACKS)) {
+        return BALL_MENU_CHOSE_NOTHING;
+    }
+
+    SE_selected();
+
+    // LEVEL is changed with left and right like any value row, so confirming on it starts the
+    // stage at what it now says rather than needing a trip up to RETRY.
+    if (ball_menu_row != BALL_MENU_EXIT) {
+        Parry_The_Ball_Again();
+        return BALL_MENU_CHOSE_AGAIN;
+    }
+
+    return BALL_MENU_CHOSE_EXIT;
+}
+/// @}
+
 void Game09() {
     switch (G_No[2]) {
     case 0:
@@ -1321,6 +1432,10 @@ void Game09() {
 
                 if (Bonus_Type == 0x15) {
                     makeup_bonus_game_level(COM_id);
+                    // Consumed here rather than where it was read: the level is only settled on
+                    // this line, and a request left armed would send the next fight back to the
+                    // bonus stage for as long as the session lasted.
+                    Parry_The_Ball_Clear();
                     effect_35_init(0x3C, 5);
                     effect_J2_init(0x78);
                     effect_35_init(0xB4, 7);
@@ -1330,6 +1445,7 @@ void Game09() {
                     effect_35_init(0x78, 7);
                     effect_58_init(6, 0x78, 0xA1);
                 }
+
 
                 TATE00();
                 Switch_Screen_Init(0);
@@ -1376,7 +1492,46 @@ void Game09() {
         Switch_Screen(0);
         Bonus_Sub();
 
+        // The menu is up: the stage is over and frozen, and nothing below runs again until one of
+        // its rows says so. G_No[3] carries that, this case being the only one that touches it.
+        if (G_No[3] != 0) {
+            const s16 chosen = Ball_Menu_Move();
+
+            if (chosen == BALL_MENU_CHOSE_AGAIN) {
+                // Nothing to tear down by hand: case 0 opens with System_all_clear_Level_B, which
+                // is the very teardown this state was put in front of.
+                G_No[2] = 0;
+                G_No[3] = 0;
+            } else if (chosen == BALL_MENU_CHOSE_EXIT) {
+                Parry_The_Ball_Forget();
+                G_No[3] = 0;
+
+                // Row 2 of the mode select is TRAINING, and the menu opens on whatever this holds,
+                // so the way back lands where this stage was asked for.
+                Cursor_Y_Pos[0][0] = 2;
+
+                // And return rather than break. Soft_Reset_Sub tears the title's textures down and
+                // builds them again; letting this case fall through to BG_move afterwards is what
+                // made the first attempt at an exit die on a multitexture that had just gone.
+                Soft_Reset_Sub();
+                return;
+            }
+
+            break;
+        }
+
         if (--G_Timer == 0) {
+            // Asked for by name, it stops on its own menu rather than handing back to a run nobody
+            // started -- and it stops here, before the three lines below, not after them.
+            // System_all_clear_Level_B closes the background and destroys every effect work: a menu
+            // put up after it has nothing to be drawn over and nothing left to draw with. Frozen
+            // ahead of it, the finished stage stays on screen underneath.
+            if (Parry_The_Ball_Was_Requested()) {
+                ball_menu_row = BALL_MENU_RETRY;
+                G_No[3] = 1;
+                break;
+            }
+
             Cover_Timer = 24;
             Suicide[0] = 1;
             System_all_clear_Level_B();

@@ -22,6 +22,9 @@
 #include "sf33rd/Source/Game/effect/effe0.h"
 #include "sf33rd/Source/Game/effect/effect.h"
 #include "sf33rd/Source/Game/effect/effk6.h"
+#include "sf33rd/Source/Game/engine/bbbscom.h"
+#include "sf33rd/Source/Game/rendering/texgroup.h"
+#include "sf33rd/Source/Game/system/ramcnt.h"
 #include "sf33rd/Source/Game/engine/grade.h"
 #include "sf33rd/Source/Game/engine/plcnt.h"
 #include "sf33rd/Source/Game/engine/pls02.h"
@@ -1083,6 +1086,16 @@ void Sel_CPU_Sub(s16 PL_id, u16 sw, u16 /* unused */) {
     if (sw & SWK_ATTACKS) {
         Sel_EM_Complete[PL_id] = 1;
         EM_id = EM_List[Player_id][Temporary_EM[Player_id] - 1];
+
+        // Upstream of everything, because everything downstream reads this. Setting the opponent
+        // in Setup_Next_Fighter alone was too late: the assets are asked for from My_char[COM_id],
+        // which is derived here, so the stage came up as Sean's while the fighter loaded was the
+        // one this screen had picked -- a sprite reading a texture group nobody brought in, which
+        // is a crash with nothing to say for itself.
+        if (Parry_The_Ball_Was_Requested()) {
+            EM_id = CHAR_SEAN;
+        }
+
         My_char[COM_id] = EM_id;
         Time_Stop = 2;
 
@@ -1112,6 +1125,22 @@ void Setup_Next_Fighter() {
     paring_counter[COM_id] = 0;
     paring_bonus_r[COM_id] = 0;
     My_char[COM_id] = EM_id;
+
+    // PARRY THE BALL settles both of these itself. Left to run, this picks a fighter and a battle
+    // country and loads them, and the bonus stage is then loaded on top rather than instead --
+    // which is what a glitched background is: two stages resident at once. Deciding it here rather
+    // than undoing it afterwards is the difference between one request and two, and a stage's
+    // assets are keyed per table entry, so there is no undoing them in one call.
+    if (Parry_The_Ball_Was_Requested()) {
+        My_char[COM_id] = CHAR_SEAN;
+        Battle_Country = bg_w.stage = PARRY_THE_BALL_STAGE;
+        Push_LDREQ_Queue_BG(bg_w.stage);
+        bg_w.area = 0;
+        Super_Arts[COM_id] = Stock_Com_Arts[Player_id] = Setup_Com_Arts();
+        Setup_Com_Color();
+        Setup_PL_Color(COM_id, Com_Color_Shot);
+        return;
+    }
 
     if (EM_id == 17) {
         Battle_Country = Q_Country;
@@ -1489,12 +1518,19 @@ s8 Check_Bonus_Stage() {
 
     Setup_Com_Color();
     Setup_PL_Color(COM_id, Com_Color_Shot);
+
     Push_LDREQ_Queue_Player(COM_id, My_char[COM_id]);
     Push_LDREQ_Queue_BG(Bonus_Type);
     return Completion_Bonus[Player_id][Bonus_Type - 20] = 1;
 }
 
 s8 Check_Bonus_Type() {
+    // The training row asks for the basketball by name, so none of the conditions below apply: no
+    // run is in progress, there is no grade to read, and it has not been completed this run.
+    if (Parry_The_Ball_Requested()) {
+        return 21;
+    }
+
 #if DEBUG
     if (debug_config.bonus_stage_override != 0) {
         if (debug_config.bonus_stage_override == 1) {

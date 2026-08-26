@@ -17,7 +17,7 @@ void EFF61_SLIDE_IN(WORK_Other_CONN* ewk);
 void EFF61_SLIDE_OUT(WORK_Other_CONN* /* unused */);
 void EFF61_SUDDENLY(WORK_Other_CONN* ewk);
 
-const s8* Menu_Letter_Data[174] = { "ARCADE",
+const s8* Menu_Letter_Data[183] = { "ARCADE",
                                    "VERSUS",
                                    "TRAINING",
                                    "SYSTEM DIRECTION",
@@ -245,7 +245,27 @@ const s8* Menu_Letter_Data[174] = { "ARCADE",
                                    "ST+HK",
                                    "-",
                                    "-",
-                                   "-" };
+                                   "-",
+                                   // 172: the training menu's third row. Appended rather than
+                                   // slotted in beside the two above it, which sit at 53 and 54:
+                                   // an entry inserted there would move every index after it, and
+                                   // Slide_Pos_Data_61 is indexed by the same number.
+                                   "PARRY THE BALL !",
+                                   // 173-182: which of the ten throw patterns that row will run,
+                                   // numbered as set_bonus_game_nando numbers them — 1 to 5 are
+                                   // bbbs_table's second set, 6 to 10 its first. Short because the
+                                   // row's own label is sixteen letters of the wide charset,
+                                   // which is what decides where the value can start.
+                                   "LVL 1",
+                                   "LVL 2",
+                                   "LVL 3",
+                                   "LVL 4",
+                                   "LVL 5",
+                                   "LVL 6",
+                                   "LVL 7",
+                                   "LVL 8",
+                                   "LVL 9",
+                                   "LVL 10" };
 
 void (*const EFF61_Jmp_Tbl[4])() = { EFF61_WAIT, EFF61_SLIDE_IN, EFF61_SLIDE_OUT, EFF61_SUDDENLY };
 

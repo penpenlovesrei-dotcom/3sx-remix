@@ -1,25 +1,30 @@
 @echo off
-rem Lance 3SX apres la remontee des 27 commits d'amont.
-rem Les tables de menu ont ete realignees : c'est ce qu'il faut verifier.
+rem 3SX tout-en-un : musique, couleurs et francais dans un seul binaire.
 
 cd /d "%~dp0build\application\bin"
 
 echo Lancement de 3SX...
 echo.
-echo A VERIFIER EN PRIORITE - un decalage de table donne un libelle
-echo faux, jamais un plantage, donc seul l'oeil peut le voir :
+echo LES TROIS CHANTIERS SONT DANS CE BINAIRE :
 echo.
-echo   1. Options ^> Display : les huit lignes portent leur nom
-echo      (SCREEN ADJUST, RESOLUTION, CHAR. COLOR, BACKGROUNDS,
-echo       HUD, ARTWORKS, COLOR EDIT, EXIT) et leurs valeurs.
-echo   2. COLOR EDIT ^> un personnage : le NOM du personnage est le bon,
-echo      les captions R G B sont R G B, les lignes COLOR et SAVE
-echo      portent leurs valeurs.
-echo   3. Options ^> Sound : les rangees et leurs valeurs, la ligne
-echo      BGM TYPE, et EXIT qui sort bien.
-echo   4. Les ecrans Custom (musiques, decors, couleurs) s'ouvrent
-echo      depuis les bonnes lignes.
-echo   5. L'amont a ajoute un selecteur de LANGUE : voir ou il est.
+echo   Musique   Options ^> Sound ^> BGM TYPE, et l'ecran Custom
+echo   Couleurs  Options ^> Display ^> CHAR. COLOR et COLOR EDIT
+echo             plus le cycle START sur l'ecran de selection
+echo   Francais  Options ^> Screen Adjust ^> LANGUAGE : EN, JP, FR
+echo             (citations, dialogues d'avant-combat et fins)
+echo.
+echo A VERIFIER - la remontee d'amont a realigne les tables de menu,
+echo et un decalage donne un libelle faux, jamais un plantage :
+echo.
+echo   1. Les lignes de Display portent leur nom et leurs valeurs.
+echo   2. COLOR EDIT : bon personnage, captions R G B, lignes
+echo      COLOR et SAVE avec leurs valeurs.
+echo   3. Options ^> Sound : rangees, BGM TYPE, et EXIT qui sort.
+echo   4. LANGUAGE sur FR : les fins et les dialogues en francais,
+echo      accents compris.
+echo.
+echo ATTENTION : la sauvegarde retient la langue. Un binaire qui ne
+echo connait pas FR et qui relit ce profil lirait une entree vide.
 echo.
 
 3sx.exe > "%~dp03sx-couleurs.log" 2>&1

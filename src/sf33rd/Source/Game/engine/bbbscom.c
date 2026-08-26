@@ -142,6 +142,49 @@ void bbbs_com_initialize() {
     Bonus_Stage_RNO[2] = Bonus_Stage_RNO[3] = 0;
 }
 
+/// What the training menu asked for, if anything. Kept here rather than in the menu because this
+/// is where the level is decided, and because the stage has to be able to clear it on the way out.
+static s16 parry_the_ball;
+static s16 parry_the_ball_level;
+static s16 parry_the_ball_session;
+
+void Request_Parry_The_Ball(s16 on, s16 level) {
+    parry_the_ball = on;
+    parry_the_ball_level = level;
+    parry_the_ball_session = on;
+}
+
+s32 Parry_The_Ball_Requested(void) {
+    return parry_the_ball;
+}
+
+void Parry_The_Ball_Clear(void) {
+    parry_the_ball = 0;
+}
+
+/// The request is consumed as soon as the level is settled, but the stage still has to know at the
+/// very end which door it came in by — hence parry_the_ball_session above, which only the exit
+/// clears.
+s32 Parry_The_Ball_Was_Requested(void) {
+    return parry_the_ball_session;
+}
+
+void Parry_The_Ball_Forget(void) {
+    parry_the_ball_session = 0;
+}
+
+void Parry_The_Ball_Again(void) {
+    parry_the_ball = 1;
+}
+
+s32 Parry_The_Ball_Level(void) {
+    return parry_the_ball_level;
+}
+
+void Parry_The_Ball_Step_Level(s16 delta) {
+    parry_the_ball_level = (parry_the_ball_level + delta + 10) % 10;
+}
+
 void makeup_bonus_game_level(s16 ix) {
     s16 emid = (ix + 1) & 1;
     u16 swdat;
@@ -153,6 +196,20 @@ void makeup_bonus_game_level(s16 ix) {
     }
 
     bbbs_type = 1;
+
+    // A level named on the menu outranks both the button combination and the grade: it is the one
+    // the player just chose, on a screen built to choose it. Split the same way set_bonus_game_nando
+    // splits its own answer, since the two speak the same numbering.
+    if (parry_the_ball) {
+        if (parry_the_ball_level > 4) {
+            bbbs_type = 0;
+            Bonus_Stage_Level = parry_the_ball_level - 5;
+        } else {
+            Bonus_Stage_Level = parry_the_ball_level;
+        }
+
+        return;
+    }
 
     if (katteni_bonus_nando(swdat)) {
         Bonus_Stage_Level = set_bonus_game_nando(swdat);

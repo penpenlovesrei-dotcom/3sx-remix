@@ -27,6 +27,7 @@
 #include "sf33rd/Source/Game/effect/eff61.h"
 #include "sf33rd/Source/Game/effect/eff63.h"
 #include "sf33rd/Source/Game/effect/eff64.h"
+#include "sf33rd/Source/Game/engine/bbbscom.h"
 #include "sf33rd/Source/Game/effect/eff66.h"
 #include "sf33rd/Source/Game/effect/eff75.h"
 #include "sf33rd/Source/Game/effect/eff91.h"
@@ -296,6 +297,30 @@ void End_Replay_Menu(struct _TASK* task_ptr);
 void Mode_Select(struct _TASK* task_ptr);
 void Option_Select(struct _TASK* task_ptr);
 void Custom_Tracklist(struct _TASK* task_ptr);
+/// @name The training menu's third row
+///
+/// PARRY THE BALL, which runs the basketball bonus stage on its own rather than waiting for an
+/// arcade run to reach it. The stage itself is the game's — `Game09`, entered by `G_No[1] = 9`
+/// when `Bonus_Type` is not zero — so this adds a way in, not a mode.
+/// @{
+/// Its string, appended past the end of Menu_Letter_Data; the two rows above it are at 53 and 54.
+#define TRAINING_ROW_BALL_LETTER 172
+/// The ten level names beside it, and the work that draws whichever is current
+#define TRAINING_BALL_LEVEL_FIRST 173
+#define TRAINING_BALL_LEVELS 10
+#define TRAINING_BALL_LEVEL_WORK 0x54
+/// Which row of the four it is, and how many there are now
+#define TRAINING_ROW_BALL 2
+#define TRAINING_ROW_EXIT 3
+#define TRAINING_ROWS 4
+/// @}
+
+/// Which of the ten throw patterns PARRY THE BALL will run, 0 to 9 as set_bonus_game_nando
+/// numbers them. Outlives the screen, so a second visit opens on the last one tried.
+static s8 training_ball_level;
+/// Where its line lives in frw, since the line has to be rebuilt whenever the level changes
+static s16 training_ball_level_work = -1;
+
 void Training_Mode(struct _TASK* task_ptr);
 void System_Direction(struct _TASK* task_ptr);
 void Load_Replay(struct _TASK* task_ptr);
@@ -764,6 +789,25 @@ void imgSelectGameButton() {
     dispButtonImage2(0xB2, 0x6B, 0x18, 0x20, 0x1A, 0, 5, 0);
 }
 
+/// @brief Draw the level beside PARRY THE BALL, having taken down the one it replaces.
+///
+/// Rebuilt rather than updated: effect_61 walks its string once and bakes a sprite per letter, so
+/// a line whose text changes has to be made again. Its cursor index is the row's, which is what
+/// makes it light and dim with the row rather than on its own.
+static void Training_Ball_Level_Line() {
+    if (training_ball_level_work >= 0) {
+        push_effect_work((WORK*)frw[training_ball_level_work]);
+        training_ball_level_work = -1;
+    }
+
+    effect_61_init(0, TRAINING_BALL_LEVEL_WORK, 0, 1, TRAINING_BALL_LEVEL_FIRST + training_ball_level,
+                   TRAINING_ROW_BALL, 0x70A7);
+    training_ball_level_work = effect_61_last_work;
+    Order[TRAINING_BALL_LEVEL_WORK] = 1;
+    Order_Dir[TRAINING_BALL_LEVEL_WORK] = 4;
+    Order_Timer[TRAINING_BALL_LEVEL_WORK] = TRAINING_ROW_BALL + 0x14;
+}
+
 void Training_Mode(struct _TASK* task_ptr) {
     s16 ix;
     s16 char_index;
@@ -779,19 +823,24 @@ void Training_Mode(struct _TASK* task_ptr) {
         Order_Timer[0x6F] = 1;
         effect_04_init(1, 5, 0, 0x48);
 
-        ix = 0;
-        char_index = 0x35;
+        // Four rows now, and no longer three consecutive strings: PARRY THE BALL had to be
+        // appended past the end of Menu_Letter_Data rather than slotted between PARRYING TRAINING
+        // and EXIT, because an entry inserted there would move every index after it.
+        {
+            static const s16 training_rows[TRAINING_ROWS] = { 0x35, 0x36, TRAINING_ROW_BALL_LETTER, 0x37 };
 
-        while (ix < 3) {
-            effect_61_init(0, ix + 0x50, 0, 1, char_index, ix, 0x7047);
-            Order[ix + 0x50] = 1;
-            Order_Dir[ix + 0x50] = 4;
-            Order_Timer[ix + 0x50] = ix + 0x14;
-            ix++;
-            char_index++;
+            for (ix = 0; ix < TRAINING_ROWS; ix++) {
+                effect_61_init(0, ix + 0x50, 0, 1, training_rows[ix], ix, 0x7047);
+                Order[ix + 0x50] = 1;
+                Order_Dir[ix + 0x50] = 4;
+                Order_Timer[ix + 0x50] = ix + 0x14;
+            }
         }
 
-        Menu_Cursor_Move = 3;
+        (void)char_index;
+        training_ball_level_work = -1;
+        Training_Ball_Level_Line();
+        Menu_Cursor_Move = TRAINING_ROWS;
         system_dir[4] = system_dir[1];
         system_dir[5] = system_dir[1];
         break;
@@ -808,12 +857,27 @@ void Training_Mode(struct _TASK* task_ptr) {
 
         break;
 
-    case 3:
+    case 3: {
+        const u16 sw = Check_Menu_Lever(0, 0);
+
         PL_id = 0;
 
-        if (MC_Move_Sub(Check_Menu_Lever(0, 0), 0, 2, 0xFF) == 0) {
+        if (MC_Move_Sub(sw, 0, TRAINING_ROW_EXIT, 0xFF) == 0) {
             PL_id = 1;
-            MC_Move_Sub(Check_Menu_Lever(1, 0), 0, 2, 0xFF);
+            MC_Move_Sub(Check_Menu_Lever(1, 0), 0, TRAINING_ROW_EXIT, 0xFF);
+        }
+
+        // Left and right pick which of the ten patterns the row will run, the way any value row
+        // is changed. Only on that row: the two above it carry no value.
+        if ((Menu_Cursor_Y[0] == TRAINING_ROW_BALL) && (sw == 4 || sw == 8)) {
+            const s16 delta = (sw == 4) ? -1 : 1;
+
+            training_ball_level = (s8)(((training_ball_level + delta) % TRAINING_BALL_LEVELS
+                                        + TRAINING_BALL_LEVELS)
+                                       % TRAINING_BALL_LEVELS);
+            SE_dir_cursor_move();
+            Training_Ball_Level_Line();
+            return;
         }
 
         switch (IO_Result) {
@@ -827,7 +891,7 @@ void Training_Mode(struct _TASK* task_ptr) {
 
         SE_selected();
 
-        if (Menu_Cursor_Y[0] == 2 || IO_Result == 0x200) {
+        if (Menu_Cursor_Y[0] == TRAINING_ROW_EXIT || IO_Result == 0x200) {
             Menu_Suicide[0] = 0;
             Menu_Suicide[1] = 1;
             task_ptr->r_no[1] = 1;
@@ -841,12 +905,42 @@ void Training_Mode(struct _TASK* task_ptr) {
 
         Decide_ID = PL_id;
 
+        // PARRY THE BALL is not a training session at all, and setting it up as one was the whole
+        // trouble: Setup_VS_Mode makes both sides operators, which is what put a second fighter on
+        // the select screen, and Is_Training_Mode then lays the training menu over the stage. So it
+        // launches the way the mode select launches ARCADE, line for line, and nothing else here
+        // runs. The bonus stage is the arcade's own; this only asks for it on the first fight
+        // rather than the fourth.
+        if (Menu_Cursor_Y[0] == TRAINING_ROW_BALL) {
+            Request_Parry_The_Ball(1, training_ball_level);
+            G_No[2] += 1;
+            Mode_Type = MODE_ARCADE;
+            Present_Mode = PRESENT_MODE_LOCAL;
+            task_ptr->r_no[0] = 5;
+            cpExitTask(TASK_SAVER);
+            Decide_PL(PL_id);
+
+            // The rows have to be taken down by hand here. They are effect_61 lines built with
+            // master_player 1, and Check_Die_61 kills such a line only when Menu_Suicide[1] says
+            // so -- which the EXIT row sets and this path, being the mode select's launch rather
+            // than the training menu's, never did. Left standing they keep asking to be drawn
+            // after multitexture 13 is gone, which the renderer calls a display request before
+            // initialisation and treats as fatal. That is what killed every attempt so far.
+            Menu_Suicide[0] = 0;
+            Menu_Suicide[1] = 1;
+            Order[0x6F] = 4;
+            Order_Timer[0x6F] = 4;
+            break;
+        }
+
+        Request_Parry_The_Ball(0, training_ball_level);
+
         if (Menu_Cursor_Y[0] == 0) {
             Mode_Type = MODE_NORMAL_TRAINING;
-            Present_Mode = 4;
+            Present_Mode = PRESENT_MODE_NORMAL_TRAINING;
         } else {
             Mode_Type = MODE_PARRY_TRAINING;
-            Present_Mode = 5;
+            Present_Mode = PRESENT_MODE_PARRY_TRAINING;
         }
 
         Setup_VS_Mode(task_ptr);
@@ -860,6 +954,7 @@ void Training_Mode(struct _TASK* task_ptr) {
         cpExitTask(TASK_ENTRY);
 
         break;
+    }
     }
 }
 
@@ -2373,6 +2468,7 @@ static s8 color_edit_row_sel;
 static s8 color_edit_focus;
 /// Where each value's line currently lives in frw, so it can be taken down before being rebuilt
 static s16 color_edit_value_work[COL_EDIT_VALUES];
+
 
 static s16 Color_Edit_Rows_On_Page() {
     const s16 left = CHARACTER_TOTAL - color_edit_page * COLOR_EDIT_PAGE_ROWS;
