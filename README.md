@@ -1,3 +1,19 @@
+> [!IMPORTANT]
+> **This is a personal fork, not the 3SX project.**
+> The upstream project lives at **[crowded-street/3sx](https://github.com/crowded-street/3sx)** —
+> that is where releases, issues and pull requests belong. Everything below this notice is
+> upstream's own README, kept as it stands.
+>
+> This fork tracks upstream and adds three things of its own, all on the `tout-en-un` branch:
+>
+> | | |
+> |---|---|
+> | **BGM remix** | user-supplied soundtracks, chosen per stage from a Custom screen |
+> | **Palette sets** | New Generation and 2nd Impact colours, plus an in-game COLOR EDIT MODE |
+> | **French** | quotes, pre-fight dialogue and endings, on a third `LANGUAGE` entry |
+>
+> None of it has been offered upstream. Bugs seen here are this fork's until shown otherwise.
+
 # 3SX
 
 3SX is a native port of *Street Fighter III: 3rd Strike*. It's a continuation of [3s-decomp](https://github.com/crowded-street/3s-decomp) – a matching decompilation of 3rd Strike for PS2. 
