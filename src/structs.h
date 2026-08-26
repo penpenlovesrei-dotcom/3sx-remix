@@ -27,12 +27,19 @@ typedef struct {
     s32 heapnum;
 } FMS_FRAME;
 
+typedef enum Language : u8 {
+    LANG_ENGLISH,
+    LANG_JAPANESE,
+} Language;
+
+#define Language_Toggle(lang) ((lang) == LANG_ENGLISH ? LANG_JAPANESE : LANG_ENGLISH)
+
 typedef struct {
     FMS_FRAME fmsFrame;
     u8* ramcntBuff;
     bool initTrainingData;
     bool inGame;
-    s8 language;
+    Language language;
     bool cutAnalogStickData;
     bool useAnalogStickData;
 } MPP;
@@ -45,7 +52,7 @@ struct _TASK {
     u8 free[4];
 };
 
-typedef enum {
+typedef enum : u8 {
     BGM_ARRANGED,
     BGM_ORIGINAL,
     /// First installed remix pack; further packs take the slots above it, so the pack index is
@@ -61,7 +68,6 @@ typedef enum {
 } BgmType;
 
 struct _SYSTEM_W {
-    u8 sound_mode;
     u8 screen_mode;
     /// The soundtrack actually playing. Never BGM_RANDOM: that resolves to a real one per fight.
     BgmType bgm_type;
@@ -925,14 +931,12 @@ struct _SAVE_W {
     s8 Adjust_Y;
     u8 Screen_Size;
     u8 Screen_Mode;
+    Language Language;
     u8 GuardCheck;
-    u8 Auto_Save;
     u8 AnalogStick;
     BgmType BgmType;
-    u8 SoundMode;
     u8 BGM_Level;
     u8 SE_Level;
-    u8 Extra_Option;
     _EXTRA_OPTION extra_option;
     RANK_DATA Ranking[20];
     u32 sum;
@@ -1162,40 +1166,9 @@ typedef union {
 } MTX;
 
 typedef struct {
-    s8 ok;
-    s8 type;
-    s16 key;
-    uintptr_t texture_table;
-    uintptr_t trans_table;
-} TEX_GRP_LD;
-
-typedef struct {
     u8 wh;
     u8 dat[4];
 } TEX;
-
-typedef struct {
-    u8 be;
-    u8 type;
-    s16 id;
-    u8 rno;
-    u8 retry;
-    u8 ix;
-    u8 frre;
-    s16 key;
-    u8 kokey;
-    u8 group;
-    u8* result;
-    s32 size;
-    s32 sect;
-    u16 fnum;
-    u8 free[2];
-    TEX_GRP_LD* lds;
-    struct {
-        u32 number;
-        u32 size;
-    } info;
-} REQ;
 
 struct _cursor_infor {
     u8 first_x;
@@ -1247,7 +1220,7 @@ typedef struct {
 } CharInitData2;
 
 typedef struct {
-    uintptr_t adr;
+    void* ptr;
     size_t size;
     u8 search_type;
     u8 group_num;
@@ -1378,16 +1351,6 @@ typedef struct {
     f32 s;
     f32 t;
 } TexCoord;
-
-typedef struct {
-    u16 num_of_1st;
-    s16 apfn;
-    s16 conv;
-    s16 ix1st;
-    u32 use;
-    u32 to_tex;
-    u32 to_chd;
-} TexGroupData;
 
 typedef struct {
     f32 x;

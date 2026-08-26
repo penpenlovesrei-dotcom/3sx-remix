@@ -59,6 +59,7 @@
 #include "sf33rd/Source/Game/ui/flash_lp.h"
 #include "sf33rd/Source/Game/ui/input_history.h"
 #include "sf33rd/Source/Game/ui/sc_sub.h"
+#include "sf33rd/Source/PS2/mc/savesub.h"
 #include "structs.h"
 
 void Wait_Auto_Load(struct _TASK* /* unused */);
@@ -1031,24 +1032,14 @@ void Game06() {
                     save_w[Present_Mode].Ranking[xx] = Ranking_Data[xx];
                 }
 
-                if (save_w[Present_Mode].Auto_Save) {
-                    G_No[2] = 5;
-                    G_No[3] = 0;
-                    G_Timer = 4;
-                    Pause_ID = Player_id;
-                    cpReadyTask(TASK_MENU, Menu_Task);
-                    System_all_clear_Level_B();
-                    Menu_Init(&task[TASK_MENU]);
-                    task[TASK_MENU].r_no[0] = 9;
-                    task[TASK_MENU].r_no[1] = 0;
-                    Forbid_Reset = 1;
-                    make_texcash_work(12);
-                    Unsubstantial_BG[0] = 1;
-                    Copy_Check_w();
-                    cpExitTask(TASK_SAVER);
-                } else {
-                    G_No[2] = 6;
-                }
+                G_No[2] = 5;
+                G_No[3] = 0;
+                G_Timer = 4;
+                Pause_ID = Player_id;
+                System_all_clear_Level_B();
+                Forbid_Reset = 1;
+                Copy_Check_w();
+                cpExitTask(TASK_SAVER);
             }
 
             break;
@@ -1059,7 +1050,11 @@ void Game06() {
 
                 if (--G_Timer == 0) {
                     G_No[3] = 1;
+                    SaveInit(SAVE_FILE_SETTINGS, SAVE_MODE_SAVE);
                 }
+            } else if (SaveMove() <= 0) {
+                Forbid_Reset = 0;
+                G_No[2] = 6;
             }
 
             break;
@@ -1318,7 +1313,7 @@ void Game09() {
         Switch_Screen(1);
 
         if (--G_Timer == 0) {
-            if (Check_LDREQ_Queue_BG((u16)bg_w.stage) == 0) {
+            if (!Check_LDREQ_Queue_BG(bg_w.stage)) {
                 G_Timer = 1;
             } else {
                 G_No[2] += 1;
@@ -1806,7 +1801,7 @@ s16 Ck_Coin() {
     default:
     case 1:
         ToneDown(0xFF, 0);
-        PL_id = Check_LDREQ_Break();
+        PL_id = Check_LDREQ_Break() ? 1 : 0;
         return PL_id ^ 1;
     }
 }

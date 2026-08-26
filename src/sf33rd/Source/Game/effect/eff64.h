@@ -7,19 +7,19 @@
 #include <stdbool.h>
 
 /// Row of Letter_Data_64 whose values are the installed soundtracks
-#define LETTER_TYPE_SOUNDTRACK 16
+#define LETTER_TYPE_SOUNDTRACK 15
 /// @name Rows of Letter_Data_64 belonging to the Display page
 /// @{
-#define LETTER_TYPE_RESOLUTION 17
-#define LETTER_TYPE_SD_HD 18
-#define LETTER_TYPE_BACKGROUNDS 19
+#define LETTER_TYPE_RESOLUTION 16
+#define LETTER_TYPE_SD_HD 17
+#define LETTER_TYPE_BACKGROUNDS 18
 /// Same values per stage, on the Custom backgrounds screen
-#define LETTER_TYPE_BACKGROUND_SET 20
+#define LETTER_TYPE_BACKGROUND_SET 19
 /// How a character's palette set gets chosen
-#define LETTER_TYPE_CHARACTER_COLOR 21
+#define LETTER_TYPE_CHARACTER_COLOR 20
 /// Same per character, on the Custom character colours screen, and that screen's navigation row
-#define LETTER_TYPE_CHARACTER_SET 22
-#define LETTER_TYPE_PAGE_NAV 23
+#define LETTER_TYPE_CHARACTER_SET 21
+#define LETTER_TYPE_PAGE_NAV 22
 /// @}
 /// @name How a character's palette set gets chosen
 ///

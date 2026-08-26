@@ -16,14 +16,12 @@ void Init_sound_system();
 void Resolve_bgm_type(u16 base_code);
 /// Put the player's BGM Type choice into effect, drawing one if that choice is Random
 void Apply_bgm_choice();
-s32 sndCheckVTransStatus(s32 type);
 void sndInitialLoad();
 void checkAdxFileLoaded();
 void Exit_sound_system();
 void Init_bgm_work();
 void sound_all_off();
 void setSeVolume();
-void setupSoundMode();
 void BGM_Server();
 void setupAlwaysSeamlessFlag(s16 flag);
 s32 adx_now_playend();

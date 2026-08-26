@@ -30,7 +30,6 @@ void ADX_StartFile(const char* path);
 const char* ADX_GetCurrentFilePath();
 void ADX_ResetEntry();
 void ADX_SetOutVol(int volume);
-void ADX_SetMono(bool mono);
 ADXState ADX_GetState();
 
 #endif

@@ -24,7 +24,7 @@ void Setup_Letter_64(WORK_Other_CONN* ewk, s16 disp_index);
 s16 disp_index_64(WORK_Other_CONN* ewk);
 static s16 subject_64(WORK_Other_CONN* ewk);
 
-const s8* Letter_Data_64[24][16] = {
+const s8* Letter_Data_64[23][16] = {
     { "\"OFF\"", "\"/ON/\"", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
     { "#;;;;;;;",
       "##;;;;;;",
@@ -49,7 +49,7 @@ const s8* Letter_Data_64[24][16] = {
     { "DISABLE", "ENABLE", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
     { "OFF", "ON", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
     { "HUMAN", "CPU", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { "ENGLISH", "JAPANESE", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { "EN", "JP", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
     { "SYSTEM  NORMAL",
       "SYSTEM  CUSTOM",
       NULL,
@@ -66,7 +66,6 @@ const s8* Letter_Data_64[24][16] = {
       NULL,
       NULL,
       NULL },
-    { "Stereo", "Monaural", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
     { "Silence", "-14", "-13", "-12", "-11", "-10", "-9", "-8", "-7", "-6", "-5", "-4", "-3", "-2", "-1", "Standard" },
     { "Arrange", "Original", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
     { "-PLAY(A)", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
@@ -142,7 +141,7 @@ s16 letter_data_64_selectable(s16 letter_type, s16 disp_index, s16 subject) {
 void (*const EFF64_Jmp_Tbl[4])() = { EFF64_WAIT, EFF64_SLIDE_IN, EFF64_CHAR_CHANGE, EFF64_SUDDENLY };
 
 /// Row of Letter_Data_64 holding the `BGM Type` values
-#define LETTER_TYPE_BGM_TYPE 13
+#define LETTER_TYPE_BGM_TYPE 12
 
 // Convert_Buff holds twelve values per row and is part of the netplay state, so the sixteen
 // stages get their own buffer rather than being squeezed in.

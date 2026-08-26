@@ -225,14 +225,14 @@ static s32 bgm_use_seamless(s16 code) {
 
 // Patch the pitch adjustment for voice lines to match arcade
 static void patch_tsb() {
-	TSB_SE[156].pitch = 100; // code: 140 "KO"
-	TSB_SE[174].pitch = 100; // code: 158 "You need to practice more"
-	TSB_SE[175].pitch = 100; // code: 159 "Excellent job!"
-	TSB_SE[176].pitch = 100; // code: 160 "Bonus stage!"
-	TSB_SE[177].pitch = 100; // code: 161 "Begin!"
-	TSB_SE[178].pitch = 100; // code: 162 "What's next?"
-	TSB_SE[179].pitch = 100; // code: 163 "Decide..." (what is he saying here?)
-	TSB_SE[180].pitch = 100; // code: 164 "Choose your path!" 
+    TSB_SE[156].pitch = 100; // code: 140 "KO"
+    TSB_SE[174].pitch = 100; // code: 158 "You need to practice more"
+    TSB_SE[175].pitch = 100; // code: 159 "Excellent job!"
+    TSB_SE[176].pitch = 100; // code: 160 "Bonus stage!"
+    TSB_SE[177].pitch = 100; // code: 161 "Begin!"
+    TSB_SE[178].pitch = 100; // code: 162 "What's next?"
+    TSB_SE[179].pitch = 100; // code: 163 "Decide..." (what is he saying here?)
+    TSB_SE[180].pitch = 100; // code: 164 "Choose your path!"
 }
 
 /// @brief Point each remix slot at the tables its pack follows.
@@ -263,7 +263,7 @@ static s16 config_sound_level(const char* key) {
 }
 
 void Init_sound_system() {
-	patch_tsb();
+    patch_tsb();
     setup_remix_tables();
 
     // Out-of-range values would be read straight into the volume maths, so they fall back to
@@ -273,18 +273,12 @@ void Init_sound_system() {
     bgm_half_down = 0;
     current_bgm = 0;
     bgm_seamless_always = 0;
-    sys_w.sound_mode = 0;
     sys_w.bgm_type = BGM_ARRANGED;
     sys_w.bgm_choice = BGM_ARRANGED;
     ADX_Init();
     system_init_level |= 2;
     cseInitSndDrv();
     system_init_level |= 1;
-}
-
-s32 sndCheckVTransStatus(s32 type) {
-    // Keeping this for now, might use later?
-    return 1;
 }
 
 void sndInitialLoad() {
@@ -324,7 +318,7 @@ void checkAdxFileLoaded() {
         key = load_it_use_any_key(fnum, 21, 0);
     } while (key == 0);
 
-    adr = (u8*)Get_ramcnt_address(key);
+    adr = Get_ramcnt_pointer(key);
     ppgSetupCmpChunk(adr, 0, adx_VS);
     ppgSetupCmpChunk(adr, 1, adx_EmSel);
     Push_ramcnt_key(key);
@@ -373,13 +367,6 @@ void setSeVolume() {
     if (system_init_level & 2) {
         vol = (127.0f / 15.0f) * se_level;
         cseSysSetMasterVolume(vol);
-    }
-}
-
-void setupSoundMode() {
-    if (system_init_level & 2) {
-        cseSysSetMono(sys_w.sound_mode);
-        ADX_SetMono(sys_w.sound_mode);
     }
 }
 

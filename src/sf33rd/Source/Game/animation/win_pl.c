@@ -93,6 +93,10 @@ void Win_01000(PLW* wk) {
 
     bg_app_stop = 1;
 
+    if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
+        set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
+    }
+
     switch (wk->wu.routine_no[3]) {
     case 0:
         win_rno[0] = win_rno[1] = 0;
@@ -321,6 +325,10 @@ void Win_02000(PLW* wk) {
 
     switch (wk->wu.routine_no[3]) {
     case 0:
+        if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
+            set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
+        }
+
         wk->wu.routine_no[3]++;
 
         win_rno[0] = win_rno[1] = 0;
@@ -337,10 +345,6 @@ void Win_02000(PLW* wk) {
             }
         } else {
             set_char_move_init(&wk->wu, 9, 32);
-        }
-
-        if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
-            set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
         }
 
         break;
@@ -404,7 +408,6 @@ void Win_03000(PLW* wk) {
         char_move(&wk->wu);
         break;
     }
-
 }
 
 void Win_04000(PLW* wk) {
@@ -412,6 +415,10 @@ void Win_04000(PLW* wk) {
     s16 work2;
 
     bg_app_stop = 1;
+
+    if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
+        set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
+    }
 
     switch (wk->wu.routine_no[3]) {
     case 0:
@@ -451,10 +458,6 @@ void Win_04000(PLW* wk) {
         char_move(&wk->wu);
         break;
     }
-
-    if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
-        set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
-    }
 }
 
 void Normal_normal_Winner(PLW* wk) {
@@ -478,13 +481,16 @@ void Normal_normal_Winner(PLW* wk) {
         char_move(&wk->wu);
         break;
     }
-
 }
 
 void Judge_normal_winner(PLW* wk) {
     s16 work;
 
     bg_app_stop = 1;
+
+    if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
+        set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
+    }
 
     switch (wk->wu.routine_no[3]) {
     case 0:
@@ -499,16 +505,16 @@ void Judge_normal_winner(PLW* wk) {
         char_move(&wk->wu);
         break;
     }
-
-    if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
-        set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
-    }
 }
 
 void Win_05000(PLW* wk) {
     s16 work;
 
     bg_app_stop = 1;
+
+    if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
+        set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
+    }
 
     switch (wk->wu.routine_no[3]) {
     case 0:
@@ -562,10 +568,6 @@ void Win_05000(PLW* wk) {
             break;
         }
     }
-
-    if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
-        set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
-    }
 }
 
 void Win_06000(PLW* wk) {
@@ -575,6 +577,10 @@ void Win_06000(PLW* wk) {
 
     switch (wk->wu.routine_no[3]) {
     case 0:
+        if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
+            set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
+        }
+
         win_rno[0] = win_rno[1] = 0;
         wk->wu.routine_no[3]++;
 
@@ -585,10 +591,6 @@ void Win_06000(PLW* wk) {
         } else {
             work = win_select(wk, 3);
             set_char_move_init(&wk->wu, 9, work + 32);
-        }
-
-        if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
-            set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
         }
 
         break;
@@ -603,6 +605,10 @@ void Win_07000(PLW* wk) {
     s16 work;
 
     bg_app_stop = 1;
+
+    if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
+        set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
+    }
 
     switch (wk->wu.routine_no[3]) {
     case 0:
@@ -672,10 +678,6 @@ void Win_07000(PLW* wk) {
             char_move(&wk->wu);
         }
     }
-
-    if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
-        set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
-    }
 }
 
 void Win_08000(PLW* wk) {
@@ -685,22 +687,24 @@ void Win_08000(PLW* wk) {
 
     switch (wk->wu.routine_no[3]) {
     case 0:
+        if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
+            set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
+        }
+
         win_rno[0] = win_rno[1] = 0;
         wk->wu.routine_no[3]++;
 
         if (Round_Result & 0x800) {
             set_char_move_init(&wk->wu, 9, 40);
-        } else if (Round_num >= (save_w[Present_Mode].Battle_Number[Play_Type] * 2) ||
-                   PL_Wins[wk->wu.id] >= save_w[Present_Mode].Battle_Number[Play_Type] + 1) {
+        } else if (
+            Round_num >= (save_w[Present_Mode].Battle_Number[Play_Type] * 2) ||
+            PL_Wins[wk->wu.id] >= save_w[Present_Mode].Battle_Number[Play_Type] + 1
+        ) {
             work = win_select(wk, 3);
             set_char_move_init(&wk->wu, 9, work + 36);
         } else {
             work = win_select(wk, 3);
             set_char_move_init(&wk->wu, 9, work + 32);
-        }
-
-        if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
-            set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
         }
 
         break;
@@ -715,6 +719,10 @@ void Win_09000(PLW* wk) {
     s16 work;
 
     bg_app_stop = 1;
+
+    if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
+        set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
+    }
 
     switch (wk->wu.routine_no[3]) {
     case 0:
@@ -788,10 +796,6 @@ void Win_09000(PLW* wk) {
         Normal_normal_Winner(wk);
         break;
     }
-
-    if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
-        set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
-    }
 }
 
 void Win_10000(PLW* wk) {
@@ -806,6 +810,10 @@ void Win_10000(PLW* wk) {
 
     switch (wk->wu.routine_no[3]) {
     case 0:
+        if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
+            set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
+        }
+
         win_rno[0] = win_rno[1] = 0;
         wk->wu.routine_no[3]++;
         work = win_select(wk, 3);
@@ -843,10 +851,6 @@ void Win_10000(PLW* wk) {
             }
         } else {
             set_char_move_init(&wk->wu, 9, work + 32);
-        }
-
-        if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
-            set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
         }
 
         break;
@@ -1102,6 +1106,10 @@ void Win_11000(PLW* wk) {
 
     switch (wk->wu.routine_no[3]) {
     case 0:
+        if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
+            set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
+        }
+
         win_rno[0] = win_rno[1] = 0;
         wk->wu.routine_no[3]++;
         work = win_select(wk, 3);
@@ -1131,10 +1139,6 @@ void Win_11000(PLW* wk) {
         } else {
             win_rno[0] = 0;
             set_char_move_init(&wk->wu, 9, work + 32);
-        }
-
-        if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
-            set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
         }
 
         break;
@@ -1307,6 +1311,10 @@ void Win_13000(PLW* wk) {
 
     switch (wk->wu.routine_no[3]) {
     case 0:
+        if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
+            set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
+        }
+
         win_rno[0] = win_rno[1] = 0;
         wk->wu.routine_no[3]++;
 
@@ -1329,10 +1337,6 @@ void Win_13000(PLW* wk) {
             set_char_move_init(&wk->wu, 9, work + 32);
         }
 
-        if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
-            set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
-        }
-
         break;
 
     default:
@@ -1345,6 +1349,10 @@ void Win_14000(PLW* wk) {
     s16 work;
 
     bg_app_stop = 1;
+
+    if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
+        set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
+    }
 
     switch (wk->wu.routine_no[3]) {
     case 0:
@@ -1375,10 +1383,6 @@ void Win_14000(PLW* wk) {
         }
 
         break;
-    }
-
-    if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
-        set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
     }
 }
 
@@ -1489,6 +1493,10 @@ void Win_15000(PLW* wk) {
 
     switch (wk->wu.routine_no[3]) {
     case 0:
+        if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
+            set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
+        }
+
         win_rno[0] = win_rno[1] = 0;
         wk->wu.routine_no[3]++;
 
@@ -1499,10 +1507,6 @@ void Win_15000(PLW* wk) {
         } else {
             work = win_select(wk, 3);
             set_char_move_init(&wk->wu, 9, work + 32);
-        }
-
-        if (set_field_hosei_flag(&plw[wk->wu.id], scrr, 1)) {
-            set_field_hosei_flag(&plw[wk->wu.id], scrl, 0);
         }
 
         break;
@@ -1521,6 +1525,14 @@ s16 win_select(PLW* /* unused */, s16 num) {
 
 void bonus_game_win_pause(PLW* wk) {
     bg_app_stop = 1;
+
+    if (set_field_hosei_flag(&plw[1], bs_scrrrl[1][0], 1)) {
+        set_field_hosei_flag(&plw[1], bs_scrrrl[1][1], 0);
+    }
+
+    if (set_field_hosei_flag(&plw[0], bs_scrrrl[0][0], 1)) {
+        set_field_hosei_flag(&plw[0], bs_scrrrl[0][1], 0);
+    }
 
     switch (wk->wu.routine_no[3]) {
     case 0:
@@ -1581,14 +1593,6 @@ void bonus_game_win_pause(PLW* wk) {
     case 9:
         char_move(&wk->wu);
         break;
-    }
-
-    if (set_field_hosei_flag(&plw[1], bs_scrrrl[1][0], 1)) {
-        set_field_hosei_flag(&plw[1], bs_scrrrl[1][1], 0);
-    }
-
-    if (set_field_hosei_flag(&plw[0], bs_scrrrl[0][0], 1)) {
-        set_field_hosei_flag(&plw[0], bs_scrrrl[0][1], 0);
     }
 }
 

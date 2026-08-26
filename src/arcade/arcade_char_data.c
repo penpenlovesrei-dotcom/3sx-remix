@@ -261,6 +261,89 @@ static const void* read_u16_array(SDL_IOStream* rom, Location location) {
     return result;
 }
 
+static void coalesce_adjacent_sections(CharDataImage* image, const LocationData* locations) {
+    const Location* section_locations = (const Location*)locations;
+    CharDataSection sections[CHAR_DATA_SECTION_COUNT];
+
+    for (int i = 0; i < CHAR_DATA_SECTION_COUNT; i++) {
+        sections[i] = i;
+    }
+
+    for (int i = 1; i < CHAR_DATA_SECTION_COUNT; i++) {
+        const CharDataSection section = sections[i];
+        int j = i;
+
+        while (j > 0 && section_locations[sections[j - 1]].offset > section_locations[section].offset) {
+            sections[j] = sections[j - 1];
+            j--;
+        }
+
+        sections[j] = section;
+    }
+
+    for (int run_start = 0; run_start < CHAR_DATA_SECTION_COUNT;) {
+        int run_end = run_start;
+
+        while (run_end + 1 < CHAR_DATA_SECTION_COUNT) {
+            const Location current = section_locations[sections[run_end]];
+            const Location next = section_locations[sections[run_end + 1]];
+
+            if (current.offset + current.size != next.offset) {
+                break;
+            }
+
+            run_end++;
+        }
+
+        if (run_end > run_start) {
+            const Uint32 base_offset = section_locations[sections[run_start]].offset;
+            const Location last = section_locations[sections[run_end]];
+            Uint8* allocation = SDL_malloc(last.offset + last.size - base_offset);
+
+            for (int i = run_start; i <= run_end; i++) {
+                const CharDataSection section = sections[i];
+                CharDataSpan* span = &image->spans[section];
+                Uint8* destination = allocation + section_locations[section].offset - base_offset;
+                SDL_memcpy(destination, span->data, span->size);
+                SDL_free(span->data);
+                span->data = destination;
+            }
+        }
+
+        run_start = run_end + 1;
+    }
+}
+
+static void update_table_pointers(CharDataImage* image) {
+    CharInitData* dst = &image->tables;
+
+    dst->nmca = image->spans[CHAR_DATA_NMCA].data;
+    dst->dmca = image->spans[CHAR_DATA_DMCA].data;
+    dst->btca = image->spans[CHAR_DATA_BTCA].data;
+    dst->caca = image->spans[CHAR_DATA_CACA].data;
+    dst->cuca = image->spans[CHAR_DATA_CUCA].data;
+    dst->atca = image->spans[CHAR_DATA_ATCA].data;
+    dst->saca = image->spans[CHAR_DATA_SACA].data;
+    dst->exca = image->spans[CHAR_DATA_EXCA].data;
+    dst->cbca = image->spans[CHAR_DATA_CBCA].data;
+    dst->yuca = image->spans[CHAR_DATA_YUCA].data;
+    dst->stxy = image->spans[CHAR_DATA_STXY].data;
+    dst->mvxy = image->spans[CHAR_DATA_MVXY].data;
+    dst->sernd = image->spans[CHAR_DATA_SERND].data;
+    dst->ovct = image->spans[CHAR_DATA_OVCT].data;
+    dst->ovix = image->spans[CHAR_DATA_OVIX].data;
+    dst->rict = image->spans[CHAR_DATA_RICT].data;
+    dst->hiit = image->spans[CHAR_DATA_HIIT].data;
+    dst->boda = image->spans[CHAR_DATA_BODA].data;
+    dst->hana = image->spans[CHAR_DATA_HANA].data;
+    dst->cata = image->spans[CHAR_DATA_CATA].data;
+    dst->caua = image->spans[CHAR_DATA_CAUA].data;
+    dst->atta = image->spans[CHAR_DATA_ATTA].data;
+    dst->hosa = image->spans[CHAR_DATA_HOSA].data;
+    dst->atit = image->spans[CHAR_DATA_ATIT].data;
+    dst->prot = image->spans[CHAR_DATA_PROT].data;
+}
+
 static const void* read_sernd(SDL_IOStream* rom, Location location) {
     SDL_SeekIO(rom, location.offset, SDL_IO_SEEK_SET);
 
@@ -427,6 +510,11 @@ void ArcadeCharData_Init() {
             };
         }
 
+        // CPS3 data sometimes indexes across named section boundaries. Preserve
+        // every directly adjacent ROM run so those accesses remain well-defined.
+        coalesce_adjacent_sections(image, locations);
+        update_table_pointers(image);
+
 #if DEBUG && DUMP_CHAR_DATA
         dump_data(dst, character);
 #endif
@@ -525,46 +613,128 @@ bool ArcadeCharData_Apply3SXRenderingConventions(Character character, const void
     return true;
 }
 
+static const CgRemapRange gill_cg_ranges[] = {
+    { .first = 0x7070, .last = 0x707A, .delta = -0x6AE0 },
+};
+
+static const CgRemapRange alex_cg_ranges[] = {
+    { .first = 0x707B, .last = 0x7085, .delta = -0x667D },
+};
+
+static const CgRemapRange ryu_cg_ranges[] = {
+    { .first = 0x7082, .last = 0x7090, .delta = -0x62C6 },
+};
+
+static const CgRemapRange yun_cg_ranges[] = {
+    { .first = 0x7091, .last = 0x709B, .delta = -0x5D20 },
+};
+
+static const CgRemapRange dudley_cg_ranges[] = {
+    { .first = 0x709C, .last = 0x70A6, .delta = -0x58C3 },
+};
+
+static const CgRemapRange necro_cg_ranges[] = {
+    { .first = 0x70A7, .last = 0x70B1, .delta = -0x53E4 },
+};
+
+static const CgRemapRange hugo_cg_ranges[] = {
+    { .first = 0x70B2, .last = 0x70BC, .delta = -0x5005 },
+};
+
 static const CgRemapRange ibuki_cg_ranges[] = {
     { .first = 0x70BD, .last = 0x70C7, .delta = -18692 },
     { .first = 0x9BA8, .last = 0x9C6F, .delta = -29904 },
 };
 
 static const CgRemapRange elena_cg_ranges[] = {
+    { .first = 0x70C8, .last = 0x70D2, .delta = -0x42E5 },
     { .first = 0x9C88, .last = 0x9CC1, .delta = -0x6F08 },
 };
 
+static const CgRemapRange oro_cg_ranges[] = {
+    { .first = 0x70D3, .last = 0x70DD, .delta = -0x3D5A },
+};
+
+static const CgRemapRange yang_cg_ranges[] = {
+    { .first = 0x70DE, .last = 0x70E8, .delta = -0x37F2 },
+};
+
+static const CgRemapRange ken_cg_ranges[] = {
+    { .first = 0x70E9, .last = 0x70F3, .delta = -0x3399 },
+};
+
+static const CgRemapRange sean_cg_ranges[] = {
+    { .first = 0x70F4, .last = 0x70FF, .delta = -0x2F74 },
+};
+
+static const CgRemapRange urien_cg_ranges[] = {
+    { .first = 0x70FF, .last = 0x7109, .delta = -0x29C3 },
+};
+
+static const CgRemapRange akuma_cg_ranges[] = {
+    { .first = 0x710A, .last = 0x7114, .delta = -0x2526 },
+};
+
+static const CgRemapRange chunli_cg_ranges[] = {
+    { .first = 0x7115, .last = 0x711F, .delta = -0x1EB4 },
+};
+
 static const CgRemapRange makoto_cg_ranges[] = {
+    { .first = 0x7120, .last = 0x712A, .delta = -0x1760 },
     { .first = 0xA000, .last = UINT16_MAX, .delta = -0x5378 },
 };
 
+static const CgRemapRange q_cg_ranges[] = {
+    { .first = 0x712B, .last = 0x7135, .delta = -0x123A },
+};
+
+static const CgRemapRange twelve_cg_ranges[] = {
+    { .first = 0x7136, .last = 0x7140, .delta = -0x0C46 },
+};
+
+static const CgRemapRange remy_cg_ranges[] = {
+    { .first = 0x7141, .last = 0x714B, .delta = -0x07C1 },
+};
+
 static const CharacterCgMap cg_maps[NUM_CHARS] = {
-    [CHAR_GILL] = { .default_delta = 0x0000 },
-    [CHAR_ALEX] = { .default_delta = 0x0020 },
-    [CHAR_RYU] = { .default_delta = -0x01E0 },
-    [CHAR_YUN] = { .default_delta = -0x0420 },
-    [CHAR_DUDLEY] = { .default_delta = -0x0480 },
-    [CHAR_NECRO] = { .default_delta = -0x0600 },
-    [CHAR_HUGO] = { .default_delta = -0x0720 },
+    [CHAR_GILL] = { .default_delta = 0x0000, .ranges = gill_cg_ranges, .range_count = SDL_arraysize(gill_cg_ranges) },
+    [CHAR_ALEX] = { .default_delta = 0x0020, .ranges = alex_cg_ranges, .range_count = SDL_arraysize(alex_cg_ranges) },
+    [CHAR_RYU] = { .default_delta = -0x01E0, .ranges = ryu_cg_ranges, .range_count = SDL_arraysize(ryu_cg_ranges) },
+    [CHAR_YUN] = { .default_delta = -0x0420, .ranges = yun_cg_ranges, .range_count = SDL_arraysize(yun_cg_ranges) },
+    [CHAR_DUDLEY] = { .default_delta = -0x0480,
+                      .ranges = dudley_cg_ranges,
+                      .range_count = SDL_arraysize(dudley_cg_ranges) },
+    [CHAR_NECRO] = { .default_delta = -0x0600,
+                     .ranges = necro_cg_ranges,
+                     .range_count = SDL_arraysize(necro_cg_ranges) },
+    [CHAR_HUGO] = { .default_delta = -0x0720, .ranges = hugo_cg_ranges, .range_count = SDL_arraysize(hugo_cg_ranges) },
     [CHAR_IBUKI] = { .default_delta = -0x0940,
                      .ranges = ibuki_cg_ranges,
                      .range_count = SDL_arraysize(ibuki_cg_ranges) },
     [CHAR_ELENA] = { .default_delta = -0x0820,
                      .ranges = elena_cg_ranges,
                      .range_count = SDL_arraysize(elena_cg_ranges) },
-    [CHAR_ORO] = { .default_delta = -0x0800 },
-    [CHAR_YANG] = { .default_delta = -0x0820 },
-    [CHAR_KEN] = { .default_delta = -0x08C0 },
-    [CHAR_SEAN] = { .default_delta = -0x0AA0 },
-    [CHAR_URIEN] = { .default_delta = -0x0C60 },
-    [CHAR_AKUMA] = { .default_delta = -0x0CA0 },
-    [CHAR_CHUNLI] = { .default_delta = -0x0E00 },
+    [CHAR_ORO] = { .default_delta = -0x0800, .ranges = oro_cg_ranges, .range_count = SDL_arraysize(oro_cg_ranges) },
+    [CHAR_YANG] = { .default_delta = -0x0820, .ranges = yang_cg_ranges, .range_count = SDL_arraysize(yang_cg_ranges) },
+    [CHAR_KEN] = { .default_delta = -0x08C0, .ranges = ken_cg_ranges, .range_count = SDL_arraysize(ken_cg_ranges) },
+    [CHAR_SEAN] = { .default_delta = -0x0AA0, .ranges = sean_cg_ranges, .range_count = SDL_arraysize(sean_cg_ranges) },
+    [CHAR_URIEN] = { .default_delta = -0x0C60,
+                     .ranges = urien_cg_ranges,
+                     .range_count = SDL_arraysize(urien_cg_ranges) },
+    [CHAR_AKUMA] = { .default_delta = -0x0CA0,
+                     .ranges = akuma_cg_ranges,
+                     .range_count = SDL_arraysize(akuma_cg_ranges) },
+    [CHAR_CHUNLI] = { .default_delta = -0x0E00,
+                      .ranges = chunli_cg_ranges,
+                      .range_count = SDL_arraysize(chunli_cg_ranges) },
     [CHAR_MAKOTO] = { .default_delta = -0x0D80,
                       .ranges = makoto_cg_ranges,
                       .range_count = SDL_arraysize(makoto_cg_ranges) },
-    [CHAR_Q] = { .default_delta = -0x0C20 },
-    [CHAR_TWELVE] = { .default_delta = -0x0B80 },
-    [CHAR_REMY] = { .default_delta = -0x0D00 },
+    [CHAR_Q] = { .default_delta = -0x0C20, .ranges = q_cg_ranges, .range_count = SDL_arraysize(q_cg_ranges) },
+    [CHAR_TWELVE] = { .default_delta = -0x0B80,
+                      .ranges = twelve_cg_ranges,
+                      .range_count = SDL_arraysize(twelve_cg_ranges) },
+    [CHAR_REMY] = { .default_delta = -0x0D00, .ranges = remy_cg_ranges, .range_count = SDL_arraysize(remy_cg_ranges) },
 };
 
 static const size_t section_element_sizes[CHAR_DATA_SECTION_COUNT] = {

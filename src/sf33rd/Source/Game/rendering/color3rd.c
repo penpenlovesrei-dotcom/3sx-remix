@@ -76,7 +76,7 @@ s32 palFormConv;
 const u16 hitmark_color[128];
 const col_file_data color_file[161];
 
-void q_ldreq_color_data(REQ* curr) {
+void q_ldreq_color_data(LoadRequest* curr) {
     col_file_data* cfn;
     s32 err;
 
@@ -84,16 +84,14 @@ void q_ldreq_color_data(REQ* curr) {
 
     switch (curr->rno) {
     case 0:
-        if (fsCheckCommandExecuting() != 0) {
+        if (fsCheckCommandExecuting()) {
             break;
         }
+
         if (cfn->type == 10) {
-            if (sndCheckVTransStatus(0) == 0) {
-                break;
-            }
             if (cfn->data + 1 == cseGetIdStoredBd(curr->id + 1)) {
-                *curr->result |= lpr_wrdata[curr->id];
-                curr->be = 0;
+                LDREQ_SetResultFlag(curr, true);
+                curr->status = LDREQ_STATUS_FREE;
                 break;
             }
         }
@@ -102,75 +100,86 @@ void q_ldreq_color_data(REQ* curr) {
         curr->fnum = cfn->apfn;
 
         if (cfn->apfn == 0xFFFF) {
-            *curr->result |= lpr_wrdata[curr->id];
-            curr->be = 0;
+            LDREQ_SetResultFlag(curr, true);
+            curr->status = LDREQ_STATUS_FREE;
         }
+
         /* fallthrough */
+
     case 1:
-        err = fsOpen(curr);
-        if (err == 0) {
+        if (!fsOpen(curr->fnum)) {
             curr->rno = 0;
             break;
         }
+
         curr->rno = 2;
         /* fallthrough */
+
     case 2:
         curr->size = fsGetFileSize(curr->fnum);
-        curr->sect = fsCalSectorSize(curr->size);
-        curr->key = Pull_ramcnt_key(curr->sect << 11, curr->kokey, curr->group, curr->frre);
+        curr->key = Pull_ramcnt_key(curr->size, curr->kokey, curr->group, curr->frre);
         Set_size_data_ramcnt_key(curr->key, curr->size);
         curr->rno = 3;
         /* fallthrough */
+
     case 3:
-        err = fsRequestFileRead(curr, (void*)Get_ramcnt_address(curr->key));
+        err = fsRequestFileRead(Get_ramcnt_pointer(curr->key));
 
         if (err == 0) {
             Push_ramcnt_key(curr->key);
-            fsClose(curr);
+            fsClose();
             curr->rno = 0;
         } else {
             curr->rno = 4;
-            curr->be = 1;
+            curr->status = LDREQ_STATUS_RUNNING;
         }
+
         break;
 
     case 4:
-        switch (fsCheckFileReaded(curr)) {
-        case 1:
+        switch (fsCheckFileReaded()) {
+        case FS_READ_IDLE:
             if (cfn->type == 10) {
-                fsClose(curr);
-                cseSendBd2SpuWithId((void*)Get_ramcnt_address(curr->key),
-                                    Get_size_data_ramcnt_key(curr->key),
-                                    curr->id + 1,
-                                    cfn->data + 1);
+                fsClose();
+
+                cseSendBd2SpuWithId(
+                    Get_ramcnt_pointer(curr->key),
+                    Get_size_data_ramcnt_key(curr->key),
+                    curr->id + 1,
+                    cfn->data + 1
+                );
+
                 curr->rno = 5;
             } else {
                 init_trans_color_ram(curr->id, curr->key, cfn->type, cfn->data);
-                fsClose(curr);
-                *curr->result |= lpr_wrdata[curr->id];
-                curr->be = 0;
+                fsClose();
+                LDREQ_SetResultFlag(curr, true);
+                curr->status = LDREQ_STATUS_FREE;
             }
+
             break;
-        case 0:
+
+        case FS_READ_READING:
+            // Do nothing
             break;
-        default:
+
+        case FS_READ_ERROR:
             Push_ramcnt_key(curr->key);
-            fsClose(curr);
-            curr->be = 2;
+            fsClose();
+            curr->status = LDREQ_STATUS_IDLE;
             curr->rno = 0;
             break;
         }
+
         break;
 
     case 5:
-        if (sndCheckVTransStatus(1) != 0) {
-            Push_ramcnt_key(curr->key);
-            cseMemMapSetPhdAddr(curr->id + 1, csePHDDataTable[cfn->data + 1]);
-            cseTsbSetBankAddr(curr->id + 1, cseTSBDataTable[cfn->data + 1]);
-            sdbd[curr->id + 1] = (s8*)cseTSBDataTable[cfn->data + 1];
-            *curr->result |= lpr_wrdata[curr->id];
-            curr->be = 0;
-        }
+        Push_ramcnt_key(curr->key);
+        cseMemMapSetPhdAddr(curr->id + 1, csePHDDataTable[cfn->data + 1]);
+        cseTsbSetBankAddr(curr->id + 1, cseTSBDataTable[cfn->data + 1]);
+        sdbd[curr->id + 1] = (s8*)cseTSBDataTable[cfn->data + 1];
+        LDREQ_SetResultFlag(curr, true);
+        curr->status = LDREQ_STATUS_FREE;
         break;
     }
 }
@@ -228,13 +237,13 @@ void init_trans_color_ram(s16 id, s16 key, u8 type, u16 data) {
             over = NULL;
         }
 
-        plcol[id] = (over != NULL) ? (COL*)over : (COL*)Get_ramcnt_address(key);
+        plcol[id] = (over != NULL) ? (COL*)over : (COL*)Get_ramcnt_pointer(key);
 
         // The archive's own entry, deliberately, and not whatever plcol ended up pointing at. An
         // installed set is a file the colour editor can read again whenever it likes; the game's
         // own palettes are readable exactly here, between the key being pulled and released a few
         // lines down, and nowhere else. So this keeps the one that cannot be fetched twice.
-        SDL_memcpy(&player_source[id], (const void*)Get_ramcnt_address(key), (size_t)needed);
+        SDL_memcpy(&player_source[id], Get_ramcnt_pointer(key), (size_t)needed);
         player_source_size[id] = needed;
 
         if (My_char[id] == 0) {
@@ -298,7 +307,7 @@ void init_trans_color_ram(s16 id, s16 key, u8 type, u16 data) {
         } else {
             size = Get_size_data_ramcnt_key(key);
             size = size / 2;
-            tradrs = (u16*)Get_ramcnt_address(key);
+            tradrs = (u16*)Get_ramcnt_pointer(key);
         }
 
         // Whatever the source, it cannot be allowed to write past the end of colour RAM
@@ -325,7 +334,7 @@ void init_trans_color_ram(s16 id, s16 key, u8 type, u16 data) {
     }
 
     case 3: {
-        COL_x1000* dadr = (COL_x1000*)Get_ramcnt_address(key);
+        COL_x1000* dadr = Get_ramcnt_pointer(key);
         if (id == 2) {
             for (i = 0; i < 64; i++) {
                 hi_meta[0][0][i] = dadr->col[0][Player_Color[0]][i];
@@ -355,7 +364,7 @@ void init_trans_color_ram(s16 id, s16 key, u8 type, u16 data) {
         break;
     }
     case 4: {
-        COL_x80* adr = (COL_x80*)Get_ramcnt_address(key);
+        COL_x80* adr = Get_ramcnt_pointer(key);
         u16* src = (&adr[Player_Color[id]])->col;
         u16* dst = (u16*)&ColorRAM[data + (id * 16)][0];
 
@@ -375,7 +384,7 @@ void init_trans_color_ram(s16 id, s16 key, u8 type, u16 data) {
         break;
     }
     case 5: {
-        COL_x180* adr = (COL_x180*)Get_ramcnt_address(key);
+        COL_x180* adr = Get_ramcnt_pointer(key);
         u16* src = (&adr[Player_Color[id]])->col[0];
         u16* dst = (u16*)&ColorRAM[data + (id * 16)][0];
         for (i = 0; i < 192U; i++) {
@@ -393,7 +402,7 @@ void init_trans_color_ram(s16 id, s16 key, u8 type, u16 data) {
         break;
     }
     case 6: {
-        COL_x100* adr = (COL_x100*)Get_ramcnt_address(key);
+        COL_x100* adr = Get_ramcnt_pointer(key);
         u16* src = (&adr[Player_Color[id]])->col[0];
         u16* dst = (u16*)&ColorRAM[data + (id * 16)][0];
 
@@ -411,7 +420,7 @@ void init_trans_color_ram(s16 id, s16 key, u8 type, u16 data) {
         break;
     }
     case 7: {
-        COL_x2800* adrs = (COL_x2800*)Get_ramcnt_address(key);
+        COL_x2800* adrs = Get_ramcnt_pointer(key);
         ldadrs = (u16*)&ColorRAM[40];
         tradrs = (u16*)&ColorRAM[41];
 
@@ -425,22 +434,12 @@ void init_trans_color_ram(s16 id, s16 key, u8 type, u16 data) {
         break;
     }
     case 8:
-        cseSendBd2SpuWithId((void*)Get_ramcnt_address(key), Get_size_data_ramcnt_key(key), 0, 0);
-
-        while (!sndCheckVTransStatus(1)) {
-            waitVsyncDummy();
-        }
-
+        cseSendBd2SpuWithId(Get_ramcnt_pointer(key), Get_size_data_ramcnt_key(key), 0, 0);
         Push_ramcnt_key(key);
         break;
 
     case 10:
-        cseSendBd2SpuWithId((void*)Get_ramcnt_address(key), Get_size_data_ramcnt_key(key), id + 1, data + 1);
-
-        while (!sndCheckVTransStatus(1)) {
-            waitVsyncDummy();
-        }
-
+        cseSendBd2SpuWithId(Get_ramcnt_pointer(key), Get_size_data_ramcnt_key(key), id + 1, data + 1);
         cseMemMapSetPhdAddr(id + 1, csePHDDataTable[data + 1]);
         cseTsbSetBankAddr(id + 1, cseTSBDataTable[data + 1]);
         sdbd[id + 1] = (s8*)cseTSBDataTable[data + 1];
@@ -575,7 +574,7 @@ void palCreateGhost() {
     ppl.palettes = 0x1000;
     size = 0x2000;
     key = Pull_ramcnt_key(size, 2, 0, 1);
-    adrs = (u8*)Get_ramcnt_address(key);
+    adrs = Get_ramcnt_pointer(key);
 
     for (i = 0; i < size; i++) {
         adrs[i] = 0;
@@ -587,7 +586,7 @@ void palCreateGhost() {
     ppl.palettes = 2;
     size = 0x2000;
     key = Pull_ramcnt_key(size, 2, 0, 1);
-    adrs = (u8*)Get_ramcnt_address(key);
+    adrs = Get_ramcnt_pointer(key);
 
     for (i = 0; i < size; i++) {
         adrs[i] = 0;

@@ -6,6 +6,7 @@
 #include "sf33rd/Source/Game/system/sys_sub.h"
 #include "common.h"
 #include "main.h"
+#include "port/config/config.h"
 #include "port/sound/bgm_remix.h"
 #include "sf33rd/AcrSDK/common/mlPAD.h"
 #include "sf33rd/Source/Game/com/com_data.h"
@@ -606,13 +607,13 @@ void Save_Game_Data() {
     save_w[1].Adjust_Y = Convert_Buff[2][0][1];
     save_w[1].Screen_Size = Convert_Buff[2][0][2];
     save_w[1].Screen_Mode = Convert_Buff[2][0][3];
-    save_w[1].Auto_Save = Convert_Buff[3][0][2];
-    save_w[1].SoundMode = Convert_Buff[3][1][0];
-    save_w[1].BGM_Level = Convert_Buff[3][1][1];
-    save_w[1].SE_Level = Convert_Buff[3][1][2];
+    save_w[1].Language = mpp_w.language;
+    // One column left of where these sat before the sound menu lost its Sound Mode row upstream.
+    save_w[1].BGM_Level = Convert_Buff[3][1][0];
+    save_w[1].SE_Level = Convert_Buff[3][1][1];
     // Store the BGM type, not the menu position, so reordering the row later can't repoint a
     // saved setting at a different soundtrack
-    save_w[1].BgmType = BgmRemix_GetSlotType(Convert_Buff[3][1][3]);
+    save_w[1].BgmType = BgmRemix_GetSlotType(Convert_Buff[3][1][2]);
 }
 
 void Copy_Save_w() {
@@ -656,17 +657,16 @@ void Copy_Save_w() {
     Convert_Buff[2][0][2] = save_w[1].Screen_Size;
     Convert_Buff[2][0][3] = save_w[1].Screen_Mode;
     sys_w.screen_mode = save_w[1].Screen_Mode;
-    Convert_Buff[3][0][2] = save_w[1].Auto_Save;
-    Convert_Buff[3][1][0] = save_w[1].SoundMode;
-    Convert_Buff[3][1][1] = save_w[1].BGM_Level;
-    Convert_Buff[3][1][2] = save_w[1].SE_Level;
+    Convert_Buff[2][0][4] = save_w[1].Language;
+    mpp_w.language = save_w[1].Language;
+    Convert_Buff[3][1][0] = save_w[1].BGM_Level;
+    Convert_Buff[3][1][1] = save_w[1].SE_Level;
     // The save holds the player's choice, Random included; the menu row works in positions. A
     // choice whose pack was removed since it was saved has no position left, and lands back on
     // the first entry.
-    Convert_Buff[3][1][3] = BgmRemix_GetSlotForType(save_w[1].BgmType);
-    sys_w.bgm_choice = (BgmType)BgmRemix_GetSlotType(Convert_Buff[3][1][3]);
+    Convert_Buff[3][1][2] = BgmRemix_GetSlotForType(save_w[1].BgmType);
+    sys_w.bgm_choice = (BgmType)BgmRemix_GetSlotType(Convert_Buff[3][1][2]);
     Apply_bgm_choice();
-
     for (ix = 0; ix < 20; ix++) {
         Ranking_Data[ix] = save_w[1].Ranking[ix];
     }
@@ -709,14 +709,12 @@ const struct _SAVE_W Game_Default_Data = {
     .Adjust_Y = 0,
     .Screen_Size = 0,
     .Screen_Mode = 1,
+    .Language = 0,
     .GuardCheck = 0,
-    .Auto_Save = 0,
     .AnalogStick = 1,
     .BgmType = 0,
-    .SoundMode = 0,
     .BGM_Level = 15,
     .SE_Level = 15,
-    .Extra_Option = 0,
     .extra_option = { { { 1, 3, 3, 0, 0, 1, 0, 0 },
                         { 0, 0, 2, 2, 8, 8, 2, 0 },
                         { 2, 2, 2, 2, 0, 0, 0, 0 },
@@ -739,6 +737,7 @@ void Setup_Default_Game_Option() {
 
     for (ix = 0; ix < 6; ix++) {
         save_w[ix] = Game_Default_Data;
+        save_w[ix].Language = mpp_w.language;
         save_w[ix].sum = 0;
     }
 }
@@ -900,36 +899,34 @@ void Basic_Sub_Ex() {
     move_effect_work(5);
 }
 
-s32 Check_PL_Load() {
-    if (!Check_LDREQ_Queue_Player(0) || !Check_LDREQ_Queue_Player(1)) {
-        return 0;
+bool Check_PL_Load() {
+    return Check_LDREQ_Queue_Player(0) && Check_LDREQ_Queue_Player(1);
+}
+
+static bool bg_layer_disabled(int i) {
+    if (!Config_GetBool(CFG_DRAW_PLAYERS_ABOVE_HUD)) {
+        return false;
     }
 
-    return 1;
+    // Rain on Yang's stage
+    if ((bg_w.bg_index == 10) && (i == 1)) {
+        return true;
+    }
+
+    return false;
 }
 
 void BG_Draw_System() {
-    u8 i;
-    u16 mask = 1 & 0xFFFF;
-    u16 s2;
-    u16 s3;
-
-    if (bg_disp_off == 0) {
-        for (i = 0; i < 4; i++, s2 = mask *= 2) {
-            if (Screen_Switch_Buffer & mask) {
-                scr_trans(i);
-            }
-        }
-    } else {
-        for (i = 0; i < 4; i++, s3 = mask *= 2) {
-            if (Screen_Switch_Buffer & mask) {
-                scr_calc(i);
-            }
+    for (int i = 0; i < 4; i++) {
+        if ((bg_disp_off == 0) && (Screen_Switch_Buffer & (1 << i)) && !bg_layer_disabled(i)) {
+            scr_trans(i);
+        } else {
+            scr_calc(i);
         }
     }
 
     if (Play_Game == 0) {
-        for (i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++) {
             if (Unsubstantial_BG[i]) {
                 scr_calc(i);
             }
@@ -1032,7 +1029,7 @@ void Soft_Reset_Sub() {
     pulpul_stop();
     init_pulpul_work();
     pp_operator_check_flag(1);
-    Init_Load_Request_Queue_1st();
+    Init_Load_Request_Queue();
 
 #if NETPLAY_ENABLED
     Netplay_CancelMatchmaking();

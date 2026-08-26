@@ -80,11 +80,11 @@
 /// @name Display page
 /// @{
 /// Its slot in After_Title's jump table
-#define MENU_SCREEN_DISPLAY 22
+#define MENU_SCREEN_DISPLAY 20
 /// Row of the option menu that opens it — the one that used to read SCREEN ADJUST
 #define OPTION_ROW_DISPLAY 2
 /// First entry of Menu_Letter_Data holding one of its rows, and of Slide_Pos_Data_61 placing it
-#define DISPLAY_LABEL_FIRST 84
+#define DISPLAY_LABEL_FIRST 83
 /// Its rows, in the order the labels are declared
 #define DISPLAY_ROW_SCREEN_ADJUST 0
 /// First row carrying a value; the rows that carry one are contiguous from here
@@ -109,7 +109,7 @@
 /// Slide_Pos_Data_64 entries placing this page's value column, reached as row + this. The page
 /// borrows the sound menu's diagonal but not its position entries, so a row here can be nudged
 /// without moving the sound menu's
-#define DISPLAY_VALUE_POS_FIRST 53
+#define DISPLAY_VALUE_POS_FIRST 54
 /// @}
 
 /// Which Letter_Data_64 row each Display row shows, how many entries it declares, and which of
@@ -133,12 +133,12 @@ static const s8 Display_Value_Default[8] = { 0, 0, CHAR_COLOR_MODE_CUSTOM, 0, 0,
 /// @name Custom character colours screen
 /// @{
 /// Its slot in After_Title's jump table
-#define MENU_SCREEN_CHARACTERS 24
+#define MENU_SCREEN_CHARACTERS 22
 /// First entry of msgSysDirTbl holding a character name. Its Menu_Letter_Data entries, 112-135,
 /// are dead since the labels moved to the message charset
 #define CHARACTER_MSG_FIRST 119
 /// First entry of Slide_Pos_Data_64 placing a set column, reached as row + this
-#define CHARACTER_VALUE_POS_FIRST 59
+#define CHARACTER_VALUE_POS_FIRST 60
 /// Twenty characters, nine to a page, so the last one holds only two
 #define CHARACTER_TOTAL 20
 #define CHARACTER_PAGES 3
@@ -162,7 +162,7 @@ static const s8 Display_Value_Default[8] = { 0, 0, CHAR_COLOR_MODE_CUSTOM, 0, 0,
 /// @name Custom backgrounds screen
 /// @{
 /// Its slot in After_Title's jump table
-#define MENU_SCREEN_BACKGROUNDS 23
+#define MENU_SCREEN_BACKGROUNDS 21
 /// First entry of msgSysDirTbl holding a row, alphabetically by character as the character screen
 /// is. Its Menu_Letter_Data entries, 92-135, are dead.
 ///
@@ -170,9 +170,9 @@ static const s8 Display_Value_Default[8] = { 0, 0, CHAR_COLOR_MODE_CUSTOM, 0, 0,
 /// names — the two orders differ, so wiring the setting up will need the mapping.
 #define BACKGROUND_MSG_FIRST 139
 /// Its Menu_Letter_Data entries, holding the bracketed stage and the dotted leader
-#define BACKGROUND_STAGE_FIRST 92
+#define BACKGROUND_STAGE_FIRST 91
 /// First entry of Slide_Pos_Data_64 placing a set column, reached as row + this
-#define BACKGROUND_VALUE_POS_FIRST 34
+#define BACKGROUND_VALUE_POS_FIRST 35
 /// One row per stage. Unlike the music, no two stages share a set of assets
 #define BACKGROUND_STAGES 20
 #define BACKGROUND_PAGES 3
@@ -189,8 +189,8 @@ static const s8 Display_Value_Default[8] = { 0, 0, CHAR_COLOR_MODE_CUSTOM, 0, 0,
 /// Custom screens already ask the same question.
 /// @{
 /// Their slots in After_Title's jump table
-#define MENU_SCREEN_COLOR_EDIT 25
-#define MENU_SCREEN_COLOR_CANVAS 26
+#define MENU_SCREEN_COLOR_EDIT 23
+#define MENU_SCREEN_COLOR_CANVAS 24
 /// The list borrows the Custom character screen's shape whole: same names from the message table,
 /// same eight rows a page, same navigation. It only drops the value column.
 #define COLOR_EDIT_PAGE_ROWS CHARACTER_PAGE_ROWS
@@ -198,12 +198,12 @@ static const s8 Display_Value_Default[8] = { 0, 0, CHAR_COLOR_MODE_CUSTOM, 0, 0,
 /// The R, G and B captions under the channel bars, and the works that draw them. Their entries sit
 /// past the end of Menu_Letter_Data so that adding them shifted nothing; the works are the Display
 /// page's label slots, dead while this screen is up.
-#define COL_EDIT_LABEL_FIRST 112
+#define COL_EDIT_LABEL_FIRST 111
 #define COL_EDIT_LABEL_WORK 0x50
 /// The name of the character being worked on, right of the swatch strip. Its own strings in
 /// Menu_Letter_Data, in engine order and reachable in any charset — the message table has the cast
 /// too, but only in the one effect_18 draws and only alphabetically.
-#define COL_EDIT_NAME_FIRST 115
+#define COL_EDIT_NAME_FIRST 114
 #define COL_EDIT_NAME_WORK 0x53
 /// @name The editor's two menu rows
 ///
@@ -215,7 +215,7 @@ static const s8 Display_Value_Default[8] = { 0, 0, CHAR_COLOR_MODE_CUSTOM, 0, 0,
 /// of their own. It is also why the captions and the name had to move off cursor 0: they were
 /// relying on this screen never moving that cursor, and now it does.
 /// @{
-#define COL_EDIT_ROW_FIRST 135
+#define COL_EDIT_ROW_FIRST 134
 #define COL_EDIT_ROW_WORK 0x54
 #define COL_EDIT_ROW_COLOR 0
 #define COL_EDIT_ROW_SAVE 1
@@ -229,9 +229,9 @@ static const s8 Display_Value_Default[8] = { 0, 0, CHAR_COLOR_MODE_CUSTOM, 0, 0,
 /// @{
 /// First of the four set names, and of the two runs of sixteen button names — one run placed
 /// beside the character's name for the row being edited, the other beside SAVE for its target
-#define COL_EDIT_SET_FIRST 137
-#define COL_EDIT_BUTTON_FIRST 141
-#define COL_EDIT_SAVE_BUTTON_FIRST 157
+#define COL_EDIT_SET_FIRST 136
+#define COL_EDIT_BUTTON_FIRST 140
+#define COL_EDIT_SAVE_BUTTON_FIRST 156
 #define COL_EDIT_VALUE_WORK 0x56
 #define COL_EDIT_VALUE_BUTTON 0
 #define COL_EDIT_VALUE_SET 1
@@ -285,12 +285,10 @@ void After_Title(struct _TASK* task_ptr);
 void In_Game(struct _TASK* task_ptr);
 void Wait_Load_Save(struct _TASK* task_ptr);
 void Wait_Replay_Check(struct _TASK* task_ptr);
-void Disp_Auto_Save(struct _TASK* task_ptr);
 void Suspend_Menu();
 void Wait_Replay_Load();
 void Training_Menu(struct _TASK* task_ptr);
 void After_Replay(struct _TASK* task_ptr);
-void Disp_Auto_Save2(struct _TASK* task_ptr);
 void Wait_Pause_in_Tr(struct _TASK* task_ptr);
 void Reset_Training(struct _TASK* task_ptr);
 void Reset_Replay(struct _TASK* task_ptr);
@@ -311,13 +309,10 @@ void Character_Custom(struct _TASK* task_ptr);
 void Color_Edit_Select(struct _TASK* task_ptr);
 void Color_Edit(struct _TASK* task_ptr);
 void Sound_Test(struct _TASK* task_ptr);
-void Memory_Card(struct _TASK* task_ptr);
 void Extra_Option(struct _TASK* task_ptr);
 void VS_Result(struct _TASK* task_ptr);
 void Save_Replay(struct _TASK* task_ptr);
 void Direction_Menu(struct _TASK* task_ptr);
-void Save_Direction(struct _TASK* task_ptr);
-void Load_Direction(struct _TASK* task_ptr);
 void Setup_VS_Mode(struct _TASK* task_ptr);
 void Setup_Next_Page(struct _TASK* task_ptr, u8 /* unused */);
 void Load_Replay_Sub(struct _TASK* task_ptr);
@@ -348,20 +343,10 @@ void Return_Option_Mode_Sub(struct _TASK* task_ptr);
 void Screen_Adjust_Sub(s16 PL_id);
 void Screen_Exit_Check(struct _TASK* task_ptr, s16 PL_id);
 void Screen_Move_Sub_LR(u16 sw);
-void Setup_Sound_Mode(u8 last_mode);
 u16 Sound_Cursor_Sub(s16 PL_id);
 u16 SD_Move_Sub_LR(u16 sw);
-void Memory_Card_Sub(s16 PL_id);
-void Save_Load_Menu(struct _TASK* task_ptr);
-void Go_Back_MC(struct _TASK* task_ptr);
-u16 Memory_Card_Move_Sub_LR(u16 sw, s16 cursor_id);
 u16 After_VS_Move_Sub(u16 sw, s16 cursor_id, s16 menu_max);
 s32 VS_Result_Move_Sub(struct _TASK* task_ptr, s16 PL_id);
-void DAS_1st(struct _TASK* task_ptr);
-void DAS_2nd(struct _TASK* task_ptr);
-void DAS_3rd(struct _TASK* task_ptr);
-void DAS_4th(struct _TASK* task_ptr);
-void DAS2_4th(struct _TASK* task_ptr);
 void Training_Init(struct _TASK* task_ptr);
 void Menu_Select(struct _TASK* task_ptr);
 void Button_Config_in_Game(struct _TASK* task_ptr);
@@ -394,8 +379,8 @@ typedef struct {
 } LetterData;
 
 const MenuFunc Menu_Jmp_Tbl[14] = {
-    After_Title,   In_Game,      Wait_Load_Save,  Wait_Replay_Check, Disp_Auto_Save, Suspend_Menu, Wait_Replay_Load,
-    Training_Menu, After_Replay, Disp_Auto_Save2, Wait_Pause_in_Tr,  Reset_Training, Reset_Replay, End_Replay_Menu,
+    After_Title,   In_Game,      Wait_Load_Save, Wait_Replay_Check, After_Title,    Suspend_Menu, Wait_Replay_Load,
+    Training_Menu, After_Replay, After_Replay,   Wait_Pause_in_Tr,  Reset_Training, Reset_Replay, End_Replay_Menu,
 };
 
 u8 r_no_plus;
@@ -428,19 +413,20 @@ void Setup_Pad_or_Stick() {
 }
 
 void After_Title(struct _TASK* task_ptr) {
-    void (*AT_Jmp_Tbl[27])() = { Menu_Init,        Mode_Select,    Option_Select,  Option_Select, Training_Mode,
-                                 System_Direction,
+    void (*AT_Jmp_Tbl[25])() = { Menu_Init,     Mode_Select,      Option_Select, Option_Select,
+                                 Training_Mode, System_Direction,
 #if NETPLAY_ENABLED
                                  Netplay_Menu,
 #else
                                  Load_Replay,
 #endif
-                                 Option_Select,    toSelectGame,   Game_Option,    Button_Config, Screen_Adjust,
-                                 Sound_Test,       Memory_Card,    Extra_Option,   Option_Select, VS_Result,
-                                 Save_Replay,      Direction_Menu, Save_Direction, Load_Direction,
-                                 Custom_Tracklist, Display_Menu,   Background_Custom,
-                                 Character_Custom, Color_Edit_Select,
-                                 Color_Edit };
+                                 Option_Select, toSelectGame,     Game_Option,   Button_Config,
+                                 Screen_Adjust, Sound_Test,       Option_Select, Extra_Option,
+                                 Option_Select, VS_Result,        Save_Replay,   Direction_Menu,
+                                 // 19-24: the screens these chantiers added, behind everything the
+                                 // stock menus reach. See MENU_SCREEN_*.
+                                 Custom_Tracklist, Display_Menu,      Background_Custom,
+                                 Character_Custom, Color_Edit_Select, Color_Edit };
 
     AT_Jmp_Tbl[task_ptr->r_no[1]](task_ptr);
 }
@@ -564,6 +550,17 @@ void Mode_Select(struct _TASK* task_ptr) {
         break;
 
     case 1:
+        if (task_ptr->free[3]) {
+            FadeOut(1, 0xFF, 8);
+
+            if (SaveMove() > 0) {
+                break;
+            }
+
+            task_ptr->free[3] = 0;
+            Forbid_Reset = 0;
+        }
+
         if (Menu_Sub_case1(task_ptr) != 0) {
             Order[0x4E] = 2;
             Order_Dir[0x4E] = 0;
@@ -868,7 +865,8 @@ void Training_Mode(struct _TASK* task_ptr) {
 
 void Option_Select(struct _TASK* task_ptr) {
     s16 ix;
-    s16 char_index;
+    static const s16 option_items[6] = { 7, 8, 9, 10, 12, 13 };
+    static const s16 option_routines[6] = { 9, 10, 11, 12, 14, 15 };
 
     switch (task_ptr->r_no[2]) {
     case 0:
@@ -880,41 +878,20 @@ void Option_Select(struct _TASK* task_ptr) {
         Order[0x4F] = 1;
         Order_Dir[0x4F] = 8;
         Order_Timer[0x4F] = 1;
-
-        if (save_w[Present_Mode].Extra_Option == 0) {
-            effect_04_init(1, 4, 0, 0x48);
-
-            ix = 0;
-            char_index = 0x2F;
-
-            while (ix < 6) {
-                effect_61_init(0, ix + 0x50, 0, 1, char_index, ix, 0x7047);
-                Order[ix + 0x50] = 1;
-                Order_Dir[ix + 0x50] = 4;
-                Order_Timer[ix + 0x50] = ix + 0x14;
-                ix++;
-                char_index++;
-            }
-
-            Menu_Cursor_Move = 6;
-            break;
-        }
-
         effect_04_init(1, 1, 0, 0x48);
 
-        ix = 0;
-        char_index = 7;
+        if (Menu_Cursor_Y[0] >= 6) {
+            Menu_Cursor_Y[0] = 5;
+        }
 
-        while (ix < 7) {
-            effect_61_init(0, ix + 0x50, 0, 1, char_index, ix, 0x7047);
+        for (ix = 0; ix < 6; ix++) {
+            effect_61_init(0, ix + 0x50, 0, 1, option_items[ix], ix, 0x7047);
             Order[ix + 0x50] = 1;
             Order_Dir[ix + 0x50] = 4;
             Order_Timer[ix + 0x50] = ix + 0x14;
-            ix++;
-            char_index++;
         }
 
-        Menu_Cursor_Move = 7;
+        Menu_Cursor_Move = 6;
         break;
 
     case 1:
@@ -933,14 +910,8 @@ void Option_Select(struct _TASK* task_ptr) {
         break;
 
     case 3:
-        if (save_w[Present_Mode].Extra_Option) {
-            ix = 1;
-        } else {
-            ix = 0;
-        }
-
-        if (MC_Move_Sub(Check_Menu_Lever(0, 0), 0, ix + 5, 0xFF) == 0) {
-            MC_Move_Sub(Check_Menu_Lever(1, 0), 0, ix + 5, 0xFF);
+        if (MC_Move_Sub(Check_Menu_Lever(0, 0), 0, 5, 0xFF) == 0) {
+            MC_Move_Sub(Check_Menu_Lever(1, 0), 0, 5, 0xFF);
         }
 
         switch (IO_Result) {
@@ -954,7 +925,7 @@ void Option_Select(struct _TASK* task_ptr) {
 
         SE_selected();
 
-        if (Menu_Cursor_Y[0] == ix + 5 || IO_Result == 0x200) {
+        if (Menu_Cursor_Y[0] == 5 || IO_Result == 0x200) {
             Menu_Suicide[0] = 0;
             Menu_Suicide[1] = 1;
             task_ptr->r_no[1] = 1;
@@ -965,13 +936,10 @@ void Option_Select(struct _TASK* task_ptr) {
             Order_Timer[0x4F] = 4;
 
             if (Check_Change_Contents()) {
-                if (save_w[Present_Mode].Auto_Save) {
-                    task_ptr->r_no[0] = 4;
-                    task_ptr->r_no[1] = 0;
-                    Forbid_Reset = 1;
-                    Copy_Check_w();
-                    break;
-                }
+                SaveInit(SAVE_FILE_SETTINGS, SAVE_MODE_SAVE);
+                task_ptr->free[3] = 1;
+                Forbid_Reset = 1;
+                Copy_Check_w();
             }
 
             break;
@@ -989,17 +957,18 @@ void Option_Select(struct _TASK* task_ptr) {
 
     default:
         // Row 2 used to be SCREEN ADJUST; it is now DISPLAY, which owns the screen adjust page.
-        // Every other row keeps the stock cursor-to-jump-table offset.
+        // Every other row keeps whatever option_routines says.
         Exit_Sub(task_ptr,
                  1,
-                 Menu_Cursor_Y[0] == OPTION_ROW_DISPLAY ? MENU_SCREEN_DISPLAY : Menu_Cursor_Y[0] + 9);
+                 Menu_Cursor_Y[0] == OPTION_ROW_DISPLAY ? MENU_SCREEN_DISPLAY
+                                                        : option_routines[Menu_Cursor_Y[0]]);
         break;
     }
 }
 
 void System_Direction(struct _TASK* task_ptr) {
     s16 ix;
-    s16 char_index;
+    static const s16 menu_items[2] = { 0x2B, 0x2E };
 
     switch (task_ptr->r_no[2]) {
     case 0:
@@ -1018,19 +987,14 @@ void System_Direction(struct _TASK* task_ptr) {
         Order_Dir[0x61] = 4;
         Order_Timer[0x61] = 0x14;
 
-        ix = 0;
-        char_index = 0x2B;
-
-        while (ix < 4) {
-            effect_61_init(0, ix + 0x50, 0, 1, char_index, ix + 1, 0x7047);
+        for (ix = 0; ix < 2; ix++) {
+            effect_61_init(0, ix + 0x50, 0, 1, menu_items[ix], ix + 1, 0x7047);
             Order[ix + 0x50] = 1;
             Order_Dir[ix + 0x50] = 4;
             Order_Timer[ix + 0x50] = ix + 0x15;
-            ix++;
-            char_index++;
         }
 
-        Menu_Cursor_Move = 4;
+        Menu_Cursor_Move = 2;
         Page_Max = Check_SysDir_Page();
         break;
 
@@ -1066,13 +1030,16 @@ void System_Direction(struct _TASK* task_ptr) {
             Order[0x6D] = 4;
             Order_Timer[0x6D] = 4;
 
-            if (Menu_Cursor_Y[0] == 4 || IO_Result == 0x200) {
+            if (Menu_Cursor_Y[0] == 2 || IO_Result == 0x200) {
                 Menu_Suicide[0] = 0;
                 Menu_Suicide[1] = 1;
                 task_ptr->r_no[1] = 1;
                 task_ptr->r_no[2] = 0;
                 task_ptr->r_no[3] = 0;
                 task_ptr->free[0] = 0;
+                task_ptr->free[3] = 1;
+                Forbid_Reset = 1;
+                SaveInit(SAVE_FILE_SYSTEM_DIRECTION, SAVE_MODE_SAVE);
                 break;
             }
 
@@ -1093,7 +1060,7 @@ void System_Direction(struct _TASK* task_ptr) {
 void System_Dir_Move_Sub(s16 PL_id) {
     u16 sw = ~plsw_01[PL_id] & plsw_00[PL_id]; // potential macro
     sw = Check_Menu_Lever(PL_id, 0);
-    MC_Move_Sub(sw, 0, 4, 0xFF);
+    MC_Move_Sub(sw, 0, 2, 0xFF);
     System_Dir_Move_Sub_LR(sw, 0);
     Direction_Working[1] = Convert_Buff[3][0][0];
     Direction_Working[4] = Convert_Buff[3][0][0];
@@ -1527,91 +1494,6 @@ void Setup_Next_Page(struct _TASK* task_ptr, u8 /* unused */) {
     effect_40_init(mode_type, 3, 0x4B, 0, 2, 2);
 }
 
-void Save_Direction(struct _TASK* task_ptr) {
-    Menu_Cursor_X[1] = Menu_Cursor_X[0];
-    Clear_Flash_Sub();
-
-    switch (task_ptr->r_no[2]) {
-    case 0:
-        FadeOut(1, 0xFF, 8);
-        task_ptr->r_no[2] += 1;
-        task_ptr->timer = 5;
-        Menu_Suicide[1] = 1;
-        Menu_Suicide[2] = 0;
-        Menu_Cursor_X[0] = 0;
-        Setup_BG(1, 0x200, 0);
-        Setup_Replay_Sub(0x70, MENU_HEADER_SYSTEM_DIRECTION, 2);
-        Setup_File_Property(2, 0);
-        Clear_Flash_Init(4);
-        Message_Data->kind_req = 5;
-        break;
-
-    case 1:
-        if (Menu_Sub_case1(task_ptr) != 0) {
-            SaveInit(1, 1);
-        }
-
-        break;
-
-    case 2:
-        Setup_Save_Replay_2nd(task_ptr, 2);
-        break;
-
-    case 3:
-        if (SaveMove() <= 0) {
-            IO_Result = 0x200;
-            Load_Replay_MC_Sub(task_ptr, 0);
-        }
-
-        break;
-    }
-}
-
-void Load_Direction(struct _TASK* task_ptr) {
-    Menu_Cursor_X[1] = Menu_Cursor_X[0];
-    Clear_Flash_Sub();
-
-    switch (task_ptr->r_no[2]) {
-    case 0:
-        FadeOut(1, 0xFF, 8);
-        task_ptr->r_no[2] += 1;
-        task_ptr->timer = 5;
-        Menu_Suicide[1] = 1;
-        Menu_Suicide[2] = 0;
-        Menu_Cursor_X[0] = 0;
-        Setup_BG(1, 0x200, 0);
-        Setup_Replay_Sub(0x70, MENU_HEADER_SYSTEM_DIRECTION, 2);
-        Setup_File_Property(2, 0);
-        Clear_Flash_Init(4);
-        Message_Data->kind_req = 5;
-        break;
-
-    case 1:
-        if (Menu_Sub_case1(task_ptr) != 0) {
-            SaveInit(1, 0);
-        }
-
-        break;
-
-    case 2:
-        if (FadeIn(1, 0x19, 8) != 0) {
-            task_ptr->r_no[2] += 1;
-            task_ptr->free[3] = 0;
-            Menu_Cursor_X[0] = Setup_Final_Cursor_Pos(0, 8);
-        }
-
-        break;
-
-    case 3:
-        if (SaveMove() <= 0) {
-            IO_Result = 0x200;
-            Load_Replay_MC_Sub(task_ptr, 0);
-        }
-
-        break;
-    }
-}
-
 void Load_Replay(struct _TASK* task_ptr) {
     Menu_Cursor_X[1] = Menu_Cursor_X[0];
     Clear_Flash_Sub();
@@ -1628,7 +1510,7 @@ void Load_Replay(struct _TASK* task_ptr) {
 
     case 1:
         if (Menu_Sub_case1(task_ptr) != 0) {
-            SaveInit(2, 0);
+            SaveInit(SAVE_FILE_REPLAY, SAVE_MODE_LOAD);
         }
 
         break;
@@ -1766,7 +1648,7 @@ void Load_Replay_Sub(struct _TASK* task_ptr) {
             Purge_memory_of_kind_of_key(0xC);
             Push_LDREQ_Queue_Player(0, My_char[0]);
             Push_LDREQ_Queue_Player(1, My_char[1]);
-            Push_LDREQ_Queue_BG((u16)bg_w.stage);
+            Push_LDREQ_Queue_BG(bg_w.stage);
         }
 
         break;
@@ -1779,8 +1661,7 @@ void Load_Replay_Sub(struct _TASK* task_ptr) {
         break;
 
     case 5:
-        if ((Check_PL_Load() != 0) && (Check_LDREQ_Queue_BG((u16)bg_w.stage) != 0) && (adx_now_playend() != 0) &&
-            (sndCheckVTransStatus(0) != 0)) {
+        if (Check_PL_Load() && Check_LDREQ_Queue_BG(bg_w.stage) && (adx_now_playend() != 0)) {
             task_ptr->r_no[3] += 1;
             Switch_Screen_Init(0);
             init_omop();
@@ -2217,7 +2098,7 @@ void Button_Exit_Check(struct _TASK* task_ptr, s16 PL_id) {
         }
 
         switch (Menu_Cursor_Y[0]) {
-        case 3:
+        case 2:
             SE_selected();
             Return_Option_Mode_Sub(task_ptr);
             Order[0x69] = 4;
@@ -2233,11 +2114,6 @@ void Button_Exit_Check(struct _TASK* task_ptr, s16 PL_id) {
         case 1:
             SE_selected();
             task_ptr->r_no[2] = 5;
-            task_ptr->r_no[3] = 0;
-            break;
-
-        case 2:
-            task_ptr->r_no[2] = 6;
             task_ptr->r_no[3] = 0;
             break;
         }
@@ -3471,12 +3347,19 @@ void Screen_Adjust(struct _TASK* task_ptr) {
         Order_Dir[0x65] = 8;
         Order_Timer[0x65] = 1;
 
-        for (ix = 0; ix < 5; ix++) {
+        Convert_Buff[2][0][4] = mpp_w.language;
+
+        for (ix = 0; ix < 4; ix++) {
             effect_63_init(ix + 0x66, 0, 2, ix, ix);
             Order[ix + 0x66] = 1;
             Order_Dir[ix + 0x66] = 4;
             Order_Timer[ix + 0x66] = ix + 0x14;
         }
+
+        effect_64_init(0x6A, 0, 2, 9, 4, 0x7047, 18, 2, 0);
+        Order[0x6A] = 1;
+        Order_Dir[0x6A] = 4;
+        Order_Timer[0x6A] = 0x18;
 
         for (ix = 0, unused_s3 = char_index = 0xE; ix < 7; ix++, unused_s2 = char_index++) {
             effect_61_init(0, ix + 0x50, 0, 2, char_index, ix, 0x7047);
@@ -3524,8 +3407,7 @@ void Screen_Adjust_Sub(s16 PL_id) {
     Convert_Buff[2][0][1] = Y_Adjust_Buff[2] & 0xFF;
     Convert_Buff[2][0][2] = dspwhPack(Disp_Size_H, Disp_Size_V);
     save_w[1].Screen_Size = dspwhPack(Disp_Size_H, Disp_Size_V);
-    Convert_Buff[2][0][3] = sys_w.screen_mode;
-    save_w[1].Screen_Mode = sys_w.screen_mode;
+    Convert_Buff[2][0][4] = mpp_w.language;
 }
 
 void Screen_Exit_Check(struct _TASK* task_ptr, s16 PL_id) {
@@ -3567,7 +3449,7 @@ void Screen_Exit_Check(struct _TASK* task_ptr, s16 PL_id) {
         Y_Adjust_Buff[2] = 0;
         Disp_Size_H = 100;
         Disp_Size_V = 100;
-        sys_w.screen_mode = 1;
+        mpp_w.language = Get_Default_Language();
     }
 }
 
@@ -3621,7 +3503,7 @@ void Screen_Move_Sub_LR(u16 sw) {
             break;
 
         case 4:
-            sys_w.screen_mode = (sys_w.screen_mode + 1) & 1;
+            mpp_w.language = Language_Toggle(mpp_w.language);
             flag = 1;
             break;
         }
@@ -3672,7 +3554,7 @@ void Screen_Move_Sub_LR(u16 sw) {
             break;
 
         case 4:
-            sys_w.screen_mode = (sys_w.screen_mode + 1) & 1;
+            mpp_w.language = Language_Toggle(mpp_w.language);
             flag = 1;
             break;
         }
@@ -3687,18 +3569,18 @@ void Screen_Move_Sub_LR(u16 sw) {
 }
 
 /// Row of the sound options menu holding the BGM type
-#define SOUND_ITEM_BGM_TYPE 3
+#define SOUND_ITEM_BGM_TYPE 2
 
 /// @name Custom tracklist screen
 /// @{
 /// Its slot in After_Title's jump table
-#define MENU_SCREEN_CUSTOM 21
+#define MENU_SCREEN_CUSTOM 19
 /// First entry of msgSysDirTbl holding a row's character, in the condensed charset
 #define CUSTOM_MSG_FIRST 159
 /// First entry of Menu_Letter_Data holding a row's bracketed theme, in the menu's small charset
-#define CUSTOM_THEME_FIRST 68
+#define CUSTOM_THEME_FIRST 67
 /// First entry of Slide_Pos_Data_64 placing a soundtrack column
-#define CUSTOM_VALUE_POS_FIRST 18
+#define CUSTOM_VALUE_POS_FIRST 19
 /// Effect work ids, reusing the sound menu's — the two screens never coexist
 #define CUSTOM_THEME_WORK 0x50
 #define CUSTOM_VALUE_WORK 0x60
@@ -3914,7 +3796,6 @@ void Custom_Tracklist(struct _TASK* task_ptr) {
 void Sound_Test(struct _TASK* task_ptr) {
     s16 char_index;
     s16 ix;
-    u8 last_mode;
 
     Clear_Flash_Sub();
 
@@ -3929,17 +3810,11 @@ void Sound_Test(struct _TASK* task_ptr) {
         Menu_Cursor_Y[0] = 0;
         Menu_Suicide[1] = 1;
         Menu_Suicide[2] = 0;
-        Convert_Buff[3][1][5] = 0;
+        Convert_Buff[3][1][4] = 0;
 
-        if (sys_w.sound_mode == 0) {
-            Convert_Buff[3][1][0] = 0;
-        } else {
-            Convert_Buff[3][1][0] = 1;
-        }
+        Convert_Buff[3][1][2] = BgmRemix_GetSlotForType(sys_w.bgm_choice);
 
-        Convert_Buff[3][1][3] = BgmRemix_GetSlotForType(sys_w.bgm_choice);
-
-        Convert_Buff[3][1][7] = 1;
+        Convert_Buff[3][1][6] = 1;
         Order[0x4F] = 4;
         Order_Timer[0x4F] = 1;
         Order[0x4E] = 2;
@@ -3952,9 +3827,9 @@ void Sound_Test(struct _TASK* task_ptr) {
         effect_04_init(2, 6, 2, 0x48);
 
         {
-            s32 ixSoundMenuItem[4] = { 10, 11, 11, 12 };
+            s32 ixSoundMenuItem[3] = { 10, 10, 11 };
 
-            for (ix = 0; ix < 4; ix++) {
+            for (ix = 0; ix < 3; ix++) {
                 Order[ix + 0x57] = 1;
                 Order_Dir[ix + 0x57] = 4;
                 Order_Timer[ix + 0x57] = ix + 0x14;
@@ -3963,19 +3838,19 @@ void Sound_Test(struct _TASK* task_ptr) {
         }
 
         Order_Dir[0x78] = 0;
-        effect_A8_init(0, 0x78, 0, 2, 5, 0x70A7, 0);
+        effect_A8_init(0, 0x78, 0, 2, 4, 0x70A7, 0);
         Order_Dir[0x79] = 1;
-        effect_A8_init(0, 0x79, 0, 2, 5, 0x70A7, 1);
-        effect_A8_init(3, 0x7A, 0, 2, 5, 0x70A7, 3);
-        Convert_Buff[3][1][5] = 0;
+        effect_A8_init(0, 0x79, 0, 2, 4, 0x70A7, 1);
+        effect_A8_init(3, 0x7A, 0, 2, 4, 0x70A7, 3);
+        Convert_Buff[3][1][4] = 0;
         Order_Dir[0x7B] = 0;
-        effect_A8_init(2, 0x7B, 0, 2, 5, 0x70A7, 2);
+        effect_A8_init(2, 0x7B, 0, 2, 4, 0x70A7, 2);
 
         {
             s16 unused_s2;
             s16 unused_s3;
 
-            for (ix = 0, unused_s3 = char_index = 0x3B; ix < 7; ix++, unused_s2 = char_index++) {
+            for (ix = 0, unused_s3 = char_index = 0x3B; ix < 6; ix++, unused_s2 = char_index++) {
                 effect_61_init(0, ix + 0x50, 0, 2, char_index, ix, 0x7047);
                 Order[ix + 0x50] = 1;
                 Order_Dir[ix + 0x50] = 4;
@@ -3999,45 +3874,43 @@ void Sound_Test(struct _TASK* task_ptr) {
         break;
 
     case 3:
-        last_mode = Convert_Buff[3][1][0];
         Sound_Cursor_Sub(0);
 
         if (IO_Result == 0) {
             Sound_Cursor_Sub(1);
         }
 
-        if ((Menu_Cursor_Y[0] == 4) && (IO_Result == 0x100)) {
+        if ((Menu_Cursor_Y[0] == 3) && (IO_Result == 0x100)) {
             SE_selected();
             Convert_Buff[3][1][0] = 0;
             Convert_Buff[3][1][1] = 0xF;
-            Convert_Buff[3][1][2] = 0xF;
-            Convert_Buff[3][1][3] = BgmRemix_GetSlotForType(BGM_ARRANGED);
+            Convert_Buff[3][1][1] = 0xF;
+            Convert_Buff[3][1][2] = BgmRemix_GetSlotForType(BGM_ARRANGED);
         }
 
-        if (bgm_level != (s16)Convert_Buff[3][1][1]) {
-            bgm_level = Convert_Buff[3][1][1];
-            save_w[Present_Mode].BGM_Level = Convert_Buff[3][1][1];
+        if (bgm_level != (s16)Convert_Buff[3][1][0]) {
+            bgm_level = Convert_Buff[3][1][0];
+            save_w[Present_Mode].BGM_Level = Convert_Buff[3][1][0];
             SsBgmHalfVolume(0);
         }
 
-        if (se_level != (s16)Convert_Buff[3][1][2]) {
-            se_level = Convert_Buff[3][1][2];
-            setSeVolume(save_w[Present_Mode].SE_Level = Convert_Buff[3][1][2]);
+        if (se_level != (s16)Convert_Buff[3][1][1]) {
+            se_level = Convert_Buff[3][1][1];
+            setSeVolume(save_w[Present_Mode].SE_Level = Convert_Buff[3][1][1]);
         }
 
         // The row holds a menu position; the sound engine and the save want the BGM type. What is
         // stored is the choice, Random included, so it survives a restart as a choice.
-        save_w[Present_Mode].BgmType = BgmRemix_GetSlotType(Convert_Buff[3][1][3]);
+        save_w[Present_Mode].BgmType = BgmRemix_GetSlotType(Convert_Buff[3][1][2]);
 
         if (sys_w.bgm_choice != save_w[Present_Mode].BgmType) {
             sys_w.bgm_choice = save_w[Present_Mode].BgmType;
             Apply_bgm_choice();
-            Convert_Buff[3][1][5] = 0;
+            Convert_Buff[3][1][4] = 0;
             BGM_Request_Code_Check(0x41);
         }
 
-        Order_Dir[0x7B] = Convert_Buff[3][1][5];
-        Setup_Sound_Mode(last_mode);
+        Order_Dir[0x7B] = Convert_Buff[3][1][4];
         Save_Game_Data();
 
         // Confirming on a BGM Type set to Custom opens the screen that fills it in
@@ -4054,21 +3927,21 @@ void Sound_Test(struct _TASK* task_ptr) {
             return;
         }
 
-        if (Menu_Cursor_Y[0] == 5) {
+        if (Menu_Cursor_Y[0] == 4) {
             if (IO_Result == 0x100) {
                 SsRequest((u16)Order_Dir[0x7B] + 1);
-                Convert_Buff[3][1][7] = 1;
+                Convert_Buff[3][1][6] = 1;
                 return;
             }
 
-            if ((IO_Result == 0x200) && Convert_Buff[3][1][7]) {
-                Convert_Buff[3][1][7] = 0;
+            if ((IO_Result == 0x200) && Convert_Buff[3][1][6]) {
+                Convert_Buff[3][1][6] = 0;
                 BGM_Stop();
                 return;
             }
         }
 
-        if (IO_Result == 0x200 || ((Menu_Cursor_Y[0] == 6) && (IO_Result == 0x100 || IO_Result == 0x4000))) {
+        if (IO_Result == 0x200 || ((Menu_Cursor_Y[0] == 5) && (IO_Result == 0x100 || IO_Result == 0x4000))) {
             SE_selected();
             Return_Option_Mode_Sub(task_ptr);
             setupAlwaysSeamlessFlag(0);
@@ -4081,29 +3954,19 @@ void Sound_Test(struct _TASK* task_ptr) {
     }
 }
 
-void Setup_Sound_Mode(u8 last_mode) {
-    if (last_mode == Convert_Buff[3][1][0]) {
-        return;
-    }
-
-    sys_w.sound_mode = Convert_Buff[3][1][0];
-    setupSoundMode();
-    SsBgmHalfVolume(0);
-}
-
 u16 Sound_Cursor_Sub(s16 PL_id) {
     u16 sw;
     u16 ret;
 
     sw = ~plsw_01[PL_id] & plsw_00[PL_id];
     sw = Check_Menu_Lever(PL_id, 0);
-    ret = MC_Move_Sub(sw, 0, 6, 0xFF);
+    ret = MC_Move_Sub(sw, 0, 5, 0xFF);
     ret |= SD_Move_Sub_LR(sw);
     ret &= 0x20F;
     return ret;
 }
 
-const u8 Sound_Data_Max[3][6] = { { 1, 0, 0, 1, 0, 66 }, { 1, 15, 15, 1, 0, 66 }, { 0, 15, 15, 0, 0, 0 } };
+const u8 Sound_Data_Max[3][5] = { { 0, 0, 1, 0, 66 }, { 15, 15, 1, 0, 66 }, { 15, 15, 0, 0, 0 } };
 
 /// @brief Bound for a sound option, widened for the BGM type row when a remix pack is installed.
 /// @param row 0 wraps a decrement, 1 caps an increment, 2 is where an increment wraps back to.
@@ -4122,7 +3985,7 @@ u16 SD_Move_Sub_LR(u16 sw) {
 
     rnum = 0;
 
-    if (Menu_Cursor_Y[0] == 4 || Menu_Cursor_Y[0] == 6) {
+    if (Menu_Cursor_Y[0] == 3 || Menu_Cursor_Y[0] == 5) {
         return 0;
     }
 
@@ -4139,7 +4002,7 @@ u16 SD_Move_Sub_LR(u16 sw) {
                 Convert_Buff[3][1][Menu_Cursor_Y[0]] = max;
             }
 
-            if ((Menu_Cursor_Y[0] != 5) || (bgmSkipCheck(Convert_Buff[3][1][5] + 1) == 0)) {
+            if ((Menu_Cursor_Y[0] != 4) || (bgmSkipCheck(Convert_Buff[3][1][4] + 1) == 0)) {
                 break;
             }
         }
@@ -4160,7 +4023,7 @@ u16 SD_Move_Sub_LR(u16 sw) {
                 Convert_Buff[3][1][Menu_Cursor_Y[0]] = Sound_Data_Max[2][Menu_Cursor_Y[0]];
             }
 
-            if ((Menu_Cursor_Y[0] != 5) || (bgmSkipCheck(Convert_Buff[3][1][5] + 1) == 0)) {
+            if ((Menu_Cursor_Y[0] != 4) || (bgmSkipCheck(Convert_Buff[3][1][4] + 1) == 0)) {
                 break;
             }
         }
@@ -4177,170 +4040,6 @@ u16 SD_Move_Sub_LR(u16 sw) {
     }
 
     return rnum;
-}
-
-void Memory_Card(struct _TASK* task_ptr) {
-    s16 ix;
-    s16 char_index;
-
-    s16 unused_s3;
-    s16 unused_s2;
-
-    switch (task_ptr->r_no[2]) {
-    case 0:
-        FadeOut(1, 0xFF, 8);
-        task_ptr->r_no[2] += 1;
-        task_ptr->timer = 5;
-        Menu_Common_Init();
-        Menu_Cursor_Y[0] = 0;
-        Menu_Suicide[1] = 1;
-        Menu_Suicide[2] = 0;
-        Order[0x4F] = 4;
-        Order_Timer[0x4F] = 1;
-        Order[0x4E] = 2;
-        Order_Dir[0x4E] = 4;
-        Order_Timer[0x4E] = 1;
-        effect_57_init(0x69, MENU_HEADER_SAVE_LOAD, 0, 0x3F, 2);
-        Order[0x69] = 1;
-        Order_Dir[0x69] = 8;
-        Order_Timer[0x69] = 1;
-
-        for (ix = 0, unused_s3 = char_index = 0x15; ix < 4; ix++, unused_s2 = char_index++) {
-            effect_61_init(0, ix + 0x50, 1, 2, char_index, ix, 0x7047);
-            Order[ix + 0x50] = 1;
-            Order_Dir[ix + 0x50] = 4;
-            Order_Timer[ix + 0x50] = ix + 0x14;
-        }
-
-        Menu_Cursor_Move = 4;
-        effect_64_init(0x61, 1, 2, 0, 2, 0x7047, 0, 3, 0);
-        Order[0x61] = 1;
-        Order_Dir[0x61] = 4;
-        Order_Timer[0x61] = 0x18;
-        effect_66_init(0x8A, 8, 2, 1, -1, -1, -0x7FF5);
-        Order[0x8A] = 3;
-        Order_Timer[0x8A] = 1;
-        effect_04_init(2, 2, 2, 0x48);
-        Setup_File_Property(0, 0xFF);
-        break;
-
-    case 1:
-        Menu_Sub_case1(task_ptr);
-        break;
-
-    case 2:
-        if (FadeIn(1, 0x19, 8) != 0) {
-            task_ptr->r_no[2] += 1;
-            Suicide[3] = 0;
-        }
-
-        break;
-
-    case 3:
-        Memory_Card_Sub(0);
-        Button_Exit_Check(task_ptr, 0);
-
-        if (IO_Result == 0) {
-            Memory_Card_Sub(1);
-            Button_Exit_Check(task_ptr, 0);
-        }
-
-        break;
-
-    case 4:
-    case 5:
-    case 6:
-        Save_Load_Menu(task_ptr);
-        break;
-    }
-}
-
-void Save_Load_Menu(struct _TASK* task_ptr) {
-    s16 ix;
-
-    Menu_Cursor_X[1] = Menu_Cursor_X[0];
-
-    switch (task_ptr->r_no[3]) {
-    case 0:
-        task_ptr->r_no[3] += 1;
-        task_ptr->timer = 5;
-
-        if (task_ptr->r_no[2] == 5) {
-            SaveInit(0, 0);
-        } else {
-            SaveInit(0, 1);
-        }
-
-        Menu_Common_Init();
-        Menu_Suicide[3] = 0;
-        Target_BG_X[1] = bg_w.bgw[1].wxy[0].disp.pos + 0x180;
-        Offset_BG_X[1] = 0;
-        Target_BG_X[2] = bg_w.bgw[2].wxy[0].disp.pos + 0x200;
-        Offset_BG_X[2] = 0;
-        bg_w.bgw[2].speed_x = 0x333333;
-        Next_Step = 0;
-        bg_mvxy.a[0].sp = 0x266666;
-        bg_mvxy.d[0].sp = 0;
-        effect_58_init(0xE, 1, 1);
-        effect_58_init(0, 1, 2);
-        Menu_Cursor_X[0] = Setup_Final_Cursor_Pos(0, 8);
-        Message_Data->kind_req = 5;
-        break;
-
-    case 1:
-        if (Next_Step) {
-            task_ptr->r_no[3] += 1;
-            task_ptr->free[3] = 0;
-        }
-
-        break;
-
-    case 2:
-        task_ptr->r_no[3] += 1;
-        Menu_Cursor_X[1] = Menu_Cursor_X[0] + 8;
-        /* fallthrough */
-
-    case 3:
-        if (SaveMove() <= 0) {
-            Go_Back_MC(task_ptr);
-        }
-
-        break;
-
-    case 4:
-        if (Next_Step) {
-            task_ptr->r_no[2] = 3;
-            task_ptr->r_no[3] = 0;
-
-            for (ix = 0; ix < 4; ix++) {
-                Message_Data[ix].order = 3;
-            }
-
-            Order[0x78] = 3;
-            Order_Timer[0x78] = 1;
-        }
-
-        break;
-
-    default:
-        Exit_Sub(task_ptr, 1, Menu_Cursor_Y[0] + 7);
-        break;
-    }
-}
-
-void Go_Back_MC(struct _TASK* task_ptr) {
-    task_ptr->r_no[3] = 4;
-    Menu_Cursor_Y[0] = task_ptr->r_no[2] - 4;
-    Target_BG_X[1] = bg_w.bgw[1].wxy[0].disp.pos - 0x180;
-    Offset_BG_X[1] = 0;
-    Target_BG_X[2] = bg_w.bgw[2].wxy[0].disp.pos - 0x200;
-    Offset_BG_X[2] = 0;
-    bg_w.bgw[2].speed_x = -0x333333;
-    Next_Step = 0;
-    bg_mvxy.a[0].sp = 0xFFD9999A;
-    bg_mvxy.d[0].sp = 0;
-    effect_58_init(0xE, 1, 1);
-    effect_58_init(0, 1, 2);
 }
 
 s32 Setup_Final_Cursor_Pos(s8 cursor_x, s16 dir) {
@@ -4401,75 +4100,6 @@ s32 Setup_Final_Cursor_Pos(s8 cursor_x, s16 dir) {
     }
 
     return -1;
-}
-
-void Memory_Card_Sub(s16 PL_id) {
-    u16 sw;
-
-    sw = ~plsw_01[PL_id] & plsw_00[PL_id];
-    sw = Check_Menu_Lever(PL_id, 0);
-    MC_Move_Sub(sw, 0, 3, 0xFF);
-
-    if ((Menu_Cursor_Y[0] == 2) && !(IO_Result & 0x200)) {
-        IO_Result = 0;
-    }
-
-    Memory_Card_Move_Sub_LR(sw, 0);
-
-    if (Convert_Buff[3][0][2] == 0) {
-        save_w[Present_Mode].Auto_Save = 0;
-    }
-}
-
-u16 Memory_Card_Move_Sub_LR(u16 sw, s16 cursor_id) {
-    s32 ret;
-    s32 idx;
-    s32 val;
-
-    idx = Menu_Cursor_Y[cursor_id];
-
-    if (idx != 2) {
-        return 0;
-    }
-
-    val = Convert_Buff[3][cursor_id][idx];
-
-    switch (sw) {
-    case 4:
-        val -= 1;
-
-        if (val < 0) {
-            val = 1;
-        }
-
-        SE_dir_cursor_move();
-        ret = 4;
-        break;
-
-    case 8:
-        val += 1;
-
-        if (val > 1) {
-            val = 0;
-        }
-
-        SE_dir_cursor_move();
-        ret = 8;
-        break;
-
-    default:
-        ret = 0;
-        break;
-    }
-
-    Convert_Buff[3][cursor_id][idx] = val;
-
-    if ((ret != 0) && (val == 1)) {
-        IO_Result = 0x100;
-        Forbid_Reset = 1;
-    }
-
-    return ret;
 }
 
 u16 MC_Move_Sub(u16 sw, s16 cursor_id, s16 menu_max, s16 cansel_menu) {
@@ -5032,62 +4662,6 @@ void Wait_Load_Save(struct _TASK* task_ptr) {
     }
 }
 
-void Disp_Auto_Save(struct _TASK* task_ptr) {
-    void (*Auto_Save_Jmp_Tbl[4])() = { DAS_1st, DAS_2nd, DAS_3rd, DAS_4th };
-    Auto_Save_Jmp_Tbl[task_ptr->r_no[1]](task_ptr);
-}
-
-void DAS_1st(struct _TASK* task_ptr) {
-    FadeOut(1, 0xFF, 8);
-    task_ptr->r_no[1]++;
-    task_ptr->timer = 5;
-    Order[0x4E] = 2;
-    Order_Dir[0x4E] = 0;
-    Order_Timer[0x4E] = 1;
-    effect_66_init(0x8A, 8, 0, 0, -1, -1, -0x7FFD);
-    Order[0x8A] = 3;
-    Order_Timer[0x8A] = 1;
-}
-
-void DAS_2nd(struct _TASK* task_ptr) {
-    FadeOut(1, 0xFF, 8);
-
-    if ((task_ptr->timer -= 1) == 0) {
-        task_ptr->r_no[1]++;
-        FadeInit();
-        SaveInit(0, 3);
-    }
-}
-
-void DAS_3rd(struct _TASK* task_ptr) {
-    if (FadeIn(1, 0x19, 8) != 0) {
-        task_ptr->r_no[1]++;
-    }
-}
-
-void DAS_4th(struct _TASK* task_ptr) {
-    if (SaveMove() <= 0) {
-        task_ptr->r_no[0] = 0;
-        task_ptr->r_no[1] = 1;
-        task_ptr->r_no[2] = 0;
-        task_ptr->r_no[3] = 0;
-        Forbid_Reset = 0;
-    }
-}
-
-void Disp_Auto_Save2(struct _TASK* task_ptr) {
-    void (*Auto_Save2_Jmp_Tbl[4])() = { DAS_1st, DAS_2nd, DAS_3rd, DAS2_4th };
-    Auto_Save2_Jmp_Tbl[task_ptr->r_no[1]](task_ptr);
-}
-
-void DAS2_4th(struct _TASK* task_ptr) {
-    if (SaveMove() <= 0) {
-        G_No[2] = 6;
-        cpExitTask(TASK_MENU);
-        task[TASK_ENTRY].condition = 1;
-    }
-}
-
 void Wait_Replay_Check(struct _TASK* task_ptr) {
     switch (task_ptr->free[1]) {
     case 0:
@@ -5445,7 +5019,7 @@ void Save_Replay(struct _TASK* task_ptr) {
 
     case 1:
         if (Menu_Sub_case1(task_ptr) != 0) {
-            SaveInit(2, 1);
+            SaveInit(SAVE_FILE_REPLAY, SAVE_MODE_SAVE);
         }
         Order[0x4E] = 2;
         Order_Dir[0x4E] = 0;
@@ -5917,7 +5491,7 @@ void Reset_Training(struct _TASK* task_ptr) {
             break;
         }
 
-        if (Check_LDREQ_Break() == 0) {
+        if (!Check_LDREQ_Break()) {
             task_ptr->r_no[1]++;
             Switch_Screen_Init(0);
             break;
@@ -5984,7 +5558,7 @@ void Reset_Replay(struct _TASK* task_ptr) {
             break;
         }
 
-        if (Check_LDREQ_Break() == 0) {
+        if (!Check_LDREQ_Break()) {
             task_ptr->r_no[1]++;
             Switch_Screen_Init(0);
             break;
@@ -6823,7 +6397,7 @@ void Character_Change(struct _TASK* task_ptr) {
 
         case 1:
             if ((task_ptr->timer -= 1) == 0) {
-                if ((Check_LDREQ_Break() == 0)) {
+                if (!Check_LDREQ_Break()) {
                     task_ptr->r_no[2]++;
                     Switch_Screen_Init(0);
                     return;
@@ -6997,7 +6571,7 @@ void After_Replay(struct _TASK* task_ptr) {
             Order_Dir[110] = 8;
             Order_Timer[110] = 1;
             Setup_File_Property(1, 0xFF);
-            SaveInit(2, 1);
+            SaveInit(SAVE_FILE_REPLAY, SAVE_MODE_SAVE);
             effect_66_init(138, 41, 0, 0, -1, -1, -0x7FF3);
             Order[138] = 3;
             Order_Timer[138] = 1;
