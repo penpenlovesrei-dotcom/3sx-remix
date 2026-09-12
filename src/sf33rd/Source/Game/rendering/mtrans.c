@@ -3,7 +3,11 @@
  * Main Graphics Rendering and Transformation Engine
  */
 
+#include "port/video/trace_fin.h"
 #include "sf33rd/Source/Game/rendering/mtrans.h"
+#include "port/video/decor_objets.h"
+
+#include <string.h>
 #include "common.h"
 #include "sf33rd/AcrSDK/ps2/flps2render.h"
 #include "sf33rd/AcrSDK/ps2/foundaps2.h"
@@ -470,6 +474,8 @@ s16 getObjectHeight(u16 cgnum) {
 }
 
 void mlt_obj_trans_ext(MultiTexture* mt, WORK* wk, s32 base_y) {
+    u16 notre_cle = 0;
+    const unsigned char* nos_pixels = NULL;
     u32* textbl;
     u16* trsbas;
     TileMapEntry* trsptr;
@@ -485,23 +491,40 @@ void mlt_obj_trans_ext(MultiTexture* mt, WORK* wk, s32 base_y) {
     s16 ix;
     PatternCode cc;
     PatternInstance* cp;
+    void* table_trans;
+    void* table_tex;
 
     n = wk->cg_number;
-    i = obj_group_table[n];
 
-    if (i == 0) {
-        return;
+    /* NOTRE OBJET APPORTE SES PROPRES TABLES. Il n'emprunte plus le motif de personne :
+       `decor_objets.c` fabrique un groupe a nous, de la forme exacte que la suite attend.
+       Ce qui se trouvait ici -- recrire la liste du donneur dans SA table de trans --
+       touchait une table PARTAGEE : d'autres travaux la lisaient ensuite et mettaient
+       leur motif en cache sans leurs morceaux de 32x32, sur quoi `get_mltbuf32_ext`
+       partait en `while (1) {}`. C'est ce qui gelait la fin de round.
+       La fonction rend 0 pour tout ce qui n'est pas a nous : rien ne change pour le jeu. */
+    if (DecorObjets_Groupe(wk, &table_trans, &table_tex, &n)) {
+        i = 0;
+    } else {
+        i = obj_group_table[n];
+
+        if (i == 0) {
+            return;
+        }
+
+        if (texgrplds[i].ok == 0) {
+            // The trans data is not valid. Group number: %d\n
+            flLogOut("トランスデータが有効ではありません。グループ番号：%d\n", i);
+            while (1) {}
+        }
+
+        n -= texgrpdat[i].num_of_1st;
+        table_trans = texgrplds[i].trans_table;
+        table_tex = texgrplds[i].texture_table;
     }
 
-    if (texgrplds[i].ok == 0) {
-        // The trans data is not valid. Group number: %d\n
-        flLogOut("トランスデータが有効ではありません。グループ番号：%d\n", i);
-        while (1) {}
-    }
-
-    n -= texgrpdat[i].num_of_1st;
-    trsbas = (u16*)(texgrplds[i].trans_table + ((u32*)texgrplds[i].trans_table)[n]);
-    textbl = (u32*)texgrplds[i].texture_table;
+    trsbas = (u16*)((u8*)table_trans + ((u32*)table_trans)[n]);
+    textbl = (u32*)table_tex;
     count = *trsbas;
     trsbas++;
     trsptr = (TileMapEntry*)trsbas;
@@ -518,6 +541,18 @@ void mlt_obj_trans_ext(MultiTexture* mt, WORK* wk, s32 base_y) {
     mlt_obj_matrix(wk, base_y);
     cc.parts.group = 0;
     cc.parts.offset = wk->cg_number;
+
+    /* L'IDENTITE DU MOTIF DOIT PORTER NOTRE IMAGE, ET C'EST CE QUI GELAIT L'ETAGE 23.
+       Telle qu'elle est ci-dessus, elle ne porte que le numero de graphique du donneur.
+       Le chemin d'en bas -- celui qui retrouve un motif deja en cache -- ne televerse
+       rien : il cherche les morceaux parmi les seuls emplacements que ce motif-la avait
+       pris (`makeup_tpu_free`), et `get_mltbuf16_ext` boucle a l'infini s'il ne trouve
+       pas. Or nos cles portent NOTRE image, qui avance pendant que le `cg_number` du
+       donneur, lui, tient cinquante trames sur sa premiere image. Cinq trames apres la
+       naissance de l'objet, meme numero mais autre image : gel.
+       Sans effet sur les autres objets -- la fonction rend 0 et laisse `cc.code` intact. */
+    DecorObjets_Identite(wk, &cc.code);
+
     ix = check_patcash_ex_trans(mt->cpat, cc.code);
 
     if (ix < 0) {
@@ -563,11 +598,41 @@ void mlt_obj_trans_ext(MultiTexture* mt, WORK* wk, s32 base_y) {
                 size = (wh * wh) << 6;
                 cc.parts.offset = trsptr->code;
 
+                /* NOTRE objet -- et lui seul -- pose ses pixels a la place de ceux du
+                   donneur. Un chip 16x16 fait 256 octets d'index, le format exact de nos
+                   tuiles.
+
+                   La garde porte sur le WORK, pas sur l'etage : cette fonction dessine
+                   AUSSI les combattants, et garder sur `bg_w.stage` les couvrait de blocs
+                   blancs et saturait le cache de chips.
+
+                   La cle vient de nous, bornee : une par (image, case couverte) plus UNE
+                   pour tous les morceaux vides. Sans cle propre, le cache repond "deja la"
+                   des la deuxieme image et l'animation se fige. */
+                nos_pixels = DecorObjets_Tuile(wk, (s32)wk->cg_number, (s32)x, (s32)y, size, &notre_cle);
+
+                if (nos_pixels != NULL) {
+                    cc.parts.group = 0xD3;
+                    cc.parts.offset = notre_cle;
+                } else {
+                    /* RENDRE le groupe. Sans ce else, un seul morceau substitue laissait
+                       0xD3 en place pour tous les suivants -- dont ceux de 1024 octets,
+                       qui partent dans l'autre cache, celui de 64 emplacements, avec une
+                       cle qui n'est pas la leur. */
+                    cc.parts.group = i;
+                }
+
+                DecorObjets_Trace(nos_pixels != NULL, (s32)cc.parts.group, (s32)cc.parts.offset, wh);
+
                 switch (wh) {
                 case 1:
                 case 2:
                     if (get_mltbuf16_ext_2(mt, cc.code, 0, &code, cp) != 0) {
-                        lz_ext_p6_fx(&((u8*)texptr)[1], mt->mltbuf, size);
+                        if (nos_pixels != NULL) {
+                            memcpy(mt->mltbuf, nos_pixels, 256);
+                        } else {
+                            lz_ext_p6_fx(&((u8*)texptr)[1], mt->mltbuf, size);
+                        }
                         njReLoadTexturePartNumG(mt->mltgidx16 + (code >> 8), (s8*)mt->mltbuf, code & 0xFF, size);
                     }
 
@@ -587,7 +652,11 @@ void mlt_obj_trans_ext(MultiTexture* mt, WORK* wk, s32 base_y) {
 
                 case 4:
                     if (get_mltbuf32_ext_2(mt, cc.code, 0, &code, cp) != 0) {
-                        lz_ext_p6_fx(&((u8*)texptr)[1], mt->mltbuf, size);
+                        if (nos_pixels != NULL) {
+                            memcpy(mt->mltbuf, nos_pixels, 1024);
+                        } else {
+                            lz_ext_p6_fx(&((u8*)texptr)[1], mt->mltbuf, size);
+                        }
                         njReLoadTexturePartNumG(mt->mltgidx32 + (code >> 6), (s8*)mt->mltbuf, code & 0x3F, size);
                     }
 
@@ -652,6 +721,21 @@ void mlt_obj_trans_ext(MultiTexture* mt, WORK* wk, s32 base_y) {
             dh = (texptr->wh & 0x1C) * 2;
             wh = (texptr->wh & 3) + 1;
             cc.parts.offset = trsptr->code;
+
+            /* LE JUMEAU. Ce chemin-ci retrouve un motif deja en cache : il ne televerse
+               rien, il ne fait que CHERCHER l'emplacement. Il doit donc chercher sous la
+               MEME cle que celle sous laquelle l'autre chemin l'a enregistre.
+               Sans ca, `get_mltbuf16_ext` ne trouve pas, journalise "erreur d'expansion
+               CG" et **boucle a l'infini** des la deuxieme image. */
+            nos_pixels = DecorObjets_Tuile(wk, (s32)wk->cg_number, (s32)x, (s32)y,
+                                           (wh * wh) << 6, &notre_cle);
+
+            if (nos_pixels != NULL) {
+                cc.parts.group = 0xD3;
+                cc.parts.offset = notre_cle;
+            } else {
+                cc.parts.group = i;
+            }
 
             switch (wh) {
             case 1:
@@ -836,6 +920,8 @@ void mlt_obj_trans(MultiTexture* mt, WORK* wk, s32 base_y) {
 }
 
 void mlt_obj_trans_cp3_ext(MultiTexture* mt, WORK* wk, s32 base_y) {
+    u16 notre_cle = 0;
+    const unsigned char* nos_pixels = NULL;
     u32* textbl;
     u16* trsbas;
     TileMapEntry* trsptr;
@@ -851,23 +937,40 @@ void mlt_obj_trans_cp3_ext(MultiTexture* mt, WORK* wk, s32 base_y) {
     s16 ix;
     PatternCode cc;
     PatternInstance* cp;
+    void* table_trans;
+    void* table_tex;
 
     n = wk->cg_number;
-    i = obj_group_table[n];
 
-    if (i == 0) {
-        return;
+    /* NOTRE OBJET APPORTE SES PROPRES TABLES. Il n'emprunte plus le motif de personne :
+       `decor_objets.c` fabrique un groupe a nous, de la forme exacte que la suite attend.
+       Ce qui se trouvait ici -- recrire la liste du donneur dans SA table de trans --
+       touchait une table PARTAGEE : d'autres travaux la lisaient ensuite et mettaient
+       leur motif en cache sans leurs morceaux de 32x32, sur quoi `get_mltbuf32_ext`
+       partait en `while (1) {}`. C'est ce qui gelait la fin de round.
+       La fonction rend 0 pour tout ce qui n'est pas a nous : rien ne change pour le jeu. */
+    if (DecorObjets_Groupe(wk, &table_trans, &table_tex, &n)) {
+        i = 0;
+    } else {
+        i = obj_group_table[n];
+
+        if (i == 0) {
+            return;
+        }
+
+        if (texgrplds[i].ok == 0) {
+            // The trans data is not valid. Group number: %d\n
+            flLogOut("トランスデータが有効ではありません。グループ番号：%d\n", i);
+            while (1) {}
+        }
+
+        n -= texgrpdat[i].num_of_1st;
+        table_trans = texgrplds[i].trans_table;
+        table_tex = texgrplds[i].texture_table;
     }
 
-    if (texgrplds[i].ok == 0) {
-        // The trans data is not valid. Group number: %d\n
-        flLogOut("トランスデータが有効ではありません。グループ番号：%d\n", i);
-        while (1) {}
-    }
-
-    n -= texgrpdat[i].num_of_1st;
-    trsbas = (u16*)(texgrplds[i].trans_table + ((u32*)texgrplds[i].trans_table)[n]);
-    textbl = (u32*)texgrplds[i].texture_table;
+    trsbas = (u16*)((u8*)table_trans + ((u32*)table_trans)[n]);
+    textbl = (u32*)table_tex;
     count = *trsbas;
     trsbas++;
     trsptr = (TileMapEntry*)trsbas;
@@ -884,6 +987,18 @@ void mlt_obj_trans_cp3_ext(MultiTexture* mt, WORK* wk, s32 base_y) {
     mlt_obj_matrix(wk, base_y);
     cc.parts.group = 0;
     cc.parts.offset = wk->cg_number;
+
+    /* L'IDENTITE DU MOTIF DOIT PORTER NOTRE IMAGE, ET C'EST CE QUI GELAIT L'ETAGE 23.
+       Telle qu'elle est ci-dessus, elle ne porte que le numero de graphique du donneur.
+       Le chemin d'en bas -- celui qui retrouve un motif deja en cache -- ne televerse
+       rien : il cherche les morceaux parmi les seuls emplacements que ce motif-la avait
+       pris (`makeup_tpu_free`), et `get_mltbuf16_ext` boucle a l'infini s'il ne trouve
+       pas. Or nos cles portent NOTRE image, qui avance pendant que le `cg_number` du
+       donneur, lui, tient cinquante trames sur sa premiere image. Cinq trames apres la
+       naissance de l'objet, meme numero mais autre image : gel.
+       Sans effet sur les autres objets -- la fonction rend 0 et laisse `cc.code` intact. */
+    DecorObjets_Identite(wk, &cc.code);
+
     ix = check_patcash_ex_trans(mt->cpat, cc.code);
 
     if (ix < 0) {
@@ -934,11 +1049,41 @@ void mlt_obj_trans_cp3_ext(MultiTexture* mt, WORK* wk, s32 base_y) {
                 attr = (attr ^ flip) & 0xC000;
                 cc.parts.offset = trsptr->code;
 
+                /* NOTRE objet -- et lui seul -- pose ses pixels a la place de ceux du
+                   donneur. Un chip 16x16 fait 256 octets d'index, le format exact de nos
+                   tuiles.
+
+                   La garde porte sur le WORK, pas sur l'etage : cette fonction dessine
+                   AUSSI les combattants, et garder sur `bg_w.stage` les couvrait de blocs
+                   blancs et saturait le cache de chips.
+
+                   La cle vient de nous, bornee : une par (image, case couverte) plus UNE
+                   pour tous les morceaux vides. Sans cle propre, le cache repond "deja la"
+                   des la deuxieme image et l'animation se fige. */
+                nos_pixels = DecorObjets_Tuile(wk, (s32)wk->cg_number, (s32)x, (s32)y, size, &notre_cle);
+
+                if (nos_pixels != NULL) {
+                    cc.parts.group = 0xD3;
+                    cc.parts.offset = notre_cle;
+                } else {
+                    /* RENDRE le groupe. Sans ce else, un seul morceau substitue laissait
+                       0xD3 en place pour tous les suivants -- dont ceux de 1024 octets,
+                       qui partent dans l'autre cache, celui de 64 emplacements, avec une
+                       cle qui n'est pas la leur. */
+                    cc.parts.group = i;
+                }
+
+                DecorObjets_Trace(nos_pixels != NULL, (s32)cc.parts.group, (s32)cc.parts.offset, wh);
+
                 switch (wh) {
                 case 1:
                 case 2:
                     if (get_mltbuf16_ext_2(mt, cc.code, 0, &code, cp) != 0) {
-                        lz_ext_p6_fx(&((u8*)texptr)[1], mt->mltbuf, size);
+                        if (nos_pixels != NULL) {
+                            memcpy(mt->mltbuf, nos_pixels, 256);
+                        } else {
+                            lz_ext_p6_fx(&((u8*)texptr)[1], mt->mltbuf, size);
+                        }
                         njReLoadTexturePartNumG(mt->mltgidx16 + (code >> 8), (s8*)mt->mltbuf, code & 0xFF, size);
                     }
 
@@ -958,7 +1103,11 @@ void mlt_obj_trans_cp3_ext(MultiTexture* mt, WORK* wk, s32 base_y) {
 
                 case 4:
                     if (get_mltbuf32_ext_2(mt, cc.code, 0, &code, cp) != 0) {
-                        lz_ext_p6_fx(&((u8*)texptr)[1], mt->mltbuf, size);
+                        if (nos_pixels != NULL) {
+                            memcpy(mt->mltbuf, nos_pixels, 1024);
+                        } else {
+                            lz_ext_p6_fx(&((u8*)texptr)[1], mt->mltbuf, size);
+                        }
                         njReLoadTexturePartNumG(mt->mltgidx32 + (code >> 6), (s8*)mt->mltbuf, code & 0x3F, size);
                     }
 
@@ -1029,6 +1178,19 @@ void mlt_obj_trans_cp3_ext(MultiTexture* mt, WORK* wk, s32 base_y) {
             palt = (attr & 0x1FF) + palo;
             attr = (attr ^ flip) & 0xC000;
             cc.parts.offset = trsptr->code;
+
+            /* LE JUMEAU -- voir le meme commentaire dans `mlt_obj_trans_ext`. Ce chemin
+               ne televerse rien : il cherche l'emplacement, et doit donc chercher sous la
+               cle sous laquelle l'autre l'a enregistre. */
+            nos_pixels = DecorObjets_Tuile(wk, (s32)wk->cg_number, (s32)x, (s32)y,
+                                           (wh * wh) << 6, &notre_cle);
+
+            if (nos_pixels != NULL) {
+                cc.parts.group = 0xD3;
+                cc.parts.offset = notre_cle;
+            } else {
+                cc.parts.group = i;
+            }
 
             switch (wh) {
             case 1:
@@ -1915,6 +2077,13 @@ static s32 get_mltbuf16_ext(MultiTexture* mt, u32 code, u32 palt) {
         }
     }
 
+    /* C'EST ICI QUE LE JEU SE FIGE : le `flLogOut` ci-dessous est suivi d'un
+       `while (1) {}`. Ce chemin ne fait que CHERCHER un morceau que l'autre chemin a
+       televerse ; s'il ne le trouve pas, il ne rend jamais la main. On note le code
+       cherche avant de partir, sans quoi la trace meurt avec le jeu. */
+    TraceFin("GEL 16x16 : code %#010x (groupe %#x), %d emplacements occupes\n",
+             (s32)code, (s32)(code >> 16), (s32)tpu_free->x16);
+
     flLogOut("ＣＧ展開エラー　１６×１６\n");
     while (1) {}
 }
@@ -1928,6 +2097,13 @@ static s32 get_mltbuf32_ext(MultiTexture* mt, u32 code, u32 palt) {
             return tpu_free->x32_used[i];
         }
     }
+
+    /* C'EST ICI QUE LE JEU SE FIGE : le `flLogOut` ci-dessous est suivi d'un
+       `while (1) {}`. Ce chemin ne fait que CHERCHER un morceau que l'autre chemin a
+       televerse ; s'il ne le trouve pas, il ne rend jamais la main. On note le code
+       cherche avant de partir, sans quoi la trace meurt avec le jeu. */
+    TraceFin("GEL 32x32 : code %#010x (groupe %#x), %d emplacements occupes\n",
+             (s32)code, (s32)(code >> 16), (s32)tpu_free->x32);
 
     flLogOut("ＣＧ展開エラー　３２×３２\n");
     while (1) {}

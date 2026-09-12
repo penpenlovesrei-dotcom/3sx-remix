@@ -593,6 +593,19 @@ void Select_CPU_1st() {
     Temporary_EM[Player_id] = Last_Selected_EM[Player_id];
     Select_Timer = 0x20;
     Setup_EM_List();
+
+    // Out before anything moves or is created. Setup_EM_List above is the last of the data; from
+    // here the function is the screen -- it slides the background 458 across and builds the objects
+    // that ride it, and that slide is what could still be glimpsed between confirming a fighter and
+    // the stage coming up. Nothing below is missed: the bonus stage clears the background work and
+    // sets its own up in Game09.
+    if (Parry_The_Ball_Was_Requested()) {
+        Moving_Plate[Player_id] = 0;
+        SC_No[0] = 2;
+        SC_No[1] = 0;
+        return;
+    }
+
     Target_BG_X[3] = bg_w.bgw[3].wxy[0].disp.pos + 458;
     Offset_BG_X[3] = 0;
 
@@ -616,12 +629,13 @@ void Select_CPU_1st() {
         Order_Timer[66] = 1;
     }
 
-    Setup_Regular_OBJ(Player_id);
     Moving_Plate[Player_id] = 0;
 
     if (VS_Index[Player_id] >= 8) {
         Push_LDREQ_Queue_Direct(9, LDREQ_ID_SHARED);
     }
+
+    Setup_Regular_OBJ(Player_id);
 }
 
 void Select_CPU_2nd() {
@@ -664,6 +678,16 @@ void NC_Cut_Sub() {
 void Select_CPU_3rd() {
     switch (SC_No[1]) {
     case 0:
+        // PARRY THE BALL has no opponent to choose: Sean is the one throwing the balls. Answered
+        // here rather than by taking the screen out, because the two states before this one set up
+        // the background this stage is then shown against, and skipping them would cost more than
+        // the screen does.
+        if (Parry_The_Ball_Was_Requested()) {
+            EM_id = CHAR_SEAN;
+            My_char[COM_id] = CHAR_SEAN;
+            Sel_EM_Complete[Player_id] = 1;
+        }
+
         if (Demo_Flag == 0) {
             if (Player_id) {
                 Sel_CPU_Sub(1, Check_Demo_Data(1), 0);

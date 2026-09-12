@@ -38,6 +38,8 @@
 
 #include "port/io/afs.h"
 #include "port/resources.h"
+#include "port/video/trace_fin.h"
+#include "port/video/jalon.h"
 
 #define SDL_MAIN_USE_CALLBACKS 1
 #include <SDL3/SDL.h>
@@ -468,10 +470,39 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
     }
 
     if (phase == APP_PHASE_INITIALIZED) {
+        /* BATTEMENT DU MOTEUR. Le battement de `decor_objets.c` est pose dans
+           `DecorObjets_Avancer`, que seul `eff05` appelle : son silence a donc DEUX
+           lectures -- le jeu est fige, ou bien il tourne mais n'atteint jamais nos objets.
+           Celui-ci ne depend de rien : il compte les tours de la boucle de trame elle-meme.
+           Un `while (1)` dans `Main_StepFrame` l'arrete net, et la derniere ligne ecrite
+           dit a quelle trame.
+
+           Il partage `fin-de-round.log` a dessein : les lignes de chargement d'etage s'y
+           intercalent dans l'ordre, donc le journal dit d'un coup d'oeil si le moteur
+           battait encore APRES « etage 38 ». Une ligne par seconde, borne a 4000. */
+        static s32 trame_moteur = 0;
+
+        trame_moteur++;
+
+        if ((trame_moteur % 60) == 0) {
+            TraceFin("battement moteur : trame %d\n", trame_moteur, 0, 0);
+        }
+
+        Jalon_Trame(trame_moteur);
+
+        Jalon("begin_frame", 0);
         begin_frame();
+
+        Jalon("Main_StepFrame", 0);
         Main_StepFrame();
+
+        Jalon("end_frame", 0);
         end_frame();
+
+        Jalon("Main_FinishFrame", 0);
         Main_FinishFrame();
+
+        Jalon("trame terminee", 0);
     }
 
     return SDL_APP_CONTINUE;

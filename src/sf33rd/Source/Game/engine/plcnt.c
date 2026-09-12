@@ -3,6 +3,7 @@
  * Character Controller
  */
 
+#include "port/video/trace_fin.h"
 #include "sf33rd/Source/Game/engine/plcnt.h"
 #include "arcade/arcade_balance.h"
 #include "common.h"
@@ -705,6 +706,10 @@ void plcnt_move() { // 🟢
     settle_check();
 
     if (pcon_rno[0] == 2) {
+        if (bg_w.stage >= 22) {
+            TraceFin("fin de round : Round_Result %#06x, & 0x980 = %#06x, gouki_wins %d\n",
+                     Round_Result, Round_Result & 0x980, gouki_wins);
+        }
         if (Round_Result & 0x980) {
             if ((Round_Result & 0x800) && gouki_wins) {
                 effect_D3_init(1);

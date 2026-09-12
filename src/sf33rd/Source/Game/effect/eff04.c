@@ -23,7 +23,10 @@ const s16 EFF04_Cursor_Data[12][20][2] = {
     { { 32, 140 }, { 48, 108 }, { 64, 76 }, { 112, 44 }, { 0, 0 }, { 0, 0 }, { 0, 0 } },
     { { 48, 132 }, { 64, 92 }, { 112, 52 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 } },
     { { 32, 156 }, { 48, 132 }, { 64, 108 }, { 80, 84 }, { 96, 60 }, { 112, 36 }, { 0, 0 } },
-    { { 24, 132 }, { 48, 92 }, { 112, 52 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 } },
+    // The training menu, four rows since PARRY THE BALL was added to it. A bar sits 136 to the
+    // right of its row's own x in Slide_Pos_Data_61 and at the same y -- which is how the three
+    // original entries were built, and what left the fourth row without one.
+    { { 24, 132 }, { 40, 105 }, { 56, 78 }, { 112, 52 }, { 0, 0 }, { 0, 0 }, { 0, 0 } },
     { { -16, 163 }, { 0, 139 }, { 16, 115 }, { 32, 91 }, { 48, 68 }, { 68, 28 }, { 0, 0 } },
     { { 24, 132 }, { 48, 92 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 } },
     // Custom tracklist: one row per stage, sitting four of the small charset's 8px characters left

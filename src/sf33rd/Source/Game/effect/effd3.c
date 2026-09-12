@@ -3,6 +3,7 @@
  * TODO: identify what this effect does
  */
 
+#include "port/video/trace_fin.h"
 #include "sf33rd/Source/Game/effect/effd3.h"
 #include "common.h"
 #include "sf33rd/Source/Game/effect/eff20.h"
@@ -58,11 +59,12 @@ void akebono_finish(WORK_Other* ewk) {
         }
 
         Bg_On_R(8);
-        akebono_flag = 1;
-        Sound_SE(117);
         Scrn_Move_Set(3, 192 - bg_w.pos_offset, 16);
         bg_w.bgw[3].position_x = 192 - bg_w.pos_offset;
         bg_w.bgw[3].position_y = 16;
+
+        akebono_flag = 1;
+        Sound_SE(117);
         overwrite_panel(ake_color[ewk->wu.old_rno[1]], 69);
         break;
 
@@ -158,10 +160,12 @@ void syungoku_finish(WORK_Other* ewk) {
         }
 
         overwrite_panel(0xFF000000, 70);
+
         bg_w.bgw[3].position_x = 256 - bg_w.pos_offset;
         bg_w.bgw[3].position_y = 0;
-        ewk->wu.dir_timer = 2;
         Bg_Family_Set_appoint(3);
+
+        ewk->wu.dir_timer = 2;
         break;
 
     case 1:
@@ -226,6 +230,21 @@ s32 effect_D3_init(u8 ake_type) {
     WORK_Other* ewk;
     s16 ix;
 
+    /* L'AUBE TOURNE PARTOUT, Y COMPRIS SUR NOS ETAGES.
+     *
+     * Elle fait partie de la fin du combat. Elle s'approprie le plan 3 -- `Bg_On_R(8)`,
+     * `Scrn_Move_Set(3, ...)`, `bgw[3]` -- et ce plan est, sur l'etage 22, notre
+     * QUATRIEME plan de fond. Ce n'est pas un conflit : c'est un pret.
+     *
+     *   - `bg.c` donne le plan 3 a l'art de l'aube tant que `akebono_flag` est leve,
+     *     et nous le rend apres ;
+     *   - `ake_bg_off` porte maintenant, pour chacun de nos etages,
+     *     `(1 << nombre de plans) - 1` : la case 3 rallume donc tous nos plans ;
+     *   - `bg2204()` recalcule la position du quatrieme a chaque trame, ce que l'aube
+     *     y a ecrit disparait de lui-meme.
+     *
+     * La version d'avant coupait l'effet sur les quinze etages, puis n'en gardait que le
+     * panneau : un ecran blanc sans son dessin. */
     if ((ix = pull_effect_work(3)) == -1) {
         return -1;
     }

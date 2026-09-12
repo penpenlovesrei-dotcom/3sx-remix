@@ -250,7 +250,7 @@ const s8* Menu_Letter_Data[183] = { "ARCADE",
                                    // slotted in beside the two above it, which sit at 53 and 54:
                                    // an entry inserted there would move every index after it, and
                                    // Slide_Pos_Data_61 is indexed by the same number.
-                                   "PARRY THE BALL !",
+                                   "PARRY THE BALL!",
                                    // 173-182: which of the ten throw patterns that row will run,
                                    // numbered as set_bonus_game_nando numbers them — 1 to 5 are
                                    // bbbs_table's second set, 6 to 10 its first. Short because the

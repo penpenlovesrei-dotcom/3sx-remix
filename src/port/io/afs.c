@@ -1,5 +1,6 @@
 #include "port/io/afs.h"
 #include "common.h"
+#include "port/resources.h"
 
 #include "stb/stb_ds.h"
 #include <SDL3/SDL.h>
@@ -18,6 +19,14 @@ typedef struct AFSEntry {
     size_t offset;
     size_t size;
     char name[AFS_MAX_NAME_LENGTH];
+    /// Flux propre a cette entree, ou NULL pour l'archive d'origine.
+    ///
+    /// C'est ce qui permet d'AJOUTER des fichiers sans toucher a `SF33RD.AFS`. Un etage
+    /// ajoute cessait d'emprunter l'archive de pages d'un etage existant : il herite
+    /// sinon du nombre de plans de cette archive, de ses masques troues et de ses
+    /// pixels partout ou on ne remplace pas. Avec la sienne, on choisit le nombre de
+    /// pages, donc le nombre de plans. Voir @ref ajouter_fichiers_du_disque.
+    SDL_IOStream* io;
 } AFSEntry;
 
 typedef struct AFS {
@@ -165,6 +174,80 @@ static bool init_afs(const char* file_path) {
     return true;
 }
 
+/// @brief Ajoute a l'archive les fichiers de `resources/stages/`, sans la modifier.
+///
+/// Le NOM du fichier est son numero : `resources/stages/1535.bin` devient le fichier
+/// 1535. C'est volontairement explicite -- `color_file[].apfn` doit porter ce numero,
+/// et un scan trie par ordre alphabetique rendrait la correspondance fragile.
+///
+/// Les trous entre la fin de l'archive d'origine et nos numeros sont remplis par des
+/// entrees vides : `fsOpen` les refuse (`size == 0`), personne ne les demande.
+static void ajouter_fichiers_du_disque(void) {
+    char* dossier = Resources_GetPath("stages");
+    if (dossier == NULL) {
+        return;
+    }
+
+    int nb = 0;
+    char** noms = SDL_GlobDirectory(dossier, "*.bin", SDL_GLOB_CASEINSENSITIVE, &nb);
+    if (noms == NULL) {
+        SDL_free(dossier);
+        return;
+    }
+
+    for (int i = 0; i < nb; i++) {
+        char* fin = NULL;
+        const long num = SDL_strtol(noms[i], &fin, 10);
+        if (fin == noms[i] || num < 0 || num > 65535) {
+            _log("stages/%s : le nom n'est pas un numero de fichier, ignore", noms[i]);
+            continue;
+        }
+
+        char chemin[1024];
+        SDL_snprintf(chemin, sizeof(chemin), "%s/%s", dossier, noms[i]);
+
+        SDL_IOStream* io = SDL_IOFromFile(chemin, "rb");
+        if (io == NULL) {
+            _log("stages/%s : ouverture impossible, ignore", noms[i]);
+            continue;
+        }
+
+        const Sint64 taille = SDL_GetIOSize(io);
+        if (taille <= 0) {
+            SDL_CloseIO(io);
+            continue;
+        }
+
+        // `afs.entries` vient d'un `SDL_calloc`, pas de stb_ds : on l'agrandit a la main
+        // et on met les nouvelles entrees a zero -- une entree de taille nulle est
+        // refusee par `fsOpen`, ce qui est le comportement voulu pour un trou.
+        if ((size_t)num >= afs.entry_count) {
+            const size_t neuf = (size_t)num + 1;
+            AFSEntry* agrandi = SDL_realloc(afs.entries, neuf * sizeof(AFSEntry));
+            if (agrandi == NULL) {
+                SDL_CloseIO(io);
+                continue;
+            }
+            SDL_memset(agrandi + afs.entry_count, 0, (neuf - afs.entry_count) * sizeof(AFSEntry));
+            afs.entries = agrandi;
+            afs.entry_count = neuf;
+        }
+
+        AFSEntry* e = &afs.entries[num];
+        if (e->io != NULL) {
+            SDL_CloseIO(e->io);
+        }
+        e->offset = 0;
+        e->size = (size_t)taille;
+        e->io = io;
+        SDL_snprintf(e->name, sizeof(e->name), "%s", noms[i]);
+        SDL_Log("[stages] %s -> fichier %ld, %lld octets", noms[i], num, (long long)taille);
+    }
+
+    SDL_free(noms);
+    SDL_free(dossier);
+}
+
 bool AFS_Init(const char* file_path, size_t read_chunk_size) {
     SDL_assert(read_chunk_size > 0);
     _read_chunk_size = read_chunk_size;
@@ -173,10 +256,18 @@ bool AFS_Init(const char* file_path, size_t read_chunk_size) {
         return false;
     }
 
+    ajouter_fichiers_du_disque();
     return true;
 }
 
 void AFS_Finish() {
+    for (size_t i = 0; i < afs.entry_count; i++) {
+        if (afs.entries[i].io != NULL) {
+            SDL_CloseIO(afs.entries[i].io);
+            afs.entries[i].io = NULL;
+        }
+    }
+
     SDL_CloseIO(stream);
     stream = NULL;
     SDL_free(afs.file_path);
@@ -210,11 +301,14 @@ static int find_free_request_slot() {
 }
 
 static void read_into_request(ReadRequest* request, size_t max_read) {
-    const Sint64 offset = afs.entries[request->file_num].offset + request->bytes_read;
-    SDL_SeekIO(stream, offset, SDL_IO_SEEK_SET);
+    const AFSEntry* entry = &afs.entries[request->file_num];
+    // Une entree ajoutee depuis `resources/stages/` a son propre flux et commence a 0.
+    SDL_IOStream* io = (entry->io != NULL) ? entry->io : stream;
+    const Sint64 offset = entry->offset + request->bytes_read;
+    SDL_SeekIO(io, offset, SDL_IO_SEEK_SET);
 
     const size_t bytes_to_read = SDL_min(request->bytes_to_read, max_read);
-    const size_t bytes_read = SDL_ReadIO(stream, request->buf + request->bytes_read, bytes_to_read);
+    const size_t bytes_read = SDL_ReadIO(io, request->buf + request->bytes_read, bytes_to_read);
 
     request->bytes_read += bytes_read;
     request->bytes_to_read -= bytes_read;

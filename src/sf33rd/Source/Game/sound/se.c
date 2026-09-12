@@ -28,7 +28,51 @@ s16* bgm_selector[BGM_TYPE_COUNT] = { bgm_selectorDC, bgm_selectorAC, bgm_select
                                       bgm_selectorDC, bgm_selectorDC, bgm_selectorDC, bgm_selectorDC,
                                       bgm_selectorDC, bgm_selectorDC, bgm_selectorDC, bgm_selectorDC };
 
-const u16 BGM_Stage_Data[22] = { 46, 1, 13, 34, 31, 4, 7, 16, 25, 28, 34, 1, 28, 43, 22, 10, 19, 40, 4, 37, 61, 62 };
+const u16 BGM_Stage_Data[58] = { 46, 1, 13, 34, 31, 4, 7, 16, 25, 28, 34, 1, 28, 43, 22, 10, 19, 40, 4, 37, 61, 62,
+    4 /* etage 22, copie de 5 */
+,
+    4 /* etage 22, copie de 5 */,
+    4 /* etage 22, copie de 5 */,
+    4 /* etage 22, copie de 5 */,
+    4 /* etage 22, copie de 5 */,
+    4 /* etage 22, copie de 5 */,
+    4 /* etage 22, copie de 5 */,
+    4 /* etage 22, copie de 5 */,
+    4 /* etage 22, copie de 5 */,
+    4 /* etage 22, copie de 5 */,
+    4 /* etage 22, copie de 5 */,
+    4 /* etage 22, copie de 5 */,
+    4 /* etage 22, copie de 5 */,
+    4 /* etage 22, copie de 5 */,
+    4 /* etage 22, copie de 5 */,
+    /* LES VINGT ET UN ETAGES SUIVANTS N'AVAIENT AUCUNE ENTREE — 01/09/2026.
+     *
+     * Le tableau est declare `[58]` mais ne portait que 37 valeurs : les etages 37 a 57
+     * tombaient a ZERO par completion implicite du C. `Stage_BGM` calculait alors
+     * `code = 0 + selector`, qui n'est la reference d'aucun morceau, et New Generation se
+     * jouait EN SILENCE. Frederic l'a entendu avant qu'on le lise.
+     *
+     * **C'est exactement le motif de `char_add`**, en moins violent : un tableau indexe par
+     * l'etage, declare a 58 et rempli a 37. Le C completant a zero, il n'y a ni crash ni
+     * message -- juste une valeur fausse. A chercher en premier devant tout symptome
+     * « rien ne se passe » sur un etage ajoute.
+     *
+     * On reprend la base des quinze etages de 2nd Impact, qui est jouee et validee. Le
+     * choix FIN du morceau ne se fait pas ici : il passe par le pack `bgm_remix`, dont le
+     * `custom.txt` assigne par etage -- c'est la qu'il faudra donner aux dix-neuf decors
+     * de NG les pistes du pack « NewGen », qui en porte vingt-sept. */
+    4 /* etage 37 H.S.(GILL)  */, 4 /* etage 38 N.Y.(ALEX)  */,
+    4 /* etage 39 N.Y.(SEAN)  */, 4 /* etage 40 JAPAN(RYU)  */,
+    4 /* etage 41 JAPAN(KEN)  */, 4 /* etage 42 H.K.(YUN1)  */,
+    4 /* etage 43 H.K.(YUN2)  */, 4 /* etage 44 LOND(DUD1)  */,
+    4 /* etage 45 LOND(DUD2)  */, 4 /* etage 46 MOSC(NECR)  */,
+    4 /* etage 47 MUN (HUGO)  */, 4 /* etage 48 JAP(IBUK1)  */,
+    4 /* etage 49 JAP(IBUK2)  */, 4 /* etage 50 JAP(IBUK3)  */,
+    4 /* etage 51 NAI(ELEN1)  */, 4 /* etage 52 NAI(ELEN2)  */,
+    4 /* etage 53 AMAZO(ORO)  */, 4 /* etage 54 H.K (YAN1)  */,
+    4 /* etage 55 H.K (YAN2)  */,
+    4 /* etage 56 bg08        */, 4 /* etage 57 bg10        */
+};
 const s16 SE_Shock_Data[7] = { 285, 286, 287, 288, 289, 305, 306 };
 const s16 Finish_SE_Data[2][7] = { { 305, 306, 285, 286, 287, 288, 272 }, { 292, 293, 290, 291, 287, 288, 272 } };
 

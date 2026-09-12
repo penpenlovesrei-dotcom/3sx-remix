@@ -316,7 +316,23 @@ void jijii_full(PLW* wk) {
     }
 }
 
-const s16 win_2000_tbl[18] = { 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1 };
+const s16 win_2000_tbl[58] = { 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1,
+                               0, 0, 0, 0, 0 /* fonds 18 a 22 */ ,
+    0 /* fonds 18 a 22 */,
+    0 /* fonds 18 a 22 */,
+    0 /* fonds 18 a 22 */,
+    0 /* fonds 18 a 22 */,
+    0 /* fonds 18 a 22 */,
+    0 /* fonds 18 a 22 */,
+    0 /* fonds 18 a 22 */,
+    0 /* fonds 18 a 22 */,
+    0 /* fonds 18 a 22 */,
+    0 /* fonds 18 a 22 */,
+    0 /* fonds 18 a 22 */,
+    0 /* fonds 18 a 22 */,
+    0 /* fonds 18 a 22 */,
+    0 /* fonds 18 a 22 */
+};
 
 void Win_02000(PLW* wk) {
     s16 work;

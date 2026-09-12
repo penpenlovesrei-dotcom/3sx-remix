@@ -2039,27 +2039,42 @@ void Handicap_Stage_Select(s16 PL_id) {
     Handicap_Stage_Move_Sub(IO_Result);
 }
 
+/// Dernier etage selectionnable en versus. Les etages 22 a 36 sont les decors de
+/// 2nd Impact ajoutes, 37 a 55 ceux de New Generation, 56 et 57 les deux bandes de 2I restees de cote ; un de plus ici demande une
+/// entree dans chacune des tables indexees par l'etage -- voir outils/ajouter_etages.py
+/// pour 2nd Impact et outils/etagesng.py pour New Generation.
+#define VS_STAGE_MAX 57
+
 void Handicap_Stage_Move_Sub(u16 sw) {
     switch (sw) {
+    // 17 et 21 sont vides d'origine ; 22 a 36 sont les etages ajoutes de 2nd Impact.
     case SWK_LEFT:
         if ((VS_Stage -= 1) < 0) {
-            VS_Stage = 20;
+            VS_Stage = VS_STAGE_MAX;
         }
 
         if (VS_Stage == 17) {
             VS_Stage = 16;
         }
 
+        if (VS_Stage == 21) {
+            VS_Stage = 20;
+        }
+
         SE_dir_cursor_move();
         break;
 
     case SWK_RIGHT:
-        if ((VS_Stage += 1) > 20) {
+        if ((VS_Stage += 1) > VS_STAGE_MAX) {
             VS_Stage = 0;
         }
 
         if (VS_Stage == 17) {
             VS_Stage = 18;
+        }
+
+        if (VS_Stage == 21) {
+            VS_Stage = 22;
         }
 
         SE_dir_cursor_move();

@@ -166,7 +166,8 @@ const s8 Custom_Row_To_Char[20] = { 14, 1, 15, 4, 8, 0, 6, 7, 11, 16, 5, 9, 17, 
 /// the way this shipped, with every fighter on the game's own colours until someone says
 /// otherwise. So the default names that screen and changes nothing on its own.
 s8 Display_Buff[8] = { 0, 0, CHAR_COLOR_MODE_CUSTOM, 0, 0, 0, 0, 0 };
-s8 Background_Buff[20];
+s8 Background_Buff[58]; /* indexe par bg_w.stage : il en faut un par etage,
+                           et il n'en avait que 20 -- l'etage 22 debordait deja */
 s8 Background_Page;
 /// Every fighter starts on the game's own palettes, which is not what zero means here: zero is New
 /// Generation. Left to the loader's zero-fill, a fresh boot dressed the whole cast in that set

@@ -226,12 +226,13 @@ const s16 Slide_Pos_Data_61[183][2] = {
     // 172: the training menu's PARRY THE BALL row, on the diagonal its two neighbours walk. They
     // used to step 40 apart with EXIT detached below; four rows in the same height means 27, so
     // NORMAL TRAINING and EXIT stay where they were and PARRYING TRAINING moves up to make room.
-    { -96, 78 },
-    // 173-182: the level beside it, in the narrow charset. The row starts at -96 rather than
-    // continuing its diagonal to -80, which is what buys the value its column: sixteen wide
-    // letters end at 128, so LVL 10 runs 136 to 184 and clears the edge.
-    { 136, 78 }, { 136, 78 }, { 136, 78 }, { 136, 78 }, { 136, 78 },
-    { 136, 78 }, { 136, 78 }, { 136, 78 }, { 136, 78 }, { 136, 78 }
+    { -80, 78 },
+    // 173-182: the level beside it. Two above the row's own y because the narrow charset sits two
+    // pixels lower than the wide one -- the same correction the Display page's character colour row
+    // already carries, for the same reason. The row is fifteen wide letters from -80 and ends at
+    // 130, so the value starts at 138 and the longest of them ends at 178.
+    { 138, 80 }, { 138, 80 }, { 138, 80 }, { 138, 80 }, { 138, 80 },
+    { 138, 80 }, { 138, 80 }, { 138, 80 }, { 138, 80 }, { 138, 80 }
 };
 
 const s16 Slide_Pos_Data_63[5][2] = { { 40, 164 }, { 60, 142 }, { 80, 120 }, { 100, 98 }, { 120, 76 } };

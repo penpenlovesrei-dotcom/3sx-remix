@@ -15,7 +15,23 @@
 #include "sf33rd/Source/Game/stage/bg_sub.h"
 #include "sf33rd/Source/Game/stage/ta_sub.h"
 
-const s16 scr_obj_num6[22] = { 1, 6, 4, 0, 3, 1, 0, 2, 8, 3, 0, 4, 3, 0, 1, 1, 4, 0, 1, 1, 0, 0 };
+const s16 scr_obj_num6[58] = { 1, 6, 4, 0, 3, 1, 0, 2, 8, 3, 0, 4, 3, 0, 1, 1, 4, 0, 1, 1, 0, 0,
+                               0 /* fond 22 : aucun objet */ ,
+    0 /* fond 22 : aucun objet */,
+    0 /* fond 22 : aucun objet */,
+    0 /* fond 22 : aucun objet */,
+    0 /* fond 22 : aucun objet */,
+    0 /* fond 22 : aucun objet */,
+    0 /* fond 22 : aucun objet */,
+    0 /* fond 22 : aucun objet */,
+    0 /* fond 22 : aucun objet */,
+    0 /* fond 22 : aucun objet */,
+    0 /* fond 22 : aucun objet */,
+    0 /* fond 22 : aucun objet */,
+    0 /* fond 22 : aucun objet */,
+    0 /* fond 22 : aucun objet */,
+    0 /* fond 22 : aucun objet */
+};
 
 const s16 st0000_data_tbl[8] = { 0, 2, 8492, 640, 48, 82, 0, 0 };
 
@@ -36,11 +52,11 @@ const s16 st0A00_data_tbl[48] = { 0, 3, 300, 448, 16, 88, 9,  0, 0, 3, 300, 528,
 const s16 st0400_data_tbl[24] = { 0,  2,  8492, 672, 24, 10, 0,   0,   0, 2,  300, 416,
                                   72, 82, 1,    0,   0,  2,  300, 192, 0, 10, 12,  0 };
 
-const s16 st0500_data_tbl[56] = { 0,   3, 8492, 432, 0,   82,  8, 0,   0,   2, 300, 160, 0,   84,  0, 0,   0,   2, 300,
+const s16 st0500_data_tbl[58] = { 0,   3, 8492, 432, 0,   82,  8, 0,   0,   2, 300, 160, 0,   84,  0, 0,   0,   2, 300,
                                   256, 0, 84,   1,   0,   0,   2, 300, 352, 0, 84,  2,   0,   0,   2, 300, 672, 0, 84,
                                   5,   0, 0,    2,   300, 768, 0, 84,  6,   0, 0,   2,   300, 864, 0, 84,  7,   0 };
 
-const s16 st1300_data_tbl[56] = { 0, 3,  8492, 432, 0, 82, 20,  0,   0, 2,  300, 160, 0, 84, 12,  0,   0, 2,  300, 256,
+const s16 st1300_data_tbl[58] = { 0, 3,  8492, 432, 0, 82, 20,  0,   0, 2,  300, 160, 0, 84, 12,  0,   0, 2,  300, 256,
                                   0, 84, 13,   0,   0, 2,  300, 352, 0, 84, 14,  0,   0, 2,  300, 672, 0, 84, 17,  0,
                                   0, 2,  300,  768, 0, 84, 18,  0,   0, 2,  300, 864, 0, 84, 19,  0 };
 
@@ -68,11 +84,28 @@ const s16 st1100_data_tbl[32] = { 0, 1, 8492, 256, 64,  90, 0, 0, 0, 1, 8492, 38
 
 const s16 st1400_data_tbl[8] = { 0, 3, 300, 496, 64, 88, 4, 0 };
 
-const s16* scr_obj_data6[22] = { st0000_data_tbl,  st0100_data_tbl,  st0200_data_tbl, stg_dum_data_tbl, st0400_data_tbl,
+const s16* scr_obj_data6[58] = { st0000_data_tbl,  st0100_data_tbl,  st0200_data_tbl, stg_dum_data_tbl, st0400_data_tbl,
                                  st0500_data_tbl,  stg_dum_data_tbl, st0700_data_tbl, st0800_data_tbl,  st0900_data_tbl,
                                  st0A00_data_tbl,  st0B00_data_tbl,  st0c00_data_tbl, st0100_data_tbl,  st0e00_data_tbl,
                                  st1000_data_tbl,  st1100_data_tbl,  st0500_data_tbl, st1300_data_tbl,  st1400_data_tbl,
-                                 stg_dum_data_tbl, stg_dum_data_tbl };
+                                 stg_dum_data_tbl, stg_dum_data_tbl,
+    st0000_data_tbl /* etage 22, copie de 0 */
+,
+    st0000_data_tbl /* etage 22, copie de 0 */,
+    st0000_data_tbl /* etage 22, copie de 0 */,
+    st0000_data_tbl /* etage 22, copie de 0 */,
+    st0000_data_tbl /* etage 22, copie de 0 */,
+    st0000_data_tbl /* etage 22, copie de 0 */,
+    st0000_data_tbl /* etage 22, copie de 0 */,
+    st0000_data_tbl /* etage 22, copie de 0 */,
+    st0000_data_tbl /* etage 22, copie de 0 */,
+    st0000_data_tbl /* etage 22, copie de 0 */,
+    st0000_data_tbl /* etage 22, copie de 0 */,
+    st0000_data_tbl /* etage 22, copie de 0 */,
+    st0000_data_tbl /* etage 22, copie de 0 */,
+    st0000_data_tbl /* etage 22, copie de 0 */,
+    st0000_data_tbl /* etage 22, copie de 0 */
+};
 
 void effect_06_move(WORK_Other* ewk) {
     if (obr_no_disp_check()) {

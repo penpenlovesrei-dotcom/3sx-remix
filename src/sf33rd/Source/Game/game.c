@@ -2,6 +2,7 @@
 #include "common.h"
 #include "main.h"
 #include "port/utils.h"
+#include "port/video/jalon.h"
 #include "sf33rd/AcrSDK/common/pad.h"
 #include "sf33rd/Source/Common/PPGWork.h"
 #include "sf33rd/Source/Game/debug/debug_config.h"
@@ -123,17 +124,26 @@ void Game_Task(struct _TASK* task_ptr) {
         system_timer += 1;
     }
 
+    Jalon("   init_texcash_before_process", 0);
     init_texcash_before_process();
+    Jalon("   seqsBeforeProcess", 0);
     seqsBeforeProcess();
 
     if (nowSoftReset() == 0) {
+        Jalon("   Main_Jmp_Tbl G_No[0] =", G_No[0]);
         Main_Jmp_Tbl[G_No[0]](task_ptr);
+        Jalon("   Main_Jmp_Tbl rendue", 0);
     }
 
+    Jalon("   seqsAfterProcess", 0);
     seqsAfterProcess();
+    Jalon("   texture_cash_update", 0);
     texture_cash_update();
+    Jalon("   move_pulpul_work", 0);
     move_pulpul_work();
+    Jalon("   Check_LDREQ_Queue", 0);
     Check_LDREQ_Queue();
+    Jalon("   Game_Task rendue", 0);
 }
 
 void Game() {
@@ -146,7 +156,9 @@ void Game() {
         Play_Game = 2;
     }
 
+    Jalon("    Game_Jmp_Tbl G_No[1] =", G_No[1]);
     Game_Jmp_Tbl[G_No[1]]();
+    Jalon("    Game_Jmp_Tbl rendue", 0);
 }
 
 void Game00() {
@@ -412,8 +424,11 @@ void Game02() {
     void (*Game02_Jmp_Tbl[8])() = { Game2_0, Game2_1, Game2_2, Game2_3, Game2_4, Game2_5, Game2_6, Game2_7 };
 
     Scene_Cut = Cut_Cut_Cut();
+    Jalon("     Game02_Jmp_Tbl G_No[2] =", G_No[2]);
     Game02_Jmp_Tbl[G_No[2]]();
+    Jalon("     Game02_Jmp_Tbl rendue", 0);
     BG_move_Ex(3);
+    Jalon("     BG_move_Ex rendu", 0);
 }
 
 void Game2_0() {
@@ -517,44 +532,67 @@ void Game2_1() {
         Game_timer += 1;
     }
 
+    Jalon("      set_EXE_flag", 0);
     set_EXE_flag();
+    Jalon("      ppgPurgeFromVRAM 5", 0);
     ppgPurgeFromVRAM(5);
 
     if (Disp_Cockpit) {
+        Jalon("      Time_Control", 0);
         Time_Control();
     }
 
+    Jalon("      Player_control", 0);
     Player_control();
 
     if (Disp_Cockpit) {
+        Jalon("      vital_cont_main", 0);
         vital_cont_main();
+        Jalon("      combo_cont_main", 0);
         combo_cont_main();
     }
 
+    Jalon("      TATE00", 0);
     TATE00();
+    Jalon("      Game_Management", 0);
     Game_Management();
     BG_Draw_System();
+    Jalon("      ppgPurgeFromVRAM 4", 0);
     ppgPurgeFromVRAM(4);
+    Jalon("      reqPlayerDraw", 0);
     reqPlayerDraw();
+    Jalon("      Basic_Sub_Ex", 0);
     Basic_Sub_Ex();
 
     if (Disp_Cockpit) {
+        Jalon("      player_face", 0);
         player_face();
+        Jalon("      player_name", 0);
         player_name();
+        Jalon("      stngauge_cont_main", 0);
         stngauge_cont_main();
+        Jalon("      spgauge_cont_main", 0);
         spgauge_cont_main();
+        Jalon("      Sa_frame_Write", 0);
         Sa_frame_Write();
+        Jalon("      Score_Sub", 0);
         Score_Sub();
+        Jalon("      Flash_Lamp", 0);
         Flash_Lamp();
+        Jalon("      Disp_Win_Record", 0);
         Disp_Win_Record();
 
         if (should_render_input_history()) {
+            Jalon("      InputHistory_Render", 0);
             InputHistory_Render();
         }
     }
 
+    Jalon("      ppgPurgeFromVRAM 0", 0);
     ppgPurgeFromVRAM(0);
+    Jalon("      hit_check_main_process", 0);
     hit_check_main_process();
+    Jalon("      Game2_1 rendue", 0);
 }
 
 void Game2_2() {
@@ -605,7 +643,11 @@ void Game2_2() {
     Set_Appear_Type_For_Mode();
     TATE00();
 
-    for (i = 0; i < 3; i++) {
+    /* Quatre et non trois : c'est ici que les plans sont rallumes au debut du combat,
+       en double de `Bg_Texture_Load_EX`. Le quatrieme plan des etages ajoutes restait
+       eteint parce que cette boucle-ci s'arretait a trois -- le decor etait charge mais
+       jamais dessine. */
+    for (i = 0; i < 4; i++) {
         if (stage_bgw_number[bg_w.stage][i] > 0) {
             Bg_On_R(1 << i);
         }
@@ -1303,7 +1345,11 @@ void Game08() {
 #define BALL_MENU_STEP 2
 /// The blue bank the PRESS START lines use
 #define BALL_MENU_ATTR 9
-#define BALL_MENU_PRIORITY TopHUDPriority
+/// PrioBase[1], the layer that goes in front of a running stage. Not the HUD's own 2, which is
+/// where this menu spent its first four attempts being drawn behind the scene -- SSPutStr2, the
+/// one pause.c uses over gameplay, is SSPutStr with this priority hard-coded and nothing else
+/// different.
+#define BALL_MENU_PRIORITY 1
 #define BALL_MENU_LIT 0xFFFFFFFF
 #define BALL_MENU_DIM 0xFF707070
 
@@ -1466,7 +1512,48 @@ void Game09() {
         break;
 
     case 3:
+        // The menu is up: the stage is over and frozen, and nothing else here runs again until one
+        // of its rows says so. G_No[3] carries that, this case being the only one that touches it.
+        if (G_No[3] != 0) {
+            const s16 chosen = Ball_Menu_Move();
+
+            if (chosen == BALL_MENU_CHOSE_AGAIN) {
+                // Nothing to tear down by hand: case 0 opens with System_all_clear_Level_B, which
+                // is the very teardown this state was put in front of.
+                G_No[2] = 0;
+                G_No[3] = 0;
+            } else if (chosen == BALL_MENU_CHOSE_EXIT) {
+                Parry_The_Ball_Forget();
+                G_No[3] = 0;
+
+                // Row 2 of the mode select is TRAINING, and the menu opens on whatever this holds,
+                // so the way out lands where this stage was asked for.
+                Cursor_Y_Pos[0][0] = 2;
+
+                // Out through the game's own session exit, which is what the training menu's EXIT
+                // uses. From here rather than from the run-out below: nothing has been torn down
+                // yet at this point, which is the state the menu task calls it in. Tried once from
+                // the other side of System_all_clear_Level_B, it died on a multitexture that had
+                // just gone. And return rather than break, so this case does not carry on into the
+                // BG_move that follows it.
+                Soft_Reset_Sub();
+                return;
+            }
+
+            break;
+        }
+
         if (Bonus_Sub()) {
+            // Here, and not at the end of the stage's run-out, because Switch_Screen_Init on the
+            // next line starts the fade to black that case 4 carries through. A menu put up after
+            // it is drawn under a screen that has already gone dark -- correctly drawn, and
+            // invisible for a reason that has nothing to do with drawing.
+            if (Parry_The_Ball_Was_Requested()) {
+                ball_menu_row = BALL_MENU_RETRY;
+                G_No[3] = 1;
+                break;
+            }
+
             G_No[2] += 1;
             Cover_Timer = 24;
             Stop_Combo = 1;
@@ -1492,46 +1579,8 @@ void Game09() {
         Switch_Screen(0);
         Bonus_Sub();
 
-        // The menu is up: the stage is over and frozen, and nothing below runs again until one of
-        // its rows says so. G_No[3] carries that, this case being the only one that touches it.
-        if (G_No[3] != 0) {
-            const s16 chosen = Ball_Menu_Move();
-
-            if (chosen == BALL_MENU_CHOSE_AGAIN) {
-                // Nothing to tear down by hand: case 0 opens with System_all_clear_Level_B, which
-                // is the very teardown this state was put in front of.
-                G_No[2] = 0;
-                G_No[3] = 0;
-            } else if (chosen == BALL_MENU_CHOSE_EXIT) {
-                Parry_The_Ball_Forget();
-                G_No[3] = 0;
-
-                // Row 2 of the mode select is TRAINING, and the menu opens on whatever this holds,
-                // so the way back lands where this stage was asked for.
-                Cursor_Y_Pos[0][0] = 2;
-
-                // And return rather than break. Soft_Reset_Sub tears the title's textures down and
-                // builds them again; letting this case fall through to BG_move afterwards is what
-                // made the first attempt at an exit die on a multitexture that had just gone.
-                Soft_Reset_Sub();
-                return;
-            }
-
-            break;
-        }
-
         if (--G_Timer == 0) {
-            // Asked for by name, it stops on its own menu rather than handing back to a run nobody
-            // started -- and it stops here, before the three lines below, not after them.
-            // System_all_clear_Level_B closes the background and destroys every effect work: a menu
-            // put up after it has nothing to be drawn over and nothing left to draw with. Frozen
-            // ahead of it, the finished stage stays on screen underneath.
-            if (Parry_The_Ball_Was_Requested()) {
-                ball_menu_row = BALL_MENU_RETRY;
-                G_No[3] = 1;
-                break;
-            }
-
+            Parry_The_Ball_Forget();
             Cover_Timer = 24;
             Suicide[0] = 1;
             System_all_clear_Level_B();

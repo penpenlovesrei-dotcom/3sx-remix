@@ -307,7 +307,9 @@ void Custom_Tracklist(struct _TASK* task_ptr);
 #define TRAINING_ROW_BALL_LETTER 172
 /// The ten level names beside it, and the work that draws whichever is current
 #define TRAINING_BALL_LEVEL_FIRST 173
-#define TRAINING_BALL_LEVELS 10
+/// Taken from bbbscom.h so that this row and the stage's own end menu cannot disagree about how
+/// many there are, which they did while each counted for itself.
+#define TRAINING_BALL_LEVELS PARRY_THE_BALL_LEVELS
 #define TRAINING_BALL_LEVEL_WORK 0x54
 /// Which row of the four it is, and how many there are now
 #define TRAINING_ROW_BALL 2

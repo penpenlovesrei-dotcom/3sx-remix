@@ -26,12 +26,53 @@
 #include "sf33rd/Source/Game/stage/bg160.h"
 #include "sf33rd/Source/Game/stage/bg180.h"
 #include "sf33rd/Source/Game/stage/bg190.h"
+#include "sf33rd/Source/Game/stage/bg220.h"
 #include "sf33rd/Source/Game/stage/bg_sub.h"
 #include "sf33rd/Source/Game/stage/bns_bg2.h"
 #include "sf33rd/Source/Game/stage/bonus_bg.h"
 
-void (*ta_move_tbl[22])() = { BG000, BG010, BG020, BG030, BG040, BG050, BG060, BG070, BG080, BG090,    BG100,
-                              BG010, BG120, BG130, BG140, BG150, BG160, BG180, BG180, BG190, Bonus_bg, Bonus_bg2 };
+void (*ta_move_tbl[58])() = { BG000, BG010, BG020, BG030, BG040, BG050, BG060, BG070, BG080, BG090,    BG100,
+                              BG010, BG120, BG130, BG140, BG150, BG160, BG180, BG180, BG190, Bonus_bg, Bonus_bg2,
+                              BG220 ,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    /* Les dix-neuf etages de New Generation, 37 a 55 : meme gestionnaire.
+       `BG220` teste `bg_w.bg_index >= 22`, il les couvre donc sans rien changer. */
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    BG220,
+    /* bg08 et bg10, les deux bandes de 2nd Impact restees de cote */
+    BG220,
+    BG220
+};
 
 void ta0_init00();
 void ta0_init01();

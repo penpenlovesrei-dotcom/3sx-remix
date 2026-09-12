@@ -5,6 +5,7 @@
 
 #include "sf33rd/Source/Game/stage/bg_sub.h"
 #include "common.h"
+#include "port/video/trace_fin.h"
 #include "sf33rd/Source/Game/engine/plcnt.h"
 #include "sf33rd/Source/Game/engine/pls02.h"
 #include "sf33rd/Source/Game/engine/workuser.h"
@@ -1112,6 +1113,14 @@ void bg_initialize() {
     bg_w.bg_index = bg_index_tbl[bg_w.stage][bg_w.area];
     bg_w.scno = use_scr[bg_w.bg_index];
     bg_w.scrno = use_real_scr[bg_w.bg_index];
+
+    /* CE QUI MANQUAIT DEPUIS LE DEBUT. Chaque essai des etages ajoutes a coute un
+       aller-retour parce qu'on ne savait meme pas QUEL etage plantait. Trois nombres
+       suffisent a le dire, et ils sont ecrits avant tout chargement. */
+    TraceFin("etage %d, aire %d -> bg_index %d\n",
+             (s32)bg_w.stage, (s32)bg_w.area, (s32)bg_w.bg_index);
+    TraceFin("   plans %d, plans reels %d, opaque %d\n",
+             (s32)bg_w.scno, (s32)bg_w.scrno, (s32)bg_w.bg_opaque);
     y_sitei_flag = 0;
     y_sitei_pos = 0;
 
@@ -1180,6 +1189,22 @@ void bg_initialize() {
 }
 
 void akebono_initialize() {
+    /* LE PLAN 3 EST LE QUATRIEME PLAN DE FOND DES ETAGES AJOUTES.
+     *
+     * Cette fonction prepare le plan de l'aube, et elle tourne a la mise en place de
+     * CHAQUE etage : elle ecrit `bgw[3]` puis fait `Bg_Off_R(8)`. Comme elle passe
+     * apres `Bg_Texture_Load_EX`, elle eteignait le bit que celui-ci venait d'allumer.
+     *
+     * C'est ce que montrait la trace : `On_R 0x0008 -> switch 0x000f` suivi
+     * immediatement d'un `Off_R 0x0008`, sans le `On_R(8)` ni la boucle d'extinction
+     * qu'`effd3` aurait produits. Le quatrieme plan chargeait ses 32 pages et n'etait
+     * jamais dessine.
+     *
+     * L'aube reste entiere pour les etages d'origine. */
+    if (bg_w.stage >= 22) {
+        return;
+    }
+
     bg_w.bgw[3].xy[0].cal = bg_w.bgw[3].wxy[0].cal = 0x100000;
     bg_w.bgw[3].xy[1].cal = bg_w.bgw[3].wxy[1].cal = 0;
     bg_w.bgw[3].position_x = 0xC0 - bg_w.pos_offset;

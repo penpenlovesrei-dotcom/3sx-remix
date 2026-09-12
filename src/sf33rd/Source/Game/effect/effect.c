@@ -3,6 +3,9 @@
  * Main Effect Functions
  */
 
+#include "port/video/decor_objets.h"
+#include "port/video/jalon.h"
+#include "port/video/trace_fin.h"
 #include "sf33rd/Source/Game/effect/effect.h"
 #include "common.h"
 #include "port/utils.h"
@@ -27,11 +30,39 @@ void move_effect_work(s16 index) {
     s16 curr_ix;
     s16 next_ix;
 
+    /* LE GARDE-FOU QUI DIT OU LE JEU SE FIGE.
+       Cette boucle ne sort que sur `curr_ix == -1`. Si la liste chainee boucle sur
+       elle-meme, elle tourne indefiniment -- SANS message, sans `fatal_error`, et sans
+       meme rappeler les fonctions de deplacement, que le garde `timing` bloque des le
+       second tour. C'est exactement le profil du gel des etages ajoutes.
+
+       Un cycle est possible parce que `pull_effect_work` n'ecrit JAMAIS `behind` sur le
+       nouveau maillon de queue : il le suppose a -1. Si un emplacement est distribue deux
+       fois, `wrk->behind = qix` avec `qix == tail_ix[index]` fait pointer un maillon sur
+       lui-meme.
+
+       On compte les tours, on note la chaine, et on SORT au lieu de geler. */
+    s32 tours = 0;
+
     exec_tm[index] += 1;
 
     for (curr_ix = head_ix[index]; curr_ix != -1; curr_ix = next_ix) {
         c_addr = (WORK*)frw[curr_ix];
         next_ix = c_addr->behind;
+
+        /* Ce garde-fou parle par `TraceFin`, pas par `Jalon` : les jalons sont desarmes
+           par defaut, et un cycle doit se signaler dans TOUS les essais. Mesure du
+           01/09 : la liste n'etait PAS cyclique -- le parcours allait jusqu'au bout et le
+           defaut etait ailleurs (`char_add` trop court). Le garde reste parce qu'il ne
+           coute rien et qu'il ferme la question pour de bon. */
+        if (++tours > EFFECT_MAX) {
+            TraceFin("CYCLE liste %d : maillon %d, suivant %d\n", index, curr_ix, next_ix);
+            break;
+        }
+
+        Jalon("       maillon", curr_ix);
+        Jalon("        -> id", c_addr->id);
+        Jalon("        -> suivant", next_ix);
 
         if (c_addr->timing != exec_tm[index]) {
             c_addr->timing = exec_tm[index];
@@ -41,6 +72,9 @@ void move_effect_work(s16 index) {
 }
 
 void effect_work_init() {
+    /* Tout le tas repart a zero : notre objet n'existe plus. */
+    DecorObjets_Oublier(NULL);
+
     WORK* c_addr;
     s16 i;
 
@@ -171,6 +205,9 @@ s16 search_effect_index(s16 index, s16 flag, s16 tid) {
 }
 
 void push_effect_work(WORK* wkhd) {
+    /* Cet emplacement retourne au tas et sera repris par un autre. */
+    DecorObjets_Oublier(wkhd);
+
     WORK* c_addr;
     WORK* c_addr2;
     s16 qix;

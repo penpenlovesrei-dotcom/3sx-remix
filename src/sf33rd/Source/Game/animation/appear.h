@@ -15,7 +15,7 @@ typedef struct {
 } APPEAR_DATA;
 
 extern const APPEAR_DATA appear_data[55];
-extern const s16 smoke_check[22];
+extern const s16 smoke_check[58];
 extern const u8 animal_decide_tbl[16];
 
 // MARK: - Serialized

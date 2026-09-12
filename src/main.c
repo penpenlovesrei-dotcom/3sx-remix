@@ -29,6 +29,7 @@
 #include "sf33rd/Source/Game/system/sys_sub.h"
 #include "sf33rd/Source/Game/system/sys_sub2.h"
 #include "sf33rd/Source/Game/system/work_sys.h"
+#include "port/video/jalon.h"
 #include "structs.h"
 
 #include <SDL3/SDL.h>
@@ -139,7 +140,11 @@ static void cpLoopTask() {
 
         switch (task_ptr->condition) {
         case 1:
+            /* Une ligne AVANT et une APRES : si la tache ne rend pas la main, le journal
+               s'arrete sur son « tache N » sans le « tache N rendue » qui va avec. */
+            Jalon("  tache", i);
             task_ptr->func_adrs(task_ptr);
+            Jalon("  tache rendue", i);
             break;
 
         case 2:
@@ -161,6 +166,7 @@ static void appCopyKeyData() {
 }
 
 void njUserMain() {
+    Jalon(" njUserMain", 0);
     CPU_Time_Lag[0] = 0;
     CPU_Time_Lag[1] = 0;
     CPU_Rec[0] = 0;
@@ -169,7 +175,9 @@ void njUserMain() {
     Check_Replay_Status(0, Replay_Status[0]);
     Check_Replay_Status(1, Replay_Status[1]);
 
+    Jalon(" cpLoopTask", 0);
     cpLoopTask();
+    Jalon(" cpLoopTask rendue", 0);
 
     if ((Game_pause != 0x81) && (Mode_Type == MODE_VERSUS) && (Play_Mode == 1)) {
         if ((plw[0].wu.operator == 0) && (CPU_Rec[0] == 0) && (Replay_Status[0] == 1)) {
@@ -232,19 +240,27 @@ void Main_StepFrame() {
     }
 #else
     njUserMain();
+    Jalon(" njdp2d_draw", 0);
     njdp2d_draw();
 #endif
 
+    Jalon(" flFlip", 0);
     flFlip(0);
+    Jalon(" flFlip rendu", 0);
 }
 
 void Main_FinishFrame() {
     Interrupt_Timer += 1;
 
+    Jalon(" Scrn_Renew", 0);
     Scrn_Renew();
+    Jalon(" Irl_Family", 0);
     Irl_Family();
+    Jalon(" Irl_Scrn", 0);
     Irl_Scrn();
+    Jalon(" BGM_Server", 0);
     BGM_Server();
+    Jalon(" BGM_Server rendu", 0);
 }
 
 // Tasks

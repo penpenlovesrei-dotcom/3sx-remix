@@ -1,8 +1,12 @@
+#include "port/video/trace_fin.h"
+#include <stdio.h>
 /**
  * @file bg.c
  * Background/Stage logic
  */
 
+#include "port/video/tex_remix.h"
+#include "port/video/jalon.h"
 #include "sf33rd/Source/Game/stage/bg.h"
 #include "common.h"
 #include "sf33rd/AcrSDK/ps2/foundaps2.h"
@@ -56,7 +60,7 @@ static void ppgCalScrPosition(s32 x, s32 y, s32 xs, s32 ys);
 void Bg_TexInit() {
     s32 i;
 
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < 4; i++) {
         ppgBgList[i].tex = &ppgBgTex[i];
         ppgBgList[i].pal = palGetChunkGhostCP3();
     }
@@ -218,7 +222,7 @@ void Bg_Close() {
     tokusyu_stage = 0;
     rw_num = 0;
 
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < 4; i++) {
         ppgReleaseTextureHandle(&ppgBgTex[i], -1);
     }
 
@@ -262,7 +266,7 @@ void Bg_Texture_Load_EX() {
 
     ending_flag = 0;
 
-    for (stg = 0; stg < 3; stg++) {
+    for (stg = 0; stg < 4; stg++) {
         if (stage_bgw_number[bg_w.stage][stg] != 0) {
             break;
         }
@@ -272,7 +276,7 @@ void Bg_Texture_Load_EX() {
         scr_bcm[stg + i] = bg_map_tbl[bg_w.stage][i];
     }
 
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < 4; i++) {
         if (stage_bgw_number[bg_w.stage][i] > 0) {
             Bg_On_R(1 << i);
         }
@@ -282,6 +286,7 @@ void Bg_Texture_Load_EX() {
         Bg_On_R(4);
     }
 
+    TexRemix_SetStage(bg_w.stage);
     key1 = Search_ramcnt_type(0x12);
     loadAdrs = Get_ramcnt_pointer(key1);
     loadSize = Get_size_data_ramcnt_key(key1);
@@ -296,6 +301,13 @@ void Bg_Texture_Load_EX() {
     }
 
     bg_priority[3] = 70;
+
+    /* Le QUATRIEME plan des etages ajoutes. Son z etait code en dur a 70 parce que le
+       plan 3 ne servait qu'a l'effet d'aube ; le dernier octet de `stage_priority`
+       restait donc inutilise. On le lit pour nos etages, et pour eux seuls. */
+    if (bg_w.stage >= 22 && (stage_priority[bg_w.stage] & 0xFF) != 0) {
+        bg_priority[3] = stage_priority[bg_w.stage] & 0xFF;
+    }
     accnum = 0;
 
     for (j = 0; j < bg_w.scrno; j++, assign3 = stg++) {
@@ -355,6 +367,21 @@ void Bg_Texture_Load_EX() {
 
         ppgSourceDataReleased(&ppgAkeList);
     }
+
+    /* ET ON REFERME LA SUBSTITUTION. `TexRemix_Substitute` remplace une page des qu'un
+       etage ajoute est selectionne ET que le couple (liste, page) correspond a un de nos
+       `.tex`. Or `current_stage` restait a 22 APRES l'etage : les menus d'apres-combat
+       chargent leurs propres pages, et celles dont les numeros coincidaient recevaient
+       les notres. C'est le ciel etoile de Gill qu'on voyait traverser l'ecran de
+       selection et l'ecran WINNER.
+       Nos pages n'ont besoin d'etre substituees qu'ici, au chargement de l'etage. Passe
+       ce point, plus personne ne doit pouvoir les recevoir. */
+    TexRemix_SetStage(-1);
+
+    /* Le decor est charge en entier. C'est ici, et pas avant, qu'on commence a noter les
+       points de passage de la trame : le gel des etages ajoutes survient APRES ce point,
+       et les milliers de trames de menu qui precedent n'apprendraient rien. */
+    Jalon_Armer(bg_w.stage);
 }
 
 void Bg_Texture_Load2(u8 type) {
@@ -602,7 +629,14 @@ void scr_trans(u8 bgnm) {
     palOffset = bgPalCodeOffset[bgnm];
 
     if (ending_flag == 0) {
-        if (bgnm == 3) {
+        /* LE PLAN 3 : A L'AUBE PENDANT QU'ELLE PASSE, A NOUS LE RESTE DU TEMPS.
+           C'est `akebono_flag` qui tranche, pas le numero d'etage. L'aube l'allume en
+           entrant (case 0), le rend a la case 3 -- ou `ake_bg_off` rallume tous les
+           plans de l'etage -- et `bg2204()` recalcule la position du notre a chaque
+           trame, donc il se remet tout seul.
+           Garder ce plan pour nous sur l'etage 22 privait l'aube de son art : elle
+           sortait en ecran blanc. */
+        if (bgnm == 3 && (bg_w.stage < 22 || akebono_flag)) {
             ppgSetupCurrentDataList(&ppgAkeList);
             bgAkebonoDraw();
             return;
@@ -1342,6 +1376,10 @@ void Family_Set_W(s8 fmnm, s16 x, s16 y) {
 }
 
 void Bg_On_R(u16 s_prm) {
+    if (bg_w.stage >= 22) {
+        TraceFin("Bg_On_R  masque %#06x   Screen_Switch %#06x -> %#06x\n", s_prm,
+                 Screen_Switch, Screen_Switch | s_prm);
+    }
     Screen_Switch |= s_prm;
     Screen_Switch_Buffer = Screen_Switch;
 }
@@ -1352,6 +1390,10 @@ void Bg_On_W(u16 s_prm) {
 }
 
 void Bg_Off_R(u16 s_prm) {
+    if (bg_w.stage >= 22) {
+        TraceFin("Bg_Off_R masque %#06x   Screen_Switch %#06x -> %#06x\n", s_prm,
+                 Screen_Switch, Screen_Switch & ~s_prm);
+    }
     s_prm = ~s_prm;
     Screen_Switch &= s_prm;
     Screen_Switch_Buffer = Screen_Switch;

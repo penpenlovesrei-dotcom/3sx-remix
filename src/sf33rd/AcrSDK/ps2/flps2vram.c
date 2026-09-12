@@ -7,6 +7,7 @@
 #include "sf33rd/AcrSDK/ps2/foundaps2.h"
 
 #include "core/renderer.h"
+#include "port/video/tex_remix.h"
 
 #include <SDL3/SDL.h>
 
@@ -30,6 +31,10 @@ u32 flCreateTextureHandle(plContext* bits, u32 flag) {
     if (th == 0) {
         return 0;
     }
+
+    // A handle comes back from a pool that recycles them. Clear the mark here, at the one place
+    // every creation passes through, so a handle never keeps the mark of the page before it.
+    TexRemix_ForgetHandle(th);
 
     lpflTexture = &flTexture[LO_16_BITS(th) - 1];
     flPS2GetTextureInfoFromContext(bits, 1, th, flag);

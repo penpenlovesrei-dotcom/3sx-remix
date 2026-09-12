@@ -1,3 +1,4 @@
+#include <stdio.h>
 /**
  * @file sys_sub.c
  * System State and Management Hub
@@ -8,6 +9,7 @@
 #include "main.h"
 #include "port/config/config.h"
 #include "port/sound/bgm_remix.h"
+#include "port/video/jalon.h"
 #include "sf33rd/AcrSDK/common/mlPAD.h"
 #include "sf33rd/Source/Game/com/com_data.h"
 #include "sf33rd/Source/Game/com/com_datu.h"
@@ -917,10 +919,14 @@ static bool bg_layer_disabled(int i) {
 }
 
 void BG_Draw_System() {
+    Jalon("      BG_Draw_System", 0);
+
     for (int i = 0; i < 4; i++) {
         if ((bg_disp_off == 0) && (Screen_Switch_Buffer & (1 << i)) && !bg_layer_disabled(i)) {
+            Jalon("      scr_trans plan", i);
             scr_trans(i);
         } else {
+            Jalon("      scr_calc plan", i);
             scr_calc(i);
         }
     }
@@ -928,14 +934,19 @@ void BG_Draw_System() {
     if (Play_Game == 0) {
         for (int i = 0; i < 4; i++) {
             if (Unsubstantial_BG[i]) {
+                Jalon("      scr_calc bis plan", i);
                 scr_calc(i);
             }
         }
     } else if (Play_Game == 1) {
+        Jalon("      Family_Move", 0);
         Family_Move();
     } else {
+        Jalon("      Ending_Family_Move", 0);
         Ending_Family_Move();
     }
+
+    Jalon("      BG_Draw_System rendu", 0);
 }
 
 u16 Check_Demo_Data(s16 PL_id) {

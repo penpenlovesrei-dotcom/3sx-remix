@@ -74,7 +74,7 @@ s32 palFormConv;
 
 // forward decls
 const u16 hitmark_color[128];
-const col_file_data color_file[161];
+const col_file_data color_file[197];
 
 void q_ldreq_color_data(LoadRequest* curr) {
     col_file_data* cfn;
@@ -649,7 +649,7 @@ const u16 hitmark_color[128] = {
     64478, 58270, 54174, 49950, 45662, 43550, 43486, 41310, 64478, 58206, 56094, 53982, 53918, 51806, 49694, 47582
 };
 
-const col_file_data color_file[161] = { { .data = 0x0, .type = 0x1, .apfn = 0x5B7, .free = 0x0 },
+const col_file_data color_file[197] = { { .data = 0x0, .type = 0x1, .apfn = 0x5B7, .free = 0x0 },
                                         { .data = 0x0, .type = 0x1, .apfn = 0x5BA, .free = 0x0 },
                                         { .data = 0x0, .type = 0x1, .apfn = 0x5BE, .free = 0x0 },
                                         { .data = 0x0, .type = 0x1, .apfn = 0x5C1, .free = 0x0 },
@@ -809,4 +809,51 @@ const col_file_data color_file[161] = { { .data = 0x0, .type = 0x1, .apfn = 0x5B
                                         { .data = 0x0, .type = 0x0, .apfn = 0x8, .free = 0x0 },
                                         { .data = 0x0, .type = 0x63, .apfn = 0x53, .free = 0x0 },
                                         { .data = 0x0, .type = 0x63, .apfn = 0x54, .free = 0x0 },
-                                        { .data = 0x0, .type = 0x63, .apfn = 0x55, .free = 0x0 } };
+                                        { .data = 0x0, .type = 0x63, .apfn = 0x55, .free = 0x0 }     ,
+    /* LES ARCHIVES DE PAGES DES QUINZE ETAGES AJOUTES -- les notres.
+     *
+     * `.apfn` est un numero de fichier, et les fichiers 1535 et suivants n'existent pas
+     * dans `SF33RD.AFS` : ils sont ajoutes au chargement depuis `resources/stages/`
+     * (voir `ajouter_fichiers_du_disque` dans `src/port/io/afs.c`). L'etage cesse donc
+     * d'emprunter l'archive d'un etage existant, et avec elle son nombre de plans, ses
+     * masques troues et ses pixels residuels. */
+    { .data = 0x0, .type = 0x0, .apfn = 1535, .free = 0x0 }, /* etage 22 */
+    { .data = 0x0, .type = 0x0, .apfn = 1536, .free = 0x0 }, /* etage 23 */
+    { .data = 0x0, .type = 0x0, .apfn = 1537, .free = 0x0 }, /* etage 24 */
+    { .data = 0x0, .type = 0x0, .apfn = 1538, .free = 0x0 }, /* etage 25 */
+    { .data = 0x0, .type = 0x0, .apfn = 1539, .free = 0x0 }, /* etage 26 */
+    { .data = 0x0, .type = 0x0, .apfn = 1540, .free = 0x0 }, /* etage 27 */
+    { .data = 0x0, .type = 0x0, .apfn = 1541, .free = 0x0 }, /* etage 28 */
+    { .data = 0x0, .type = 0x0, .apfn = 1542, .free = 0x0 }, /* etage 29 */
+    { .data = 0x0, .type = 0x0, .apfn = 1543, .free = 0x0 }, /* etage 30 */
+    { .data = 0x0, .type = 0x0, .apfn = 1544, .free = 0x0 }, /* etage 31 */
+    { .data = 0x0, .type = 0x0, .apfn = 1545, .free = 0x0 }, /* etage 32 */
+    { .data = 0x0, .type = 0x0, .apfn = 1546, .free = 0x0 }, /* etage 33 */
+    { .data = 0x0, .type = 0x0, .apfn = 1547, .free = 0x0 }, /* etage 34 */
+    { .data = 0x0, .type = 0x0, .apfn = 1548, .free = 0x0 }, /* etage 35 */
+    { .data = 0x0, .type = 0x0, .apfn = 1549, .free = 0x0 } /* etage 36 */,
+    /* LES VINGT ET UN ETAGES SUIVANTS : dix-neuf de New Generation (37 a 55),
+     * puis les deux bandes de 2nd Impact restees de cote (56 et 57). Meme
+     * mecanique -- les fichiers 1550 et suivants viennent de `resources/stages/`. */
+    { .data = 0x0, .type = 0x0, .apfn = 1550, .free = 0x0 }, /* etage 37, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1551, .free = 0x0 }, /* etage 38, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1552, .free = 0x0 }, /* etage 39, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1553, .free = 0x0 }, /* etage 40, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1554, .free = 0x0 }, /* etage 41, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1555, .free = 0x0 }, /* etage 42, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1556, .free = 0x0 }, /* etage 43, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1557, .free = 0x0 }, /* etage 44, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1558, .free = 0x0 }, /* etage 45, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1559, .free = 0x0 }, /* etage 46, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1560, .free = 0x0 }, /* etage 47, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1561, .free = 0x0 }, /* etage 48, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1562, .free = 0x0 }, /* etage 49, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1563, .free = 0x0 }, /* etage 50, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1564, .free = 0x0 }, /* etage 51, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1565, .free = 0x0 }, /* etage 52, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1566, .free = 0x0 }, /* etage 53, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1567, .free = 0x0 }, /* etage 54, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1568, .free = 0x0 }, /* etage 55, NG */
+    { .data = 0x0, .type = 0x0, .apfn = 1569, .free = 0x0 }, /* etage 56, 2I */
+    { .data = 0x0, .type = 0x0, .apfn = 1570, .free = 0x0 } /* etage 57, 2I */
+};

@@ -300,6 +300,122 @@ const LoadRequestEntry ldreq_tbl[] = {
     [291] = { .type = LDREQ_COLOR, .ix = 19, .frre = 1, .kokey = 10 },
     [292] = { .type = LDREQ_KANJI, .ix = 151, .frre = 2, .kokey = 25 },
     [293] = { .type = LDREQ_KANJI, .ix = 152, .frre = 2, .kokey = 26 },
+    /* LES QUINZE ETAGES AJOUTES ONT LEUR PROPRE BLOC.
+     *
+     * Les deux premieres entrees restent celles de l'etage 10 (Yang) -- ce sont les
+     * couleurs et le groupe de graphiques, qui n'ont jamais pose probleme. La
+     * TROISIEME, `LDREQ_SCREEN` avec `kokey = 18`, est la notre : elle pointe sur une
+     * entree de `color_file[]` dont `.apfn` designe un fichier de `resources/stages/`.
+     * C'est elle qui portait toute la contrainte du donneur. */
+    [294] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [295] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [296] = { .type = LDREQ_SCREEN, .ix = 161, .frre = 1, .kokey = 18 }, /* etage 22 */
+    [297] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [298] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [299] = { .type = LDREQ_SCREEN, .ix = 162, .frre = 1, .kokey = 18 }, /* etage 23 */
+    [300] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [301] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [302] = { .type = LDREQ_SCREEN, .ix = 163, .frre = 1, .kokey = 18 }, /* etage 24 */
+    [303] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [304] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [305] = { .type = LDREQ_SCREEN, .ix = 164, .frre = 1, .kokey = 18 }, /* etage 25 */
+    [306] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [307] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [308] = { .type = LDREQ_SCREEN, .ix = 165, .frre = 1, .kokey = 18 }, /* etage 26 */
+    [309] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [310] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [311] = { .type = LDREQ_SCREEN, .ix = 166, .frre = 1, .kokey = 18 }, /* etage 27 */
+    [312] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [313] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [314] = { .type = LDREQ_SCREEN, .ix = 167, .frre = 1, .kokey = 18 }, /* etage 28 */
+    [315] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [316] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [317] = { .type = LDREQ_SCREEN, .ix = 168, .frre = 1, .kokey = 18 }, /* etage 29 */
+    [318] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [319] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [320] = { .type = LDREQ_SCREEN, .ix = 169, .frre = 1, .kokey = 18 }, /* etage 30 */
+    [321] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [322] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [323] = { .type = LDREQ_SCREEN, .ix = 170, .frre = 1, .kokey = 18 }, /* etage 31 */
+    [324] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [325] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [326] = { .type = LDREQ_SCREEN, .ix = 171, .frre = 1, .kokey = 18 }, /* etage 32 */
+    [327] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [328] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [329] = { .type = LDREQ_SCREEN, .ix = 172, .frre = 1, .kokey = 18 }, /* etage 33 */
+    [330] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [331] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [332] = { .type = LDREQ_SCREEN, .ix = 173, .frre = 1, .kokey = 18 }, /* etage 34 */
+    [333] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [334] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [335] = { .type = LDREQ_SCREEN, .ix = 174, .frre = 1, .kokey = 18 }, /* etage 35 */
+    [336] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [337] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [338] = { .type = LDREQ_SCREEN, .ix = 175, .frre = 1, .kokey = 18 }, /* etage 36 */
+    /* Les vingt et un etages suivants : New Generation, puis les deux bandes de 2I. */
+    [339] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [340] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [341] = { .type = LDREQ_SCREEN, .ix = 176, .frre = 1, .kokey = 18 }, /* etage 37 */
+    [342] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [343] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [344] = { .type = LDREQ_SCREEN, .ix = 177, .frre = 1, .kokey = 18 }, /* etage 38 */
+    [345] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [346] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [347] = { .type = LDREQ_SCREEN, .ix = 178, .frre = 1, .kokey = 18 }, /* etage 39 */
+    [348] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [349] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [350] = { .type = LDREQ_SCREEN, .ix = 179, .frre = 1, .kokey = 18 }, /* etage 40 */
+    [351] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [352] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [353] = { .type = LDREQ_SCREEN, .ix = 180, .frre = 1, .kokey = 18 }, /* etage 41 */
+    [354] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [355] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [356] = { .type = LDREQ_SCREEN, .ix = 181, .frre = 1, .kokey = 18 }, /* etage 42 */
+    [357] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [358] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [359] = { .type = LDREQ_SCREEN, .ix = 182, .frre = 1, .kokey = 18 }, /* etage 43 */
+    [360] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [361] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [362] = { .type = LDREQ_SCREEN, .ix = 183, .frre = 1, .kokey = 18 }, /* etage 44 */
+    [363] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [364] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [365] = { .type = LDREQ_SCREEN, .ix = 184, .frre = 1, .kokey = 18 }, /* etage 45 */
+    [366] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [367] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [368] = { .type = LDREQ_SCREEN, .ix = 185, .frre = 1, .kokey = 18 }, /* etage 46 */
+    [369] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [370] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [371] = { .type = LDREQ_SCREEN, .ix = 186, .frre = 1, .kokey = 18 }, /* etage 47 */
+    [372] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [373] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [374] = { .type = LDREQ_SCREEN, .ix = 187, .frre = 1, .kokey = 18 }, /* etage 48 */
+    [375] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [376] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [377] = { .type = LDREQ_SCREEN, .ix = 188, .frre = 1, .kokey = 18 }, /* etage 49 */
+    [378] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [379] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [380] = { .type = LDREQ_SCREEN, .ix = 189, .frre = 1, .kokey = 18 }, /* etage 50 */
+    [381] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [382] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [383] = { .type = LDREQ_SCREEN, .ix = 190, .frre = 1, .kokey = 18 }, /* etage 51 */
+    [384] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [385] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [386] = { .type = LDREQ_SCREEN, .ix = 191, .frre = 1, .kokey = 18 }, /* etage 52 */
+    [387] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [388] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [389] = { .type = LDREQ_SCREEN, .ix = 192, .frre = 1, .kokey = 18 }, /* etage 53 */
+    [390] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [391] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [392] = { .type = LDREQ_SCREEN, .ix = 193, .frre = 1, .kokey = 18 }, /* etage 54 */
+    [393] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [394] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [395] = { .type = LDREQ_SCREEN, .ix = 194, .frre = 1, .kokey = 18 }, /* etage 55 */
+    [396] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [397] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [398] = { .type = LDREQ_SCREEN, .ix = 195, .frre = 1, .kokey = 18 }, /* etage 56 */
+    [399] = { .type = LDREQ_COLOR, .ix = 31, .frre = 1, .kokey = 2 },
+    [400] = { .type = LDREQ_TEXTURE, .ix = 85, .frre = 1, .kokey = 19 },
+    [401] = { .type = LDREQ_SCREEN, .ix = 196, .frre = 1, .kokey = 18 }, /* etage 57 */
 };
 
 const Span spans[] = {
@@ -317,5 +433,53 @@ const Span spans[] = {
     { .start = 165, .length = 3 }, { .start = 170, .length = 3 }, { .start = 175, .length = 3 },
     { .start = 180, .length = 3 }, { .start = 185, .length = 3 }, { .start = 190, .length = 3 },
     { .start = 195, .length = 3 }, { .start = 200, .length = 5 }, { .start = 206, .length = 4 },
-    { .start = 22, .length = 3 },
+    { .start = 294, .length = 3 }, /* etage 22 : SON PROPRE BLOC. On n'emprunte plus (avant :
+                                      celui de Yang -- ses deux plans etaient pleins,
+                                      mais son archive n'a que DEUX plans, et il en faut
+                                      trois. Ryu et l'etage 14 sont les seuls a trois.
+
+                                      ATTENTION -- `spans[]` sert DEUX familles :
+                                      `Push_LDREQ_Queue_Player` l'indexe par
+                                      PERSONNAGE, `Push_LDREQ_Queue_Union` par ETAGE,
+                                      et l'etage N est a `spans[N + 20]`. L'etage 10
+                                      est bien a `[30]` = {150,3}, l'etage 2 a `[22]`
+                                      = {110,3}. Ecrire {10,4} ici -- le bloc du
+                                      PERSONNAGE 2 -- faisait charger a l'etage les
+                                      fichiers d'un combattant, et le jeu tombait
+                                      avant meme d'arriver a `Bg_Texture_Load_EX`. */
+    { .start = 297, .length = 3 }, /* etage 23 */
+    { .start = 300, .length = 3 }, /* etage 24 */
+    { .start = 303, .length = 3 }, /* etage 25 */
+    { .start = 306, .length = 3 }, /* etage 26 */
+    { .start = 309, .length = 3 }, /* etage 27 */
+    { .start = 312, .length = 3 }, /* etage 28 */
+    { .start = 315, .length = 3 }, /* etage 29 */
+    { .start = 318, .length = 3 }, /* etage 30 */
+    { .start = 321, .length = 3 }, /* etage 31 */
+    { .start = 324, .length = 3 }, /* etage 32 */
+    { .start = 327, .length = 3 }, /* etage 33 */
+    { .start = 330, .length = 3 }, /* etage 34 */
+    { .start = 333, .length = 3 }, /* etage 35 */
+    { .start = 336, .length = 3 }, /* etage 36 */
+    { .start = 339, .length = 3 }, /* etage 37 */
+    { .start = 342, .length = 3 }, /* etage 38 */
+    { .start = 345, .length = 3 }, /* etage 39 */
+    { .start = 348, .length = 3 }, /* etage 40 */
+    { .start = 351, .length = 3 }, /* etage 41 */
+    { .start = 354, .length = 3 }, /* etage 42 */
+    { .start = 357, .length = 3 }, /* etage 43 */
+    { .start = 360, .length = 3 }, /* etage 44 */
+    { .start = 363, .length = 3 }, /* etage 45 */
+    { .start = 366, .length = 3 }, /* etage 46 */
+    { .start = 369, .length = 3 }, /* etage 47 */
+    { .start = 372, .length = 3 }, /* etage 48 */
+    { .start = 375, .length = 3 }, /* etage 49 */
+    { .start = 378, .length = 3 }, /* etage 50 */
+    { .start = 381, .length = 3 }, /* etage 51 */
+    { .start = 384, .length = 3 }, /* etage 52 */
+    { .start = 387, .length = 3 }, /* etage 53 */
+    { .start = 390, .length = 3 }, /* etage 54 */
+    { .start = 393, .length = 3 }, /* etage 55 */
+    { .start = 396, .length = 3 }, /* etage 56 */
+    { .start = 399, .length = 3 }, /* etage 57 */
 };

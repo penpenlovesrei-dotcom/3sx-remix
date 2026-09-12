@@ -31,6 +31,13 @@ typedef struct {
 ///
 /// @param from where the page came from, for the dump only. Required; nothing else reads it.
 /// @return `true` if `bits` now describes a replacement, `false` to use the game's own page.
+/// @brief Tell the remix which stage is loading, so a stage can own its pages by number.
+///
+/// Stages past the original 22 have no pages of their own in the archive: they borrow another
+/// stage's file, so their pages carry that stage's fingerprints. Keying their replacements by
+/// number instead of by content is what keeps the borrowed stage untouched.
+void TexRemix_SetStage(s32 stage);
+
 bool TexRemix_Substitute(plContext* bits, const TexPageOrigin* from);
 
 /// @brief Tie the texture handle just created to the page last passed to @ref TexRemix_Substitute.
@@ -66,6 +73,22 @@ void TexRemix_NotePair(u32 tex_code);
 ///
 /// Coordinates are the quad's texture coordinates, 0 to 1 across the page.
 void TexRemix_NoteQuad(float u0, float v0, float u1, float v1);
+
+/// @brief Forget what a texture handle held. Called when one is (re)created, so a recycled
+/// handle never keeps the mark of the page that used it before.
+void TexRemix_ForgetHandle(u32 handle);
+
+/// @brief Was this texture handle filled by a replacement page?
+///
+/// A page is not drawn as one quad. Its header carries a list of rectangles -- an 8x8 grid of
+/// 16x16 blocks over a 128x128 page -- and `ppgWriteQuadUseTrans` draws only those, skipping
+/// whatever the page left empty. That list belongs to the page the archive holds, and a
+/// replacement does not change it: wherever the original was blank, the replacement's pixels are
+/// never put on screen, and the layer behind shows through in 16x16 squares.
+///
+/// A replacement carries its own alpha and covers the whole page, so it wants one quad and no
+/// coverage list. This is how the drawing code tells the two apart.
+bool TexRemix_HandleIsReplacement(u32 handle);
 
 /// @brief How much room the installed replacements will want in the texture pool, in bytes.
 ///

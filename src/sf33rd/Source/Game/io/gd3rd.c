@@ -37,7 +37,17 @@ static const LDREQ_Process_Func ldreq_process[] = {
 static LoadRequest q_ldreq[16] = { 0 };
 
 static bool ldreq_break = false;
-static u8 ldreq_result[294] = { 0 };
+/* 294 a l'origine ; les quinze etages de 2nd Impact portent quarante-cinq entrees de
+   plus (294..338), puis les vingt et un suivants -- dix-neuf de New Generation et les
+   deux bandes de 2I restees de cote -- soixante-trois autres (339..401). Une par requete
+   de leur bloc propre.
+
+   `ldreq.result` est indexe par le numero d'entree de `ldreq_tbl`, donc ce tableau DOIT
+   suivre. Laisse a 339, les drapeaux d'achevement des etages de New Generation
+   s'ecrivaient HORS du tableau : la boucle d'attente ne voyait jamais le chargement
+   finir, et l'ecran de versus tournait en rond sans rien signaler. C'est le gel du
+   31/08/2026 -- aucun journal, aucune erreur, juste `[portrait] face 1/2` a l'infini. */
+static u8 ldreq_result[402] = { 0 };
 static AFSHandle afs_handle = AFS_NONE;
 
 bool fsOpen(u16 fnum) {

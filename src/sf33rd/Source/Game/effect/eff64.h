@@ -88,7 +88,7 @@ extern s8 Display_Buff[8];
 
 /// One background set per stage, as a position in LETTER_TYPE_BACKGROUND_SET. As with the
 /// characters, the page decides which eight of them the screen is showing.
-extern s8 Background_Buff[20];
+extern s8 Background_Buff[58];
 extern s8 Background_Page;
 
 /// One palette set per character, alphabetically, as a position in LETTER_TYPE_CHARACTER_SET. The

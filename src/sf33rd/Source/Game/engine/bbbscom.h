@@ -16,6 +16,10 @@ extern const BBBSTable* bbbs_table[][5];
 /// The basketball's stage number, which is also the Bonus_Type that selects it
 #define PARRY_THE_BALL_STAGE 21
 
+/// How many levels the row and the end menu offer. Four, and both count from this: they used to
+/// count separately and drifted apart, the menu stopping at one number and the end menu at another.
+#define PARRY_THE_BALL_LEVELS 4
+
 /// @param on Whether the next fight should be the bonus stage instead.
 /// @param level 0 to 9, as set_bonus_game_nando numbers them: 0-4 are one set of throw patterns
 ///        and 5-9 the other.

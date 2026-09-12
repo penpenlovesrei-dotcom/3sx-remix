@@ -27,12 +27,14 @@
  */
 
 #include "port/video/tex_remix.h"
+#include "port/video/trace_fin.h"
 #include "port/config/config.h"
 #include "port/resources.h"
 
 #include <SDL3/SDL.h>
 
 #define REMIX_DIR "tex_remix"
+#define STAGE_COUNT_ORIGINAL 22
 #define TEX_MAGIC 0x58545333u // '3STX', little end first
 #define TEX_VERSION 1
 #define TEX_HEADER_SIZE 16
@@ -58,6 +60,14 @@ static Uint64 pending_key = 0;
 #define HANDLES_MAX 4096
 
 static Uint64 texture_of_handle[HANDLES_MAX];
+
+/// Which handles hold a replacement, so the drawing code can give them one whole quad instead of
+/// the original page's coverage list. Kept whether or not the dump is on -- this one is not
+/// bookkeeping, the picture depends on it.
+static bool replacement_handle[HANDLES_MAX];
+
+/// Whether the page last passed to @ref TexRemix_Substitute was replaced.
+static bool pending_replaced = false;
 static Uint64 palette_of_handle[HANDLES_MAX];
 
 #define PAIRS_MAX 8192
@@ -110,6 +120,20 @@ static Uint64 fingerprint(const plContext* bits) {
     }
 
     return hash;
+}
+
+/// Stage currently loading its pages, or -1. Only stages past the original 22 use it.
+static s32 current_stage = -1;
+
+void TexRemix_SetStage(s32 stage) {
+    /* On note l'ouverture et la fermeture de la substitution : le journal du 31/08
+       s'arretait sur soixante-quatre televersements de 128x128 tous identiques, sans
+       qu'on puisse dire de quel etage ils venaient. Deux lignes suffisent a le dire. */
+    if (stage != current_stage) {
+        TraceFin("TexRemix_SetStage %d (etait %d)\n", (s32)stage, (s32)current_stage, 0);
+    }
+
+    current_stage = stage;
 }
 
 static char* remix_path(const char* leaf) {
@@ -231,8 +255,24 @@ static Uint64 fingerprint_bytes(const Uint8* bytes, size_t size) {
     return hash;
 }
 
+void TexRemix_ForgetHandle(u32 handle) {
+    if (handle != 0 && handle < HANDLES_MAX) {
+        replacement_handle[handle] = false;
+    }
+}
+
+bool TexRemix_HandleIsReplacement(u32 handle) {
+    return handle != 0 && handle < HANDLES_MAX && replacement_handle[handle];
+}
+
 void TexRemix_NoteTextureHandle(u32 handle) {
-    if (!Config_GetBool(CFG_TEX_REMIX_DUMP) || handle == 0 || handle >= HANDLES_MAX) {
+    if (handle == 0 || handle >= HANDLES_MAX) {
+        return;
+    }
+
+    replacement_handle[handle] = pending_replaced;
+
+    if (!Config_GetBool(CFG_TEX_REMIX_DUMP)) {
         return;
     }
 
@@ -380,6 +420,18 @@ s64 TexRemix_ReservedBytes(void) {
     SDL_EnumerateDirectory(dir, add_file_size, &total);
     SDL_free(dir);
 
+    // Pages owned by an added stage live one level down, and the pool has to make room for them too.
+    for (s32 stage = STAGE_COUNT_ORIGINAL; stage < STAGE_COUNT_ORIGINAL + 16; stage++) {
+        char leaf[32];
+        SDL_snprintf(leaf, sizeof(leaf), "%s/stage%d", REMIX_DIR, (int)stage);
+        char* sub = Resources_GetPath(leaf);
+
+        if (sub != NULL) {
+            SDL_EnumerateDirectory(sub, add_file_size, &total);
+            SDL_free(sub);
+        }
+    }
+
     if (total == 0) {
         return 0;
     }
@@ -398,15 +450,36 @@ bool TexRemix_Substitute(plContext* bits, const TexPageOrigin* from) {
 
     const Uint64 key = fingerprint(bits);
     pending_key = key;
+    pending_replaced = false;
 
     if (Config_GetBool(CFG_TEX_REMIX_DUMP)) {
         dump_page(key, bits, from);
     }
 
-    char* leaf = NULL;
-    SDL_asprintf(&leaf, "%016" SDL_PRIx64 ".tex", key);
-    char* path = (leaf != NULL) ? remix_path(leaf) : NULL;
-    SDL_free(leaf);
+    char* path = NULL;
+
+    // A stage added past the original 22 owns its pages by number, under stage<N>/<list>-<page>.tex.
+    // It borrows another stage's archive file, so its pages carry that stage's fingerprints; keying
+    // by number is what stops a replacement here from reaching the stage it borrowed from.
+    if (current_stage >= STAGE_COUNT_ORIGINAL && from != NULL) {
+        char leaf[64];
+        SDL_snprintf(
+            leaf, sizeof(leaf), "stage%d/%d-%d.tex", (int)current_stage, (int)from->first, (int)from->index
+        );
+        path = remix_path(leaf);
+
+        if (path != NULL && !SDL_GetPathInfo(path, NULL)) {
+            SDL_free(path);
+            path = NULL;
+        }
+    }
+
+    if (path == NULL) {
+        char* leaf = NULL;
+        SDL_asprintf(&leaf, "%016" SDL_PRIx64 ".tex", key);
+        path = (leaf != NULL) ? remix_path(leaf) : NULL;
+        SDL_free(leaf);
+    }
 
     if (path == NULL) {
         return false;
@@ -468,6 +541,7 @@ bool TexRemix_Substitute(plContext* bits, const TexPageOrigin* from) {
             };
 
             _log(SDL_LOG_PRIORITY_INFO, "%016" SDL_PRIx64 " -> %ux%u", key, width, height);
+            pending_replaced = true;
             SDL_free(file);
             SDL_free(path);
             return true;
@@ -483,4 +557,5 @@ void TexRemix_Destroy(void) {
     SDL_free(replacement);
     replacement = NULL;
     dumped_count = 0;
+    SDL_zero(replacement_handle);
 }

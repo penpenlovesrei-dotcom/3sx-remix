@@ -4,6 +4,8 @@
  */
 
 #include "sf33rd/Source/Game/rendering/texcash.h"
+#include "port/video/etagesng_plans.inc"
+#include "port/video/etages2ibis_plans.inc"
 #include "common.h"
 #include "port/utils.h"
 #include "sf33rd/Source/Common/PPGFile.h"
@@ -63,7 +65,7 @@ TexturePoolUsed* tpu_free;
 s16 mts_ob_curr_stage;
 
 // forward decls
-extern const s16 mts_OB_page[22][2];
+extern const s16 mts_OB_page[58][2];
 extern const MTSBase mts_base[24];
 void clear_texcash_work(s16 ix);
 
@@ -374,6 +376,9 @@ const MTSBase mts_base[24] = {
     { .p16 = 3, .p32 = 6, .gix = 50, .life16 = 20, .life32 = 20, .type = 9, .mode = 8209, .attribute = 1 },
     { .p16 = 1, .p32 = 4, .gix = 60, .life16 = 2, .life32 = 2, .type = 9, .mode = 8210, .attribute = 1 },
     { .p16 = 1, .p32 = 5, .gix = 70, .life16 = 0, .life32 = 0, .type = 8, .mode = 4113, .attribute = 1 },
+    /* mts[7] est celui des objets de decor, et ces deux valeurs-la NE SERVENT PAS :
+       `make_texcash_work` lit `mts_OB_page[bg_w.stage]` quand `ix == 7`. C'est plus bas
+       qu'il faut regarder. */
     { .p16 = 1, .p32 = 1, .gix = 80, .life16 = 12, .life32 = 12, .type = 9, .mode = 8210, .attribute = 1 },
     { .p16 = 2, .p32 = 8, .gix = 1200, .life16 = 16, .life32 = 16, .type = 9, .mode = 4114, .attribute = 1 },
     { .p16 = 4, .p32 = 34, .gix = 500, .life16 = 20, .life32 = 20, .type = 9, .mode = 4129, .attribute = 1 },
@@ -393,6 +398,52 @@ const MTSBase mts_base[24] = {
     { .p16 = 1, .p32 = 1, .gix = 1100, .life16 = 0, .life32 = 0, .type = 8, .mode = 4116, .attribute = 1 }
 };
 
-const s16 mts_OB_page[22][2] = { { 1, 1 }, { 1, 3 }, { 1, 2 }, { 1, 1 }, { 1, 2 }, { 1, 1 }, { 1, 2 }, { 1, 2 },
+/* Combien de pages de morceaux le cache d'objets de decor recoit, PAR ETAGE.
+ *
+ * C'est cette table que `make_texcash_work` lit pour `mts[7]`, pas `mts_base[7]`. Une
+ * page vaut 256 morceaux de 16x16 (`mltnum16 = page16 << 8`) et 64 de 32x32.
+ *
+ * Nos quinze etages heritaient d'une copie de l'etage 5 -- une seule page. Ca tenait
+ * tant qu'ils n'avaient qu'UN objet anime ; depuis qu'ils portent ce que le binaire de
+ * 2nd Impact leur donne -- quatre pour Gill, NEUF pour Oro -- 256 morceaux ne suffisent
+ * plus, et `get_mltbuf16_ext_2` part en `while (1) {}` :
+ *
+ *     fatal.log : « CGキャッシュが一杯になりました。×１６　ＥＸＴ２ »
+ *
+ * La demande se calcule : somme des cases de chaque grille, multipliee par le nombre
+ * d'images que `life16` (12 trames) laisse vivantes a la fois, soit trois ou quatre.
+ * Gill demande 65 cases, Oro 82. Le total de pages reste dans ce que le jeu s'accorde
+ * lui-meme ailleurs -- l'etage 19 en prend cinq. */
+const s16 mts_OB_page[58][2] = { { 1, 1 }, { 1, 3 }, { 1, 2 }, { 1, 1 }, { 1, 2 }, { 1, 1 }, { 1, 2 }, { 1, 2 },
                                  { 1, 2 }, { 1, 1 }, { 1, 1 }, { 1, 2 }, { 1, 1 }, { 1, 1 }, { 1, 1 }, { 1, 2 },
-                                 { 1, 2 }, { 1, 4 }, { 1, 2 }, { 1, 4 }, { 1, 1 }, { 1, 2 } };
+                                 { 1, 2 }, { 1, 4 }, { 1, 2 }, { 1, 4 }, { 1, 1 }, { 1, 2 },
+    { 3, 1 } /* etage 22 gill  : 4 objets, 65 cases */,
+    { 1, 1 } /* etage 23 alex  : 1 objet, 27 cases au pire */,
+    { 2, 1 } /* etage 24 ryu   : 9 objets, 104 cases par trame -- deux de plus depuis que
+                le grand sprite est servi en morceaux */,
+    { 3, 1 } /* etage 25 yun   : 8 objets, 130 cases par trame. Il en avait 3 et UNE page :
+                son sprite de 9x11 = 99 cases etait ECARTE faute de tenir dans les 32 cases
+                de la cle de cache, il est maintenant servi en CINQ morceaux voisins */,
+    { 1, 1 } /* etage 26 dudley : 1 objet, 6 cases -- le feu de circulation */,
+    { 2, 1 } /* etage 27 necro : 15 objets, 71 cases par trame. Le compte etait ECRETE a 12
+                par `OBJETS_MAX` ; les quinze naissent depuis qu'il vaut 32 */,
+    { 2, 1 } /* etage 28 hugo  : 5 objets, 298 cases au pire */,
+    { 4, 1 } /* etage 29 ibuki : 9 objets, 272 cases par trame -- une cascade en six
+                images de 272x245. Les DEUX cascades (18 objets, 544 cases, 3456 morceaux
+                distincts) figeaient le jeu sur « CG展開エラー 16x16 » : le chemin de
+                recherche ne retrouvait plus ce que le televersement n'avait pas pose. */,
+    { 3, 1 } /* etage 30 elena : 8 objets, 160 cases par trame. Il n'en avait AUCUN : son
+                unique sprite fait 8x20 = 160 cases, cinq fois la limite de la cle, et il
+                etait ecarte en entier. Servi en huit morceaux voisins */,
+    { 4, 1 } /* etage 31 oro   : 9 objets, 82 cases */,
+    { 2, 1 } /* etage 32 yang  : 3 objets, 69 cases -- deux de plus par le decoupage */,
+    { 1, 1 } /* etage 33 */,
+    { 1, 1 } /* etage 34 sean  : 2 objets, 22 cases -- les deux singes */,
+    { 1, 1 } /* etage 35 */,
+    { 4, 1 } /* etage 36 akuma : 9 objets, 215 cases par trame -- les deux cascades et
+                l'entree de la grotte. A quatre trames par image et douze de duree de vie,
+                trois images restent au chaud : 645 cases au pire, il en faut 1024. */,
+    /* Les dix-neuf etages de New Generation -- genere, voir etagesng_plans.inc */
+    ETAGESNG_OB_PAGE,
+    ETAGES2IBIS_OB_PAGE
+};

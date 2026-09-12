@@ -5,6 +5,7 @@
 
 #include "sf33rd/Source/Game/effect/eff99.h"
 #include "common.h"
+#include "port/video/trace_fin.h"
 #include "sf33rd/Source/Game/effect/effect.h"
 #include "sf33rd/Source/Game/engine/workuser.h"
 #include "sf33rd/Source/Game/rendering/aboutspr.h"
@@ -15,12 +16,49 @@ void Setup_Letter_99(WORK_Other_CONN* ewk, s16 letter_index, s16 disp_index);
 
 const s16 Pos_Data_99[5][3] = { { -144, 128, 23 }, { 48, 128, 23 }, { 8, 54, 23 }, { 0, 42, 23 }, { 0, 30, 23 } };
 
-const s8* Letter_Data_99[5][21] = {
+const s8* Letter_Data_99[5][58] = {
     { ";;;;;;;#", ";;;;;;##", ";;;;;###", ";;;;####", ";;;#####", ";;######", ";#######", "########" },
     { "#;;;;;;;", "##;;;;;;", "###;;;;;", "####;;;;", "#####;;;", "######;;", "#######;", "########" },
     { "UNKNOWN", "AMERICA", "JAPAN",  "HONG KONG", "ENGLAND", "RUSSIA", "GERMANY",
       "JAPAN",   "KENYA",   "BRAZIL", "HONG KONG", "AMERICA", "BRAZIL", "MEXICO",
-      "JAPAN",   "CHINA",   "JAPAN",  "",          "RUSSIA",  "FRANCE", "RANDOM" },
+      "JAPAN",   "CHINA",   "JAPAN",  "",          "RUSSIA",  "FRANCE", "RANDOM",
+      "",
+      "2ND IMPACT",
+      "2ND IMPACT",
+      "2ND IMPACT",
+      "2ND IMPACT",
+      "2ND IMPACT",
+      "2ND IMPACT",
+      "2ND IMPACT",
+      "2ND IMPACT",
+      "2ND IMPACT",
+      "2ND IMPACT",
+      "2ND IMPACT",
+      "2ND IMPACT",
+      "2ND IMPACT",
+      "2ND IMPACT",
+      "2ND IMPACT",
+      "HIGH SEAS",
+      "AMERICA",
+      "AMERICA",
+      "JAPAN",
+      "JAPAN",
+      "HONG KONG",
+      "HONG KONG",
+      "ENGLAND",
+      "ENGLAND",
+      "RUSSIA",
+      "GERMANY",
+      "JAPAN",
+      "JAPAN",
+      "JAPAN",
+      "KENYA",
+      "KENYA",
+      "BRAZIL",
+      "HONG KONG",
+      "HONG KONG",
+      "2ND IMPACT",
+      "2ND IMPACT" },
     { "GILL STAGE",
       "SUBWAY STATION",
       "SUZAKU CASTLE ROOFTOP",
@@ -41,7 +79,44 @@ const s8* Letter_Data_99[5][21] = {
       "",
       "MOSQUE",
       "CLUB METRO",
-      "" },
+      "",
+      "",
+      "GILL STAGE",
+      "ALEX STAGE",
+      "RYU STAGE",
+      "YUN STAGE",
+      "DUDLEY STAGE",
+      "NECRO STAGE",
+      "HUGO STAGE",
+      "IBUKI STAGE",
+      "ELENA STAGE",
+      "ORO STAGE",
+      "YANG STAGE",
+      "KEN STAGE",
+      "SEAN STAGE",
+      "URIEN STAGE",
+      "GORGE STAGE",
+      "NG GILL",
+      "NG ALEX",
+      "NG SEAN",
+      "NG RYU",
+      "NG KEN",
+      "NG YUN 1",
+      "NG YUN 2",
+      "NG DUDLEY 1",
+      "NG DUDLEY 2",
+      "NG NECRO",
+      "NG HUGO",
+      "NG IBUKI 1",
+      "NG IBUKI 2",
+      "NG IBUKI 3",
+      "NG ELENA 1",
+      "NG ELENA 2",
+      "NG ORO",
+      "NG YANG 1",
+      "NG YANG 2",
+      "2ND IMPACT BG08",
+      "2ND IMPACT BG10"  },
     { "",
       "ALEX STAGE",
       "RYU STAGE",
@@ -62,7 +137,44 @@ const s8* Letter_Data_99[5][21] = {
       "",
       "TWELVE STAGE",
       "REMY STAGE",
-      "" }
+      "",
+      "",
+      "2ND IMPACT BG00",
+      "2ND IMPACT BG01",
+      "2ND IMPACT BG02",
+      "2ND IMPACT BG03",
+      "2ND IMPACT BG04",
+      "2ND IMPACT BG05",
+      "2ND IMPACT BG06",
+      "2ND IMPACT BG07",
+      "2ND IMPACT BG09",
+      "2ND IMPACT BG0A",
+      "2ND IMPACT BG0B",
+      "2ND IMPACT BG0C",
+      "2ND IMPACT BG0D",
+      "2ND IMPACT BG0E",
+      "2ND IMPACT BG0F",
+      "NG GILL",
+      "NG ALEX",
+      "NG SEAN",
+      "NG RYU",
+      "NG KEN",
+      "NG YUN 1",
+      "NG YUN 2",
+      "NG DUDLEY 1",
+      "NG DUDLEY 2",
+      "NG NECRO",
+      "NG HUGO",
+      "NG IBUKI 1",
+      "NG IBUKI 2",
+      "NG IBUKI 3",
+      "NG ELENA 1",
+      "NG ELENA 2",
+      "NG ORO",
+      "NG YANG 1",
+      "NG YANG 2",
+      "2ND IMPACT BG08",
+      "2ND IMPACT BG10"  }
 };
 
 void effect_99_move(WORK_Other_CONN* ewk) {
@@ -124,6 +236,24 @@ void Setup_Letter_99(WORK_Other_CONN* ewk, s16 letter_index, s16 disp_index) {
         offset_x = 8;
     } else {
         offset_x = 14;
+    }
+
+    /* LE GARDE-FOU DE L'ECRAN DE SELECTION, pose le 31/08/2026.
+
+       `Setup_Letter_99` est appelee avec `VS_Stage` en `disp_index`, et le selecteur va
+       desormais jusqu'a 57. La table s'arretait a 37 : pour les etages de New Generation
+       le pointeur lu venait d'APRES le tableau, et le `while (*ptr)` juste en dessous
+       partait dans la memoire au hasard. C'est le plantage vu en arrivant sur les decors
+       de NG dans le selecteur.
+
+       La table est etendue plus bas. Ce garde reste pour que tout autre debordement se
+       SIGNALE dans `fin-de-round.log` au lieu de tuer le jeu -- une ligne manquante vaut
+       mieux qu'un plantage, et on saura laquelle. */
+    if (letter_index < 0 || letter_index >= 5 || disp_index < 0 || disp_index >= 58 ||
+        Letter_Data_99[letter_index][disp_index] == NULL) {
+        TraceFin("Setup_Letter_99 hors bornes : ligne %d, etage %d, %d lignes\n",
+                 (s32)letter_index, (s32)disp_index, 5);
+        return;
     }
 
     ptr = (u8*)Letter_Data_99[letter_index][disp_index];

@@ -182,7 +182,8 @@ s32 Parry_The_Ball_Level(void) {
 }
 
 void Parry_The_Ball_Step_Level(s16 delta) {
-    parry_the_ball_level = (parry_the_ball_level + delta + 10) % 10;
+    parry_the_ball_level =
+        (parry_the_ball_level + delta + PARRY_THE_BALL_LEVELS) % PARRY_THE_BALL_LEVELS;
 }
 
 void makeup_bonus_game_level(s16 ix) {
@@ -198,16 +199,19 @@ void makeup_bonus_game_level(s16 ix) {
     bbbs_type = 1;
 
     // A level named on the menu outranks both the button combination and the grade: it is the one
-    // the player just chose, on a screen built to choose it. Split the same way set_bonus_game_nando
-    // splits its own answer, since the two speak the same numbering.
+    // the player just chose, on a screen built to choose it.
+    //
+    // Straight onto the pattern of the same name, which is *not* how the button combination splits
+    // its own answer. bbbs_table[0] holds bbbs_level_00 to 04 and bbbs_table[1] holds 05 to 09,
+    // while set_bonus_game_nando answers 0-4 with type 1 and 5-9 with type 0 -- so the game's own
+    // "level 1" plays bbbs_level_05. Following that faithfully gave a row of numbers that named
+    // nothing. Here LVL 1 to 10 are bbbs_level_00 to 09, in the order the table declares them.
     if (parry_the_ball) {
-        if (parry_the_ball_level > 4) {
-            bbbs_type = 0;
-            Bonus_Stage_Level = parry_the_ball_level - 5;
-        } else {
-            Bonus_Stage_Level = parry_the_ball_level;
-        }
-
+        // bbbs_type stays 1, which is the set set_bonus_game_difficulty draws from: five patterns
+        // graded from the player's own record, so the only five with a designed order. The other
+        // five are reachable in the arcade by a button combination and are not a continuation of
+        // this scale.
+        Bonus_Stage_Level = parry_the_ball_level;
         return;
     }
 

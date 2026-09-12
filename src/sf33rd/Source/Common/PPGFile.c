@@ -13,6 +13,7 @@
 #include "port/video/tex_remix.h"
 
 #include <SDL3/SDL.h>
+#include <stdio.h>
 
 #define MAGIC_TO_INT(str) ((str[0] << 0x18) | (str[1] << 0x10) | (str[2] << 0x8) | (str[3]))
 
@@ -290,7 +291,12 @@ s32 ppgWriteQuadUseTrans(Vertex* pos, u32 col, PPGDataList* tb, s32 tix, s32 cix
         }
     }
 
-    if (tb->tex->srcAdrs != NULL) {
+    // A page is drawn as the rectangles its header lists -- an 8x8 grid of 16x16 blocks over a
+    // 128x128 page -- and whatever the page left empty is simply never drawn. That list describes
+    // the page the archive holds. A replacement does not change it, so wherever the original was
+    // blank the new pixels never reach the screen and the layer behind shows through in 16x16
+    // squares. A replacement carries its own alpha and covers the whole page: one quad, no list.
+    if (tb->tex->srcAdrs != NULL && !TexRemix_HandleIsReplacement(texhan)) {
         ppg = (PPGFileHeader*)(tb->tex->srcAdrs + tb->tex->offset[ix_ofs & 0xFFF]);
         transTotal = ((ppg->transNums >> 8) & 0xFF) | ((ppg->transNums & 0xFF) << 8);
 
@@ -1024,8 +1030,19 @@ s32 ppgSetupTexChunk_2nd(Texture* tch, s32 ixNum) {
         tch = ppg_w.cur->tex;
     }
 
+    /* CE N'ETAIT PAS UN AVERTISSEMENT : `flLogOut` est `__dead2`, il ne revient pas.
+       Demander a une archive plus de textures qu'elle n'en contient TUE le jeu -- et
+       c'est exactement ce qui arrive des qu'un etage reclame un plan de plus que son
+       donneur n'en a. On journalise sans mourir et on rend la main : la page manquante
+       ne sera simplement pas installee. */
     if (tch->textures <= tch->accnum) {
-        flLogOut("ppgSetupTexChunk_2nd: Handle acquisition process has been called too many times");
+        FILE* j = fopen("pages-manquantes.log", "a");
+        if (j != NULL) {
+            fprintf(j, "ppgSetupTexChunk_2nd : ixNum %d, accnum %d, textures %d\n",
+                    (int)ixNum, (int)tch->accnum, (int)tch->textures);
+            fclose(j);
+        }
+        return tch->accnum;
     }
 
     hnof = tch->handle + (ixNum - tch->ixNum1st);

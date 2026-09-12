@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "sf33rd/AcrSDK/ps2/foundaps2.h"
 #include "common.h"
 #include "port/utils.h"
@@ -101,6 +102,18 @@ s32 flLogOut(const char* format, ...) {
     va_start(args, format);
     vsnprintf(str, sizeof(str), format, args);
     va_end(args);
+
+    /* `flLogOut` est `__dead2` : tout appel TUE le jeu. Le message partait dans une
+       boite de dialogue qui disparaissait avec le processus, et on se retrouvait avec
+       « ca crashe » sans savoir lequel des quelque cent appels avait parle. On l'ecrit
+       sur disque d'abord. */
+    {
+        FILE* j = fopen("fatal.log", "a");
+        if (j != NULL) {
+            fprintf(j, "%s\n", str);
+            fclose(j);
+        }
+    }
 
     fatal_error(str);
 }

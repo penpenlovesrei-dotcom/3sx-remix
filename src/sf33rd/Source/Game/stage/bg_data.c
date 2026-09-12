@@ -4,6 +4,9 @@
  */
 
 #include "sf33rd/Source/Game/stage/bg_data.h"
+#include "port/video/etages2i_plans.inc"
+#include "port/video/etagesng_plans.inc"
+#include "port/video/etages2ibis_plans.inc"
 #include "common.h"
 #include "structs.h"
 
@@ -36,22 +39,73 @@ u8 c_number;
 u8 y_sitei_flag;
 s16 y_sitei_pos;
 
-const u8 use_scr[22] = { 2, 2, 3, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 2 };
+const u8 use_scr[58] = { 2, 2, 3, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 2,
+    /* Les quinze etages ajoutes -- genere, voir etages2i_plans.inc */
+    ETAGES2I_USE_SCR,
+    /* Les dix-neuf etages de New Generation -- genere, voir etagesng_plans.inc */
+    ETAGESNG_USE_SCR,
+    ETAGES2IBIS_USE_SCR
+};
 
-const u8 use_real_scr[22] = { 2, 1, 3, 2, 1, 2, 1, 2, 2, 2, 2, 1, 2, 2, 3, 2, 2, 2, 2, 1, 2, 1 };
+const u8 use_real_scr[58] = { 2, 1, 3, 2, 1, 2, 1, 2, 2, 2, 2, 1, 2, 2, 3, 2, 2, 2, 2, 1, 2, 1,
+    /* Les quinze etages ajoutes -- genere, voir etages2i_plans.inc */
+    ETAGES2I_USE_SCR,
+    /* Les dix-neuf etages de New Generation -- genere, voir etagesng_plans.inc */
+    ETAGESNG_USE_SCR
+};
 
-const u8 use_family[22] = { 0, 160, 4, 0, 0, 32, 160, 4, 38, 38, 0, 160, 38, 32, 0, 32, 32, 0, 32, 160, 32, 160 };
+const u8 use_family[58] = { 0, 160, 4, 0, 0, 32, 160, 4, 38, 38, 0, 160, 38, 32, 0, 32, 32, 0, 32, 160, 32, 160,
+    0 /* etage 22, copie de 10 */
+,
+    0 /* etage 22, copie de 10 */,
+    0 /* etage 22, copie de 10 */,
+    0 /* etage 22, copie de 10 */,
+    0 /* etage 22, copie de 10 */,
+    0 /* etage 22, copie de 10 */,
+    0 /* etage 22, copie de 10 */,
+    0 /* etage 22, copie de 10 */,
+    0 /* etage 22, copie de 10 */,
+    0 /* etage 22, copie de 10 */,
+    0 /* etage 22, copie de 10 */,
+    0 /* etage 22, copie de 10 */,
+    0 /* etage 22, copie de 10 */,
+    0 /* etage 22, copie de 10 */,
+    0 /* etage 22, copie de 10 */
+};
 
-const u8 rewrite_scr[22] = { 0, 0, 0, 25, 0, 0, 0, 12, 24, 0, 96, 0, 0, 0, 1, 0, 0, 0, 10, 18, 0, 0 };
+const u8 rewrite_scr[58] = { 0, 0, 0, 25, 0, 0, 0, 12, 24, 0, 96, 0, 0, 0, 1, 0, 0, 0, 10, 18, 0, 0,
+    0 /* etage 22, copie de 5 */
+,
+    0 /* etage 22, copie de 5 */,
+    0 /* etage 22, copie de 5 */,
+    0 /* etage 22, copie de 5 */,
+    0 /* etage 22, copie de 5 */,
+    0 /* etage 22, copie de 5 */,
+    0 /* etage 22, copie de 5 */,
+    0 /* etage 22, copie de 5 */,
+    0 /* etage 22, copie de 5 */,
+    0 /* etage 22, copie de 5 */,
+    0 /* etage 22, copie de 5 */,
+    0 /* etage 22, copie de 5 */,
+    0 /* etage 22, copie de 5 */,
+    0 /* etage 22, copie de 5 */,
+    0 /* etage 22, copie de 5 */
+};
 
 const u8 use_scr2[7] = { 1, 1, 1, 1, 1, 1, 1 };
 
-const u8 stage_bgw_number[22][3] = { { 1, 2, 0 }, { 0, 2, 0 }, { 1, 2, 3 }, { 1, 2, 0 }, { 0, 2, 0 }, { 1, 2, 0 },
+const u8 stage_bgw_number[58][4] = { { 1, 2, 0 }, { 0, 2, 0 }, { 1, 2, 3 }, { 1, 2, 0 }, { 0, 2, 0 }, { 1, 2, 0 },
                                      { 0, 2, 0 }, { 1, 2, 0 }, { 1, 2, 0 }, { 1, 2, 0 }, { 1, 2, 0 }, { 0, 1, 0 },
                                      { 1, 2, 0 }, { 1, 2, 0 }, { 1, 2, 3 }, { 1, 2, 0 }, { 1, 2, 0 }, { 1, 2, 0 },
-                                     { 1, 2, 0 }, { 0, 2, 0 }, { 1, 2, 0 }, { 0, 2, 0 } };
+                                     { 1, 2, 0 }, { 0, 2, 0 }, { 1, 2, 0 }, { 0, 2, 0 },
+    /* Les quinze etages ajoutes -- genere, voir etages2i_plans.inc */
+    ETAGES2I_BGW_NUMBER,
+    /* Les dix-neuf etages de New Generation -- genere, voir etagesng_plans.inc */
+    ETAGESNG_BGW_NUMBER,
+    ETAGES2IBIS_BGW_NUMBER
+};
 
-const s32 msp[22][3][2] = { { { 0xE000, 0xA000 }, { 0x10000, 0x10000 }, { 0x0, 0x0 } },
+const s32 msp[58][3][2] = { { { 0xE000, 0xA000 }, { 0x10000, 0x10000 }, { 0x0, 0x0 } },
                             { { 0xC000, 0xF000 }, { 0x10000, 0x10000 }, { 0xA000, 0x10000 } },
                             { { 0xD000, 0xD000 }, { 0x10000, 0x10000 }, { 0x8000, 0xD000 } },
                             { { 0xC000, 0xC000 }, { 0x10000, 0x10000 }, { 0xA000, 0x10000 } },
@@ -72,7 +126,27 @@ const s32 msp[22][3][2] = { { { 0xE000, 0xA000 }, { 0x10000, 0x10000 }, { 0x0, 0
                             { { 0xC000, 0xF000 }, { 0x10000, 0x10000 }, { 0x8000, 0xB000 } },
                             { { 0xF000, 0xE000 }, { 0x10000, 0x10000 }, { 0x0, 0x0 } },
                             { { 0x8000, 0xE000 }, { 0x10000, 0x10000 }, { 0x0, 0x0 } },
-                            { { 0x8000, 0xE000 }, { 0x10000, 0x10000 }, { 0x0, 0x0 } } };
+                            { { 0x8000, 0xE000 }, { 0x10000, 0x10000 }, { 0x0, 0x0 } },
+    { { 0x8000, 0xF000 }, { 0x10000, 0x10000 }, { 0x8000, 0xB000 } } /* etage 22, copie de 5 */
+,
+    { { 0x8000, 0xF000 }, { 0x10000, 0x10000 }, { 0x8000, 0xB000 } } /* etage 22, copie de 5 */,
+    { { 0x8000, 0xF000 }, { 0x10000, 0x10000 }, { 0x8000, 0xB000 } } /* etage 22, copie de 5 */,
+    { { 0x8000, 0xF000 }, { 0x10000, 0x10000 }, { 0x8000, 0xB000 } } /* etage 22, copie de 5 */,
+    { { 0x8000, 0xF000 }, { 0x10000, 0x10000 }, { 0x8000, 0xB000 } } /* etage 22, copie de 5 */,
+    { { 0x8000, 0xF000 }, { 0x10000, 0x10000 }, { 0x8000, 0xB000 } } /* etage 22, copie de 5 */,
+    { { 0x8000, 0xF000 }, { 0x10000, 0x10000 }, { 0x8000, 0xB000 } } /* etage 22, copie de 5 */,
+    { { 0x8000, 0xF000 }, { 0x10000, 0x10000 }, { 0x8000, 0xB000 } } /* etage 22, copie de 5 */,
+    { { 0x8000, 0xF000 }, { 0x10000, 0x10000 }, { 0x8000, 0xB000 } } /* etage 22, copie de 5 */,
+    { { 0x8000, 0xF000 }, { 0x10000, 0x10000 }, { 0x8000, 0xB000 } } /* etage 22, copie de 5 */,
+    { { 0x8000, 0xF000 }, { 0x10000, 0x10000 }, { 0x8000, 0xB000 } } /* etage 22, copie de 5 */,
+    { { 0x8000, 0xF000 }, { 0x10000, 0x10000 }, { 0x8000, 0xB000 } } /* etage 22, copie de 5 */,
+    { { 0x8000, 0xF000 }, { 0x10000, 0x10000 }, { 0x8000, 0xB000 } } /* etage 22, copie de 5 */,
+    { { 0x8000, 0xF000 }, { 0x10000, 0x10000 }, { 0x8000, 0xB000 } } /* etage 22, copie de 5 */,
+    { { 0x8000, 0xF000 }, { 0x10000, 0x10000 }, { 0x8000, 0xB000 } } /* etage 22, copie de 5 */,
+    /* Les dix-neuf etages de New Generation -- genere, voir etagesng_plans.inc */
+    ETAGESNG_MSP,
+    ETAGES2IBIS_MSP
+};
 
 const s32 msp2[7][3][2] = { { { 0x10000, 0x10000 }, { 0x10000, 0x10000 }, { 0xF800, 0xF000 } },
                             { { 0x10000, 0x10000 }, { 0x10000, 0x10000 }, { 0xE000, 0xE000 } },
@@ -375,7 +449,7 @@ const u16 win_lose_map[64] = { 0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0
                                0x555,  0x555,  0x555,  0xAAA,  0x5550, 0x5550, 0x5550, 0x5550, 0x5550, 0x5550, 0x5550,
                                0x5550, 0x555,  0x555,  0x555,  0x555,  0x555,  0x555,  0x555,  0x555 };
 
-const u32 bgtex_stage_gbix[22][3] = { { 0xF0F0F0F0, 0x7F7FFFFF, 0x0 },
+const u32 bgtex_stage_gbix[58][4] = { { 0xF0F0F0F0, 0x7F7FFFFF, 0x0 },
                                       { 0xFFFFFFFF, 0x0, 0x0 },
                                       { 0x3078FCFF, 0xFF, 0x7E7E7E7E },
                                       { 0xFFFFFFFF, 0xC0E0F1FF, 0x0 },
@@ -396,21 +470,53 @@ const u32 bgtex_stage_gbix[22][3] = { { 0xF0F0F0F0, 0x7F7FFFFF, 0x0 },
                                       { 0x7E7E7E7E, 0x424FEFFF, 0x0 },
                                       { 0xFFFFFFFF, 0x0, 0x0 },
                                       { 0x3C3C3C1C, 0x20343C3C, 0x0 },
-                                      { 0x3E3E3E3E, 0x0, 0x0 } };
+                                      { 0x3E3E3E3E, 0x0, 0x0 },
+    /* Les quinze etages ajoutes -- genere, voir etages2i_plans.inc */
+    ETAGES2I_GBIX,
+    /* Les dix-neuf etages de New Generation -- genere, voir etagesng_plans.inc */
+    ETAGESNG_GBIX,
+    ETAGES2IBIS_GBIX
+};
 
 const u32 bgtex_etc_gbix[7] = { 0xFFFF, 0xF0F0, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xF0F0 };
 
-const u32 stage_priority[22] = { 0x5E546800, 0x5E540000, 0x5E546800, 0x5E540000, 0x5E540000, 0x5E540000,
+const u32 stage_priority[58] = { 0x5E546800, 0x5E540000, 0x5E546800, 0x5E540000, 0x5E540000, 0x5E540000,
                                  0x5E540000, 0x68547400, 0x68545E00, 0x5E540000, 0x5E140000, 0x5E540000,
                                  0x5E540000, 0x5E540000, 0x5E546200, 0x5E540000, 0x5E540000, 0x5E540000,
-                                 0x5E540000, 0x5E540000, 0x5E540000, 0x5E540000 };
+                                 0x5E540000, 0x5E540000, 0x5E540000, 0x5E540000,
+    /* Les quinze etages ajoutes -- genere, voir etages2i_plans.inc */
+    ETAGES2I_PRIORITY,
+    /* Les dix-neuf etages de New Generation -- genere, voir etagesng_plans.inc */
+    ETAGESNG_PRIORITY,
+    ETAGES2IBIS_PRIORITY
+};
 
 const u32 etc_bg_priority[7] = { 0x54540000, 0x5E000000, 0x54540000, 0x54540000, 0x54540000, 0x54540000, 0x5E540000 };
 
-const u8 stage_opaque[22] = { 0x80, 0x80, 0x20, 0x80, 0x40, 0x80, 0x80, 0xA0, 0x80, 0x80, 0x80,
-                              0x80, 0x80, 0x80, 0x20, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80 };
+const u8 stage_opaque[58] = { 0x80, 0x80, 0x20, 0x80, 0x40, 0x80, 0x80, 0xA0, 0x80, 0x80, 0x80,
+                              0x80, 0x80, 0x80, 0x20, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+    0x80 /* etage 22, copie de 5 */
+,
+    0x80 /* etage 22, copie de 5 */,
+    0x80 /* etage 22, copie de 5 */,
+    0x80 /* etage 22, copie de 5 */,
+    0x80 /* etage 22, copie de 5 */,
+    0x80 /* etage 22, copie de 5 */,
+    0x80 /* etage 22, copie de 5 */,
+    0x80 /* etage 22, copie de 5 */,
+    0x80 /* etage 22, copie de 5 */,
+    0x80 /* etage 22, copie de 5 */,
+    0x80 /* etage 22, copie de 5 */,
+    0x80 /* etage 22, copie de 5 */,
+    0x80 /* etage 22, copie de 5 */,
+    0x80 /* etage 22, copie de 5 */,
+    0x80 /* etage 22, copie de 5 */,
+    /* Les dix-neuf etages de New Generation -- genere, voir etagesng_plans.inc */
+    ETAGESNG_OPAQUE,
+    ETAGES2IBIS_OPAQUE
+};
 
-const s8 bgrw_on[22][8] = {
+const s8 bgrw_on[58][8] = {
     { -1, -1, -1, -1, -1, -1, -1, -1 }, { -1, -1, -1, -1, -1, -1, -1, -1 }, { -1, -1, -1, -1, -1, -1, -1, -1 },
     { 14, 15, 16, 17, -1, -1, -1, -1 }, { -1, -1, -1, -1, -1, -1, -1, -1 }, { -1, -1, -1, -1, -1, -1, -1, -1 },
     { -1, -1, -1, -1, -1, -1, -1, -1 }, { 0, 1, 2, 3, -1, -1, -1, -1 },     { 6, 7, 8, 9, 10, 11, 12, 13 },
@@ -418,7 +524,26 @@ const s8 bgrw_on[22][8] = {
     { -1, -1, -1, -1, -1, -1, -1, -1 }, { -1, -1, -1, -1, -1, -1, -1, -1 }, { 18, -1, -1, -1, -1, -1, -1, -1 },
     { -1, -1, -1, -1, -1, -1, -1, -1 }, { -1, -1, -1, -1, -1, -1, -1, -1 }, { -1, -1, -1, -1, -1, -1, -1, -1 },
     { 4, 5, -1, -1, -1, -1, -1, -1 },   { 19, -1, -1, -1, -1, -1, -1, -1 }, { -1, -1, -1, -1, -1, -1, -1, -1 },
-    { -1, -1, -1, -1, -1, -1, -1, -1 }
+    { -1, -1, -1, -1, -1, -1, -1, -1 },
+    { -1, -1, -1, -1, -1, -1, -1, -1 } /* etage 22, copie de 5 */
+,
+    { -1, -1, -1, -1, -1, -1, -1, -1 } /* etage 22, copie de 5 */,
+    { -1, -1, -1, -1, -1, -1, -1, -1 } /* etage 22, copie de 5 */,
+    { -1, -1, -1, -1, -1, -1, -1, -1 } /* etage 22, copie de 5 */,
+    { -1, -1, -1, -1, -1, -1, -1, -1 } /* etage 22, copie de 5 */,
+    { -1, -1, -1, -1, -1, -1, -1, -1 } /* etage 22, copie de 5 */,
+    { -1, -1, -1, -1, -1, -1, -1, -1 } /* etage 22, copie de 5 */,
+    { -1, -1, -1, -1, -1, -1, -1, -1 } /* etage 22, copie de 5 */,
+    { -1, -1, -1, -1, -1, -1, -1, -1 } /* etage 22, copie de 5 */,
+    { -1, -1, -1, -1, -1, -1, -1, -1 } /* etage 22, copie de 5 */,
+    { -1, -1, -1, -1, -1, -1, -1, -1 } /* etage 22, copie de 5 */,
+    { -1, -1, -1, -1, -1, -1, -1, -1 } /* etage 22, copie de 5 */,
+    { -1, -1, -1, -1, -1, -1, -1, -1 } /* etage 22, copie de 5 */,
+    { -1, -1, -1, -1, -1, -1, -1, -1 } /* etage 22, copie de 5 */,
+    { -1, -1, -1, -1, -1, -1, -1, -1 } /* etage 22, copie de 5 */,
+    /* Les dix-neuf etages de New Generation -- genere, voir etagesng_plans.inc */
+    ETAGESNG_BGRW_ON,
+    ETAGES2IBIS_BGRW_ON
 };
 
 const s16 rw070[9] = { 0x6, 0x9E, 0x6, 0xE4, 0x6, 0xE8, 0x6, 0xEC, -0x1 };
@@ -507,9 +632,23 @@ const u8 stage19_loop_tbl1[16] = { 7, 1, 8, 2, 6, 2, 10, 1, 5, 8, 3, 6, 9, 7, 4,
 
 const u8 stage19_loop_tbl2[16] = { 3, 2, 1, 4, 3, 2, 1, 4, 3, 2, 1, 4, 3, 2, 1, 4 };
 
-const u8 ake_bg_off[20] = { 3, 2, 7, 3, 2, 3, 2, 7, 3, 3, 3, 2, 3, 3, 3, 3, 3, 0, 3, 2 };
+/* Les plans que l'effet d'aube eteint pendant qu'il couvre l'ecran, puis rallume.
+ *
+ * Pour nos quinze etages la valeur n'etait pas lue mais RECOPIEE (un 3 partout), ce qui
+ * n'eteignait que les plans 0 et 1 -- juste tant qu'un etage n'en a que deux. L'etage 22
+ * en a quatre et quatre autres en ont trois : il leur faut leur propre masque, sinon
+ * l'aube laisse des plans allumes par-dessus elle.
+ *
+ *     masque = (1 << nombre de plans) - 1,   d'apres ETAGES2I_USE_SCR */
+const u8 ake_bg_off[58] = { 3, 2, 7, 3, 2, 3, 2, 7, 3, 3, 3, 2, 3, 3, 3, 3, 3, 0, 3, 2,
+                            3, 3,
+    15 /* etage 22 */, 7 /* etage 23 */, 3 /* etage 24 */, 3 /* etage 25 */, 3 /* etage 26 */, 3 /* etage 27 */, 3 /* etage 28 */, 3 /* etage 29 */, 7 /* etage 30 */, 7 /* etage 31 */, 3 /* etage 32 */, 3 /* etage 33 */, 3 /* etage 34 */, 7 /* etage 35 */, 3 /* etage 36 */,
+    /* Les dix-neuf etages de New Generation -- genere, voir etagesng_plans.inc */
+    ETAGESNG_AKE_BG_OFF,
+    ETAGES2IBIS_AKE_BG_OFF
+};
 
-const s16 limit_tbl3[22][3][4] = {
+const s16 limit_tbl3[58][3][4] = {
     { { 0x110, 0x2B4, 0xF0, 0xF0 }, { 0x110, 0x2F0, 0xF0, 0xF0 }, { 0xD1, 0x2F4, 0xF0, 0xF0 } },
     { { 0x14D, 0x2B7, 0xF0, 0xF0 }, { 0x110, 0x2FC, 0xF0, 0xF0 }, { 0x189, 0x27A, 0xF0, 0xF0 } },
     { { 0x14D, 0x2B7, 0xF0, 0xF0 }, { 0x110, 0x2EC, 0xF0, 0xF0 }, { 0x189, 0x27A, 0xF0, 0xF0 } },
@@ -531,14 +670,67 @@ const s16 limit_tbl3[22][3][4] = {
     { { 0x110, 0x2F0, 0xF0, 0xF0 }, { 0x110, 0x2F0, 0xF0, 0xF0 }, { 0x110, 0x2F0, 0xF0, 0xF0 } },
     { { 0x10C, 0x2F2, 0xF0, 0xF0 }, { 0x112, 0x2F0, 0xF0, 0xF0 }, { 0x10C, 0x2F2, 0xF0, 0xF0 } },
     { { 0x1C4, 0x23C, 0xB8, 0xB8 }, { 0x1C4, 0x23C, 0xB8, 0xB8 }, { 0x1C4, 0x23C, 0xB8, 0xB8 } },
-    { { 0x1C4, 0x23C, 0xB8, 0xB8 }, { 0x1C4, 0x23C, 0xB8, 0xB8 }, { 0x1C4, 0x23C, 0xB8, 0xB8 } }
+    { { 0x1C4, 0x23C, 0xB8, 0xB8 }, { 0x1C4, 0x23C, 0xB8, 0xB8 }, { 0x1C4, 0x23C, 0xB8, 0xB8 } },
+    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } },  /* etage 22 : bg00 GILL, 384 px jouables */
+    { { 0x0100, 0x0300, 0xF0, 0xF0 }, { 0x0100, 0x0300, 0xF0, 0xF0 }, { 0x0100, 0x0300, 0xF0, 0xF0 } },  /* etage 23 : bg01 ALEX, 512 px jouables */
+    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } },  /* etage 24 : bg02 RYU, 384 px jouables */
+    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } },  /* etage 25 : bg03 YUN, 384 px jouables */
+    { { 0x0110, 0x02f0, 0xF0, 0xF0 }, { 0x0110, 0x02f0, 0xF0, 0xF0 }, { 0x0110, 0x02f0, 0xF0, 0xF0 } },  /* etage 26 : bg04 DUDLEY, 480 px jouables */
+    { { 0x013f, 0x02ec, 0xF0, 0xF0 }, { 0x013f, 0x02ec, 0xF0, 0xF0 }, { 0x013f, 0x02ec, 0xF0, 0xF0 } },  /* etage 27 : bg05 NECRO, 429 px jouables */
+    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } },  /* etage 28 : bg06 HUGO, 384 px jouables */
+    /* PISTE FERMEE -- la table 0x8C1D54E0 (12 octets par etage) donnait 0x148..0x2b0
+       pour Ibuki. Appliquee, le niveau devenait PLUS ETROIT que sur Dreamcast : ce ne
+       sont pas les limites de camera. Sa regularite -- la seconde paire vaut la premiere
+       retrecie de 56 px, sur les dix-sept etages -- prouvait son decoupage, pas son role.
+
+       LU DANS LE CODE, 0x8C0D9C26 : 2nd Impact n'a AUCUNE limite par etage. Il borne la
+       camera a [0, 495] ou [0, 383] selon un drapeau global (0x8C841F3C), les bornes
+       elles-memes venant de la position des deux combattants (joueur+96) et d'une
+       demi-largeur par personnage (table indexee par joueur+856, pas de 1036).
+
+       Et 383 de course tombe exactement sur le defaut de 3rd Strike, 0x140..0x2c0.
+       L'autre valeur, 495, donne 512 +/- 248 = 0x108..0x2F8, soit 496 de course.
+       C'est celle-ci qu'on essaie ici : elle est plus large que les 448 poses a la main,
+       ce qui va dans le sens du « moins large que sur Dreamcast » observe. */
+    { { 0x0108, 0x02f8, 0xF0, 0xF0 }, { 0x0108, 0x02f8, 0xF0, 0xF0 }, { 0x0108, 0x02f8, 0xF0, 0xF0 } },  /* etage 29 : bg07 IBUKI, 496 px jouables */
+    { { 0x0140, 0x0240, 0xF0, 0xF0 }, { 0x0140, 0x0240, 0xF0, 0xF0 }, { 0x0140, 0x0240, 0xF0, 0xF0 } },  /* etage 30 : bg09 ELENA, 256 px jouables */
+    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } },  /* etage 31 : bg0a ORO, 384 px jouables */
+    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } },  /* etage 32 : bg0b YANG, 384 px jouables */
+    { { 0x00df, 0x0320, 0xF0, 0xF0 }, { 0x00df, 0x0320, 0xF0, 0xF0 }, { 0x00df, 0x0320, 0xF0, 0xF0 } },  /* etage 33 : bg0c KEN, 577 px jouables */
+    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } },  /* etage 34 : bg0d SEAN, 384 px jouables */
+    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } },  /* etage 35 : bg0e URIEN, 384 px jouables */
+    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } }   /* etage 36 : bg0f GORGE, 384 px jouables */,
+    /* Les dix-neuf etages de New Generation -- genere, voir etagesng_plans.inc */
+    ETAGESNG_LIMIT,
+    ETAGES2IBIS_LIMIT
 };
 
-const s8 bg_index_tbl[22][3] = { { 0, 0, 0 },    { 1, 1, 1 },    { 2, 2, 2 },    { 3, 3, 3 },    { 4, 4, 4 },
+const s8 bg_index_tbl[58][3] = { { 0, 0, 0 },    { 1, 1, 1 },    { 2, 2, 2 },    { 3, 3, 3 },    { 4, 4, 4 },
                                  { 5, 5, 5 },    { 6, 6, 6 },    { 7, 7, 7 },    { 8, 8, 8 },    { 9, 9, 9 },
                                  { 10, 10, 10 }, { 11, 11, 11 }, { 12, 12, 12 }, { 13, 13, 13 }, { 14, 14, 14 },
                                  { 15, 15, 15 }, { 16, 16, 16 }, { 4, 4, 4 },    { 18, 18, 18 }, { 19, 19, 19 },
-                                 { 20, 20, 20 }, { 21, 21, 21 } };
+                                 { 20, 20, 20 }, { 21, 21, 21 },
+    { 22, 22, 22 },
+    { 23, 23, 23 },
+    { 24, 24, 24 },
+    { 25, 25, 25 },
+    { 26, 26, 26 },
+    { 27, 27, 27 },
+    { 28, 28, 28 },
+    { 29, 29, 29 },
+    { 56, 30, 30 } /* LA VARIANTE : la table 0x8C1D591C de 2nd Impact donne
+                       decor 8 -> bandes 8, 9, 9. L'aire 0 montre donc bg08,
+                       monte a l'etage 56, et les aires 1 et 2 bg09. */,
+    { 31, 31, 31 },
+    { 32, 32, 32 },
+    { 33, 33, 33 },
+    { 34, 34, 34 },
+    { 35, 35, 35 },
+    { 36, 36, 36 } /* etages 22 a 36 : chacun son fond */,
+    /* Les dix-neuf etages de New Generation -- genere, voir etagesng_plans.inc */
+    ETAGESNG_INDEX_TBL,
+    ETAGES2IBIS_INDEX_TBL
+};
 
 const s32 bg_pos_tbl2[7][3][2] = {
     { { 0x1000000, 0x0 }, { 0x1000000, 0x0 }, { 0x0, 0x0 } }, { { 0x1000000, 0x0 }, { 0x1000000, 0x0 }, { 0x0, 0x0 } },
@@ -563,7 +755,7 @@ const s8 quake_y_tbl[130] = { 0,  -1,  1,  -2,  2,  -2,  2,  -3,  3,  -3,  3,  -
                               15, -15, 15, -15, 15, -15, 15, -15, 15, -15, 15, -15, 15, -15, 15, -15, 15, -15, 15, -15,
                               15, -15, 15, -15, 15, -15, 15, -15, 15, -15 };
 
-const u16* bg_map_tbl[22][3] = { { stage000_map, stage001_map, NULL },
+const u16* bg_map_tbl[58][4] = { { stage000_map, stage001_map, NULL },
                                  { stage010_map, NULL, NULL },
                                  { stage020_map, stage021_map, stage022_map },
                                  { stage030_map, stage031_map, NULL },
@@ -584,7 +776,54 @@ const u16* bg_map_tbl[22][3] = { { stage000_map, stage001_map, NULL },
                                  { stage180_map, stage181_map, NULL },
                                  { stage190_map, NULL, NULL },
                                  { bonus010_map, bonus011_map, NULL },
-                                 { bonus020_map, NULL, NULL } };
+                                 { bonus020_map, NULL, NULL },
+    { stage050_map, stage051_map, NULL } /* etage 22, copie de 5 */
+,
+    { stage050_map, stage051_map, NULL } /* etage 22, copie de 5 */,
+    { stage050_map, stage051_map, NULL } /* etage 22, copie de 5 */,
+    { stage050_map, stage051_map, NULL } /* etage 22, copie de 5 */,
+    { stage050_map, stage051_map, NULL } /* etage 22, copie de 5 */,
+    { stage050_map, stage051_map, NULL } /* etage 22, copie de 5 */,
+    { stage050_map, stage051_map, NULL } /* etage 22, copie de 5 */,
+    { stage050_map, stage051_map, NULL } /* etage 22, copie de 5 */,
+    { stage050_map, stage051_map, NULL } /* etage 22, copie de 5 */,
+    { stage050_map, stage051_map, NULL } /* etage 22, copie de 5 */,
+    { stage050_map, stage051_map, NULL } /* etage 22, copie de 5 */,
+    { stage050_map, stage051_map, NULL } /* etage 22, copie de 5 */,
+    { stage050_map, stage051_map, NULL } /* etage 22, copie de 5 */,
+    { stage050_map, stage051_map, NULL } /* etage 22, copie de 5 */,
+    { stage050_map, stage051_map, NULL } /* etage 22, copie de 5 */,
+    /* LES VINGT ET UN ETAGES SUIVANTS S'ARRETAIENT ICI, a 37 entrees sur 58 declarees.
+     *
+     * `Bg_Texture_Load` fait `scr_bcm[stg + i] = bg_map_tbl[bg_w.stage][i]` pour tout
+     * `i < use_real_scr[stage]`, qui vaut 2 sur nos etages : New Generation recevait donc
+     * DEUX POINTEURS NULS de carte de blocs. Le C complete a zero sans rien dire.
+     *
+     * On leur donne ce que les quinze etages de 2nd Impact ont deja et qui marche -- la
+     * carte de l'etage 5. Elle ne sert que de gabarit : les pages, elles, viennent de
+     * `tex_remix`. */
+    { stage050_map, stage051_map, NULL } /* etage 37 H.S.(GILL) */,
+    { stage050_map, stage051_map, NULL } /* etage 38 N.Y.(ALEX) */,
+    { stage050_map, stage051_map, NULL } /* etage 39 N.Y.(SEAN) */,
+    { stage050_map, stage051_map, NULL } /* etage 40 JAPAN(RYU) */,
+    { stage050_map, stage051_map, NULL } /* etage 41 JAPAN(KEN) */,
+    { stage050_map, stage051_map, NULL } /* etage 42 H.K.(YUN1) */,
+    { stage050_map, stage051_map, NULL } /* etage 43 H.K.(YUN2) */,
+    { stage050_map, stage051_map, NULL } /* etage 44 LOND(DUD1) */,
+    { stage050_map, stage051_map, NULL } /* etage 45 LOND(DUD2) */,
+    { stage050_map, stage051_map, NULL } /* etage 46 MOSC(NECR) */,
+    { stage050_map, stage051_map, NULL } /* etage 47 MUN (HUGO) */,
+    { stage050_map, stage051_map, NULL } /* etage 48 JAP(IBUK1) */,
+    { stage050_map, stage051_map, NULL } /* etage 49 JAP(IBUK2) */,
+    { stage050_map, stage051_map, NULL } /* etage 50 JAP(IBUK3) */,
+    { stage050_map, stage051_map, NULL } /* etage 51 NAI(ELEN1) */,
+    { stage050_map, stage051_map, NULL } /* etage 52 NAI(ELEN2) */,
+    { stage050_map, stage051_map, NULL } /* etage 53 AMAZO(ORO) */,
+    { stage050_map, stage051_map, NULL } /* etage 54 H.K (YAN1) */,
+    { stage050_map, stage051_map, NULL } /* etage 55 H.K (YAN2) */,
+    { stage050_map, stage051_map, NULL } /* etage 56 bg08 */,
+    { stage050_map, stage051_map, NULL } /* etage 57 bg10 */
+};
 
 const u16* bg_map_tbl2[7] = { win_lose_map, rank_map, select_map, win_lose_map, win_lose_map, win_lose_map, rank_map };
 
