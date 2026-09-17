@@ -29,3 +29,13 @@ run.err
 *.log
 *.err
 *.before
+
+# Les donnees du jeu ne vont pas sur GitHub -- 18/09/2026
+#
+# `decor_objets_data.c` est CUIT par `dc-decors/outils/animer2i.py` puis `animerng.py` a
+# partir des sprites du disque Dreamcast : des tuiles, des durees et des palettes, soit
+# 75 Mo de donnees de Capcom. Le depot ne porte que la FACON de les integrer -- le code qui
+# les lit et les dessine. On regenere le fichier avec :
+#
+#     python animer2i.py --ecrire && python animerng.py --ecrire
+src/port/video/decor_objets_data.c
