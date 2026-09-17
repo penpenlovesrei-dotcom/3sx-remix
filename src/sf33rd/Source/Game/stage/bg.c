@@ -57,6 +57,134 @@ static void bgDrawOneChip(s32 x, s32 y, s32 xs, s32 ys, s32 gbix, u32 vtxCol, s3
 static void bgAkebonoDraw();
 static void ppgCalScrPosition(s32 x, s32 y, s32 xs, s32 ys);
 
+/* LES PLANS QUI SE REPETENT A L'HORIZONTALE -- un bit par plan, par etage.
+ *
+ * Seul le fond de Necro en a besoin pour l'instant : sa routine d'etage de 2nd Impact
+ * (`0x8C0DD0E8`) retire cinq pixels par trame a la position de son plan lointain, ce qui
+ * fait defiler la chaine de montagnes -- l'installation avance, le paysage passe. Un plan
+ * qui defile sans fin doit se repeter, sinon il sort du champ.
+ *
+ * Le repli tient en deux endroits : `scr_trans` n'ecrete plus les colonnes de ce plan, et
+ * `bgDrawOneScreen` prend l'index de vignette sur `x & 0x3FF`. Les autres plans ne
+ * changent pas d'un pixel : leurs colonnes sont deja dans [0, 0x3FF], ou le masque est
+ * l'identite.
+ *
+ * NEW GENERATION BOUCLE PARTOUT -- 17/09/2026. Son moteur de decor (`0x8C10FBCC`) redessine
+ * chaque rectangle decale de 1024 : la scene se repete, et Ken va de -10 a 1052. Ecrete,
+ * le plan s'arretait au bord de la page et laissait les « bandes verticales aux extremites »
+ * que Frederic a vues. */
+#define NG_BOUCLE 0x7
+static const unsigned char bg_boucle_x[58] = {
+    [27] = 1 << 0,     /* bg05 NECRO : le plan lointain, la chaine de montagnes */
+    [37] = NG_BOUCLE, [38] = NG_BOUCLE, [39] = NG_BOUCLE, [40] = NG_BOUCLE, [41] = NG_BOUCLE,
+    [42] = NG_BOUCLE, [43] = NG_BOUCLE, [44] = NG_BOUCLE, [45] = NG_BOUCLE, [46] = NG_BOUCLE,
+    [47] = NG_BOUCLE, [48] = NG_BOUCLE, [49] = NG_BOUCLE, [50] = NG_BOUCLE, [51] = NG_BOUCLE,
+    [52] = NG_BOUCLE, [53] = NG_BOUCLE, [54] = NG_BOUCLE, [55] = NG_BOUCLE,
+};
+
+static s32 Bg_Boucle_X(s32 bgnm) {
+    if (bg_w.bg_index < 0 || bg_w.bg_index >= 58 || bgnm < 0 || bgnm > 7) {
+        return 0;
+    }
+
+    return (bg_boucle_x[bg_w.bg_index] >> bgnm) & 1;
+}
+
+/* LES PLANS ANIMES DE NEW GENERATION -- 18/09/2026.
+ *
+ * Deux decors changent une COUCHE ENTIERE au fil des trames, sur les 1024 colonnes :
+ *
+ *   * la pluie de Dudley 1 (id 11, `0x8C09DFBC`) : quatre cartes de pluie et, un pas sur
+ *     deux, le decalage de 512 lignes qui montre l'autre copie de la scene -- huit vues,
+ *     enchainees par quatorze motifs d'intensite (`0x8C1AFCE4`, `0x8C1AFC24`) ;
+ *   * l'horizon de Gill (id 12, `0x8C09E298`) : deux cartes et le meme decalage, quatre
+ *     vues de douze trames.
+ *
+ * En objets animes, elles ne tenaient pas : la pluie demande plus de deux mille morceaux,
+ * et l'horizon de Gill n'en posait que les cases qui restaient dans le budget -- Frederic,
+ * « il manque plusieurs grosses vagues de lave », « la pluie n'est pas animee ».
+ *
+ * On se sert donc du mecanisme que 3rd Strike a deja pour ses propres decors : la LISTE DE
+ * REECRITURE (`rewrite_scr`, chargee avec l'etage en `(plans * 64) + 0x64`), que `bgrw`
+ * emploie une puce a la fois. Ici le plan ENTIER bascule : chaque vue est un jeu de 32
+ * pages, et `bgDrawOneScreen` deplace l'index de puce vers la liste de reecriture. La
+ * suite (duree, vue) vient des tables du jeu ; `plansng.py` ecrit les pages et l'include. */
+#include "port/video/etagesng_pages.inc"
+
+#define PLANS_ANIMES_MAX 2
+#define PAGES_PAR_VUE 32
+
+typedef struct {
+    s8 plan;          ///< le plan (`bgnm`) dont la couche change
+    u8 vues;          ///< combien de vues ; la vue 0 est la page posee avec l'etage
+    u16 premiere;     ///< l'ecart de sa premiere page dans la liste de reecriture
+    const s16* suite; ///< (duree, vue)..., terminee par -1 ; elle boucle
+} PlanAnime;
+
+static const PlanAnime plans_animes[58][PLANS_ANIMES_MAX] = { ETAGESNG_PLANS_ANIMES };
+
+static s32 pa_gix; /* le premier index de la liste de reecriture */
+static const s16* pa_pas[PLANS_ANIMES_MAX];
+static s32 pa_reste[PLANS_ANIMES_MAX];
+static s32 pa_vue[PLANS_ANIMES_MAX];
+
+/// @brief L'animation de ce plan, et son rang dans la table de l'etage.
+static const PlanAnime* Plan_Anime(s32 bgnum, s32* rang) {
+    s32 i;
+
+    if (bg_w.stage < 0 || bg_w.stage >= 58) {
+        return NULL;
+    }
+
+    for (i = 0; i < PLANS_ANIMES_MAX; i++) {
+        const PlanAnime* a = &plans_animes[bg_w.stage][i];
+
+        if (a->suite != NULL && a->plan == bgnum) {
+            *rang = i;
+            return a;
+        }
+    }
+
+    return NULL;
+}
+
+/// @brief Remet les animations de plan de l'etage a leur premier pas.
+static void Plans_Animes_Init(s32 premier_gix) {
+    s32 i;
+
+    pa_gix = premier_gix;
+
+    for (i = 0; i < PLANS_ANIMES_MAX; i++) {
+        const PlanAnime* a = (bg_w.stage >= 0 && bg_w.stage < 58) ? &plans_animes[bg_w.stage][i] : NULL;
+
+        pa_pas[i] = (a != NULL) ? a->suite : NULL;
+        pa_reste[i] = (pa_pas[i] != NULL) ? pa_pas[i][0] : 0;
+        pa_vue[i] = (pa_pas[i] != NULL) ? pa_pas[i][1] : 0;
+    }
+}
+
+/// @brief Une trame de l'animation d'un plan. Appelee une fois par plan et par trame.
+static void Plans_Animes_Avancer(s32 rang) {
+    const PlanAnime* a = &plans_animes[bg_w.stage][rang];
+
+    if (pa_pas[rang] == NULL) {
+        return;
+    }
+
+    if (--pa_reste[rang] > 0) {
+        return;
+    }
+
+    pa_pas[rang] += 2;
+
+    if (*pa_pas[rang] < 0) {
+        pa_pas[rang] = a->suite;
+    }
+
+    pa_reste[rang] = pa_pas[rang][0];
+    pa_vue[rang] = pa_pas[rang][1];
+}
+
 void Bg_TexInit() {
     s32 i;
 
@@ -338,6 +466,10 @@ void Bg_Texture_Load_EX() {
         }
     }
 
+    /* Les pages de reecriture viennent d'etre chargees : nos animations de plan savent
+       maintenant ou les prendre. */
+    Plans_Animes_Init((stg * 64) + 0x64);
+
     if (bg_w.stage == 7) {
         ppgSetupCurrentDataList(&ppgAkaneList);
         ppgSetupPalChunk(NULL, loadAdrs, loadSize, 0, 0, 1);
@@ -600,12 +732,21 @@ void scr_trans(u8 bgnm) {
     yy[1] = ((s32)point[1].y + 0x7F) & ~0x7F;
 
     for (x = 0; x < 2; x++) {
-        if (xx[x] < 0) {
-            xx[x] = 0;
-        }
+        /* UN PLAN QUI BOUCLE N'EST PAS ECRETE -- 16/09/2026, le fond de Necro.
+           L'ecretage a [0, 0x3FF] dit « la page s'arrete la » : passe le bord, on ne
+           dessine plus rien. C'est juste pour un plan qui ne fait que suivre la camera,
+           faux pour un plan qui DEFILE : le panorama de montagnes de Necro recule de cinq
+           pixels par trame (`bg220.c`) et sortirait de l'ecran en deux secondes. Sans
+           l'ecretage, `bgDrawOneScreen` replie l'index de vignette sur 1024 et la page se
+           repete -- c'est ce que fait le materiel de la Dreamcast. */
+        if (!Bg_Boucle_X(bgnm)) {
+            if (xx[x] < 0) {
+                xx[x] = 0;
+            }
 
-        if (0x3FF < xx[x]) {
-            xx[x] = 0x3FF;
+            if (0x3FF < xx[x]) {
+                xx[x] = 0x3FF;
+            }
         }
 
         if (yy[x] < 0) {
@@ -1092,10 +1233,25 @@ void bgRWWorkUpdate() {
 
 void bgDrawOneScreen(s32 bgnum, s32 gixbase, s32* xx, s32* yy, s32 /* unused */, s32 ofsPal, PPGDataList* curDataList) {
     s32 i, x, y, gbix;
+    s32 rang = 0;
+    /* LA VUE COURANTE DE CE PLAN -- voir `Plan_Anime`. La vue 0 est la page de l'etage :
+       le plan se dessine alors comme n'importe quel autre. */
+    const PlanAnime* anime = Plan_Anime(bgnum, &rang);
 
     for (y = yy[0]; y < yy[1]; y += 128) {
         for (x = xx[0]; x < xx[1]; x += 128) {
-            gbix = ((y >> 7) << 3) + (x >> 7) + gixbase;
+            /* `& 0x3FF` : le repli d'un plan qui boucle -- voir `bg_boucle_x`. Pour tous
+               les autres, `x` est deja dans [0, 0x3FF] et le masque ne change rien. */
+            gbix = ((y >> 7) << 3) + ((x & 0x3FF) >> 7) + gixbase;
+
+            if (anime != NULL && pa_vue[rang] > 0) {
+                const s32 puce = gbix - gixbase - PAGES_PAR_VUE;
+
+                if (puce >= 0 && puce < PAGES_PAR_VUE) {
+                    gbix = pa_gix + anime->premiere + (pa_vue[rang] - 1) * PAGES_PAR_VUE + puce;
+                    ppgSetupCurrentDataList(&ppgRwBgList);
+                }
+            }
 
             if (rw_bg_flag[bgnum] && rw_num) {
                 for (i = 0; i < rw_num; i++) {
@@ -1112,6 +1268,12 @@ void bgDrawOneScreen(s32 bgnum, s32 gixbase, s32* xx, s32* yy, s32 /* unused */,
             bgDrawOneChip(x, y, 128, 128, gbix, -1, ofsPal);
             ppgSetupCurrentDataList(curDataList);
         }
+    }
+
+    /* UNE TRAME, UNE FOIS PAR PLAN : ce plan n'est dessine qu'ici. Gele pendant une pause,
+       comme les objets de decor. */
+    if (anime != NULL && EXE_flag == 0 && Game_pause == 0) {
+        Plans_Animes_Avancer(rang);
     }
 }
 

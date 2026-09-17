@@ -9,7 +9,11 @@
 #define VRAM_CONTROL_SIZE 1344
 #define VRAM_BLOCK_HEADER_SIZE 3
 #define FL_PALETTE_MAX 1088
-#define FL_TEXTURE_MAX 256
+/* 512 DEPUIS LE 18/09/2026 (256 sur la console). Les plans animes de New Generation
+   chargent des pages en plus -- 224 pour la pluie de Londres, 96 pour l'horizon de Gill --
+   et l'etage seul depassait alors les 256 poignees. Les tableaux sont statiques et la
+   poignee tient sur seize bits : il n'y a que la memoire de ces tableaux a payer. */
+#define FL_TEXTURE_MAX 512
 
 extern s32 flVramStaticNum;
 extern FL_FMS flFMS;

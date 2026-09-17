@@ -89,21 +89,37 @@ void appear_data_set(PLW* wk, APPEAR_DATA* dtbl) {
     }
 }
 
+/* LES ETAGES AJOUTES LISAIENT `app_type_tbl` HORS BORNES -- 17/09/2026.
+ *
+ * La table n'a que 22 colonnes (etages 0 a 21). Pour un etage de 2nd Impact ou de New
+ * Generation, `[joueur][adversaire][42]` tombe sur `[joueur][adversaire + 1][20]` : les
+ * colonnes 20 et 21 sont les STAGES BONUS (entrees 28 et 27, pour tous les couples). D'ou
+ * Yun 1 et Yun 2, etages 42 et 43 et eux seuls : les joueurs entraient comme au bonus et
+ * ne repondaient plus.
+ *
+ * Les etages ajoutes prennent la colonne 1. C'est la seule, avec 8, 11, 17 et 18, dont
+ * aucune case ne s'ecarte de la valeur commune, dans les deux tables : ni entree a domicile
+ * (Gill en 0, Sean en 12, qui testent `bg_w.stage` en dur), ni attente d'un decor de 3S. */
+#define APPEAR_ETAGES_3S 22
+#define APPEAR_COLONNE_NEUTRE 1
+
 void appear_data_init_set(PLW* wk) {
     APPEAR_DATA* dtbl;
     s8 ap_work;
     s16 id_work;
+    s16 colonne;
 
     Appear_hv[wk->wu.id] = home_visitor_check(wk);
 
     id_work = wk->wu.id ^ 1;
+    colonne = (bg_w.stage >= 0 && bg_w.stage < APPEAR_ETAGES_3S) ? bg_w.stage : APPEAR_COLONNE_NEUTRE;
 
     if (bg_w.area) {
         ap_work = 0;
     } else if (Appear_hv[wk->wu.id]) {
-        ap_work = app_type_tbl2[wk->player_number][plw[id_work].player_number][bg_w.stage];
+        ap_work = app_type_tbl2[wk->player_number][plw[id_work].player_number][colonne];
     } else {
-        ap_work = app_type_tbl[wk->player_number][plw[id_work].player_number][bg_w.stage];
+        ap_work = app_type_tbl[wk->player_number][plw[id_work].player_number][colonne];
     }
 
     dtbl = (APPEAR_DATA*)&appear_data[ap_work];

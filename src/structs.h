@@ -1439,22 +1439,29 @@ typedef struct {
     OPBW bgw[3];
 } OP_W;
 
+/// Les pages de morceaux 16x16 qu'un cache peut recevoir. QUATRE sur la console (1024
+/// morceaux) ; DIX ici depuis le 17/09/2026 (huit le matin, dix le soir pour le pont d'Elena 1), pour les etages de New Generation
+/// (`ETAGESNG_OB_PAGE`) : leurs grands elements fixes -- l'auvent de l'etal de Hong Kong,
+/// les personnages de Necro -- ne tenaient pas dans quatre et le generateur les ecartait.
+/// `x16_map` a une ligne par page ; les deux reserves, un emplacement par morceau.
+#define PATTERN_PAGES16_MAX 10
+
 typedef struct {
     s32 x16;
     s32 x32;
-    u16 x16_free[1024];
+    u16 x16_free[PATTERN_PAGES16_MAX * 256];
     u16 x32_free[640];
 } TexturePoolFree;
 
 typedef struct {
     s32 x16;
     s32 x32;
-    u16 x16_used[1024];
+    u16 x16_used[PATTERN_PAGES16_MAX * 256];
     u16 x32_used[640];
 } TexturePoolUsed;
 
 typedef struct {
-    u16 x16_map[4][16];
+    u16 x16_map[PATTERN_PAGES16_MAX][16];
     u8 x32_map[10][8];
 } PatternMap;
 
@@ -1481,10 +1488,16 @@ typedef struct {
     PatternMap map;
 } PatternInstance;
 
+/// Les motifs vivants d'un cache de textures. 64 sur la console ; 128 ici, parce que les
+/// decors ajoutes animent beaucoup plus de fiches a la fois -- la variante d'Elena en tient
+/// 80 au pire moment (20 fiches, quatre images vivantes chacune) et le jeu figeait sur
+/// « CGキャッシュバッファが一杯 ». La structure est allouee par `sizeof` (texcash.c).
+#define PATTERN_COLLECTION_MAX 128
+
 typedef struct {
     s16 kazu;
-    PatternInstance* adr[64];
-    PatternInstance patt[64];
+    PatternInstance* adr[PATTERN_COLLECTION_MAX];
+    PatternInstance patt[PATTERN_COLLECTION_MAX];
 } PatternCollection;
 
 typedef struct {

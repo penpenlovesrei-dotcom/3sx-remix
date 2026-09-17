@@ -164,7 +164,7 @@ void init_texcash_2nd(s16 ix) {
 
     cp->kazu = 0;
 
-    for (i = 0; i < 0x40; i++) {
+    for (i = 0; i < PATTERN_COLLECTION_MAX; i++) {
         if (cp->patt[i].time) {
             cp->adr[cp->kazu] = &cp->patt[i];
             cp->kazu += 1;
@@ -425,20 +425,31 @@ const s16 mts_OB_page[58][2] = { { 1, 1 }, { 1, 3 }, { 1, 2 }, { 1, 1 }, { 1, 2 
                 son sprite de 9x11 = 99 cases etait ECARTE faute de tenir dans les 32 cases
                 de la cle de cache, il est maintenant servi en CINQ morceaux voisins */,
     { 1, 1 } /* etage 26 dudley : 1 objet, 6 cases -- le feu de circulation */,
-    { 2, 1 } /* etage 27 necro : 15 objets, 71 cases par trame. Le compte etait ECRETE a 12
-                par `OBJETS_MAX` ; les quinze naissent depuis qu'il vaut 32 */,
-    { 2, 1 } /* etage 28 hugo  : 5 objets, 298 cases au pire */,
+    { 4, 1 } /* etage 27 necro : 34 objets depuis le 16/09 -- son conducteur, sa rambarde,
+                les trois pieces de la machine. 398 morceaux vivants au pire : 77 % de deux
+                pages, sans marge (Hugo figeait a 108 %). Quatre pages : 38 %. */,
+    { 4, 1 } /* etage 28 hugo  : 16 objets aujourd'hui, plus 5. Au pire 556 morceaux
+                vivants a la fois, pour 512 avec deux pages : 108 %, et le jeu figeait
+                sur « ×１６　ＥＸＴ２ » (15/09). Quatre pages : 54 %, comme Ibuki, Oro
+                et Akuma. Mesure : dc-decors, demande par etage. */,
     { 4, 1 } /* etage 29 ibuki : 9 objets, 272 cases par trame -- une cascade en six
                 images de 272x245. Les DEUX cascades (18 objets, 544 cases, 3456 morceaux
                 distincts) figeaient le jeu sur « CG展開エラー 16x16 » : le chemin de
                 recherche ne retrouvait plus ce que le televersement n'avait pas pose. */,
-    { 3, 1 } /* etage 30 elena : 8 objets, 160 cases par trame. Il n'en avait AUCUN : son
+    { 4, 1 } /* etage 30 elena : 8 objets, 160 cases par trame. Il n'en avait AUCUN : son
                 unique sprite fait 8x20 = 160 cases, cinq fois la limite de la cle, et il
-                etait ecarte en entier. Servi en huit morceaux voisins */,
+                etait ecarte en entier. Servi en huit morceaux voisins.
+                QUATRE PAGES DEPUIS LE 16/09/2026 : la cascade animee (entree 0) ajoute
+                sept morceaux de 174 cases par image ; au pire moment quatre images vivent,
+                soit ~700 morceaux plus les 160 du sprite -- plus que les 768 de trois
+                pages, moins que les 1024 de quatre. */,
     { 4, 1 } /* etage 31 oro   : 9 objets, 82 cases */,
-    { 2, 1 } /* etage 32 yang  : 3 objets, 69 cases -- deux de plus par le decoupage */,
+    { 4, 1 } /* etage 32 yang  : 34 objets depuis le 17/09 -- ses cinq elements, le
+                monsieur en vert (19 images de 30 cases) et les deux poissons. 574 morceaux
+                vivants au pire : 112 % de deux pages, le jeu aurait fige. Quatre : 56 %. */,
     { 1, 1 } /* etage 33 */,
-    { 1, 1 } /* etage 34 sean  : 2 objets, 22 cases -- les deux singes */,
+    { 2, 1 } /* etage 34 sean  : 9 objets depuis le 16/09 -- les singes, les deux porteurs
+                et les cinq elements. 201 morceaux au pire : 78 % d'une page. Deux : 39 %. */,
     { 1, 1 } /* etage 35 */,
     { 4, 1 } /* etage 36 akuma : 9 objets, 215 cases par trame -- les deux cascades et
                 l'entree de la grotte. A quatre trames par image et douze de duree de vie,

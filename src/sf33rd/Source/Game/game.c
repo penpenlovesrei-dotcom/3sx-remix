@@ -18,6 +18,7 @@
 #include "sf33rd/Source/Game/engine/cmb_win.h"
 #include "sf33rd/Source/Game/engine/grade.h"
 #include "sf33rd/Source/Game/engine/hitcheck.h"
+#include "port/video/trace_fin.h"
 #include "sf33rd/Source/Game/engine/manage.h"
 #include "sf33rd/Source/Game/engine/plcnt.h"
 #include "sf33rd/Source/Game/engine/plcnt2.h"
@@ -1958,6 +1959,20 @@ void Next_Title_Sub() {
 
 void Time_Control() {
     count_cont_main();
+
+    /* SONDE DU COMBAT -- 17/09/2026, meme enquete que dans `Game_Manage_2nd` : si le
+       combat est autorise et que les joueurs ne repondent toujours pas, c'est ailleurs.
+       Une ligne toutes les deux secondes sur les etages de New Generation. */
+    if (bg_w.stage >= 37) {
+        static s32 sonde_combat = 0;
+
+        if ((++sonde_combat % 120) == 0) {
+            TraceFin("combat, etage %d : autorise %d, pause %d\n", bg_w.stage, Allow_a_battle_f, Game_pause);
+            TraceFin("   arret demo %d, bonus %d, manette 1 %#06x\n", Demo_Time_Stop, Bonus_Game_Flag, p1sw_0);
+            TraceFin("   joueurs %d/%d et %d\n", plw[0].wu.routine_no[0], plw[0].wu.routine_no[1],
+                     plw[1].wu.routine_no[1]);
+        }
+    }
 
     if ((Allow_a_battle_f == 0) || (Demo_Time_Stop != 0) || (Bonus_Game_Flag != 0)) {
         return;

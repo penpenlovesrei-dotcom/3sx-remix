@@ -102,7 +102,36 @@ typedef struct {
     /// toutes les variantes, et portent donc `0xF`.
     ///
     /// `0xF` = toutes ; c'est la valeur de tous les objets des autres decors.
+    ///
+    /// **LES COMBATTANTS AUSSI CHOISISSENT** (16/09/2026). Le bit 0x10 fait exister l'objet
+    /// quand aucun des deux combattants n'est un ami du decor, le bit 0x20 quand l'un
+    /// d'eux l'est ; sans aucun des deux, l'objet ne depend pas des combattants. Le chien
+    /// d'Oro lit le personnage des joueurs a sa naissance : couche en 700 contre les
+    /// inconnus, debout en 608 devant Ibuki, Elena ou Oro.
     s32 variante;
+    /// @brief 0, ou l'objet dont la ROUTINE choisit l'image -- voir `conduire`.
+    ///
+    /// 1 = le chien debout d'Oro (regard, queue, aboiement), 2 = le chien couche (repos,
+    /// reveil), 3 = le poisson rouge de Yang (va-et-vient), 4 = son poisson noir (le tour
+    /// de l'aquarium). Les autres fiches n'ecrivent pas ces champs : le C les met a zero.
+    s32 comportement;
+    /// @brief `(image, duree)` pas a pas, les suites bout a bout.
+    ///
+    /// Les pas renvoient a des images DISTINCTES : le poisson noir enchaine 66 images et
+    /// l'identite de motif n'en code que 64.
+    const unsigned char* pas;
+    /// @brief Le premier pas de chaque suite, puis la fin : `nb_suites + 1` entrees.
+    const unsigned short* suites;
+    s32 nb_suites;
+    /// @brief Le trajet d'un objet qui se deplace : `{ duree, vx, vy, suite }` par segment.
+    ///
+    /// `vx` et `vy` sont en 1/256 de pixel par trame ; `suite` vaut -1 quand le segment ne
+    /// change pas l'animation. La liste boucle sur son premier segment, et l'objet y
+    /// retrouve sa position de naissance -- c'est ce que font les routines qu'elle
+    /// remplace : la caleche de Dudley 1 revient sous son tunnel, l'eau de la riviere
+    /// d'Elena 1 revient a sa place toutes les 33 trames. Voir `TRAJET` dans le .c.
+    const short* trajet;
+    s32 nb_trajet;
 } DecorAnimation;
 
 extern const DecorAnimation decor_animations[];
@@ -122,6 +151,13 @@ s32 DecorObjets_Combien(s32 bg_index);
 /// Tiree une fois par etage, comme 2nd Impact le fait a chaque entree. `SF3_DECOR_VARIANTE`
 /// la force, ce qui permet de voir les quatre a la demande.
 s32 DecorObjets_Variante(void);
+
+/// @brief La profondeur forcee par `SF3_DECOR_Z`, ou 0 si la variable est absente.
+///
+/// Interrupteur de DIAGNOSTIC : il met tous nos objets a la meme profondeur pour savoir si
+/// un objet invisible est cache par un plan du decor. Sans la variable, rien ne change.
+s32 DecorObjets_ProfondeurForcee(void);
+
 
 /// @brief La `rang`-ieme animation de cet etage, ou NULL.
 const DecorAnimation* DecorObjets_Animation(s32 bg_index, s32 rang);
@@ -185,6 +221,12 @@ const unsigned char* DecorObjets_Tuile(const void* work, s32 cg, s32 x, s32 y, s
 /// Rend aussi au donneur le motif emprunte a la trame precedente : il n'est ainsi
 /// emprunte que pendant la passe de dessin.
 void DecorObjets_Avancer(const void* work);
+
+/// @brief La position ou dessiner NOTRE objet s'il se deplace -- les poissons de Yang.
+///
+/// @return 1 et la position dans `x`, `y` (le repere de `xyz[].disp.pos`) si l'objet bouge,
+///         0 sinon, et rien n'est ecrit.
+s32 DecorObjets_Position(const void* work, s32* x, s32* y);
 
 
 /// @brief Pose nos couleurs dans `ColorRAM` et les envoie au materiel.

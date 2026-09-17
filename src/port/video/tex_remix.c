@@ -35,6 +35,8 @@
 
 #define REMIX_DIR "tex_remix"
 #define STAGE_COUNT_ORIGINAL 22
+/// Une de plus que le dernier etage ajoute (57), pour les boucles qui les parcourent.
+#define STAGE_COUNT_ADDED 58
 #define TEX_MAGIC 0x58545333u // '3STX', little end first
 #define TEX_VERSION 1
 #define TEX_HEADER_SIZE 16
@@ -421,16 +423,35 @@ s64 TexRemix_ReservedBytes(void) {
     SDL_free(dir);
 
     // Pages owned by an added stage live one level down, and the pool has to make room for them too.
-    for (s32 stage = STAGE_COUNT_ORIGINAL; stage < STAGE_COUNT_ORIGINAL + 16; stage++) {
+    //
+    // LE PLUS GROS ETAGE, ET TOUS LES ETAGES AJOUTES -- 18/09/2026. La boucle s'arretait a
+    // l'etage 37 : les pages de New Generation ne comptaient pas, et Dudley 1 en porte
+    // maintenant 320 a lui seul (sa pluie a huit vues de 32 pages de reecriture). Les
+    // additionner toutes demanderait un demi-gigaoctet ; or `Bg_Close` rend les poignees
+    // d'un etage avant d'en charger un autre -- un seul jeu de pages vit a la fois. On
+    // reserve donc la racine, plus le plus gros dossier d'etage.
+    s64 pire = 0;
+
+    for (s32 stage = STAGE_COUNT_ORIGINAL; stage < STAGE_COUNT_ADDED; stage++) {
         char leaf[32];
         SDL_snprintf(leaf, sizeof(leaf), "%s/stage%d", REMIX_DIR, (int)stage);
         char* sub = Resources_GetPath(leaf);
 
         if (sub != NULL) {
-            SDL_EnumerateDirectory(sub, add_file_size, &total);
+            s64 taille = 0;
+
+            SDL_EnumerateDirectory(sub, add_file_size, &taille);
             SDL_free(sub);
+
+            if (taille > pire) {
+                pire = taille;
+            }
         }
     }
+
+    /* DEUX FOIS le plus gros : de quoi tenir si les pages d'un etage n'etaient pas encore
+       rendues quand celles du suivant arrivent. */
+    total += 2 * pire;
 
     if (total == 0) {
         return 0;

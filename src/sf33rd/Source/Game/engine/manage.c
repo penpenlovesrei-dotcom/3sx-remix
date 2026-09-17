@@ -4,6 +4,7 @@
  */
 
 #include "sf33rd/Source/Game/engine/manage.h"
+#include "port/video/trace_fin.h"
 #include "common.h"
 #include "constants.h"
 #include "main.h"
@@ -257,6 +258,23 @@ void Game_Manage_2nd() {
     void (*SC2_Jmp_Tbl[5])() = { Game_Manage_2_0, Game_Manage_2_1, Game_Manage_2_2, Game_Manage_2_3, Game_Manage_2_4 };
 
     SC2_Jmp_Tbl[C_No[1]]();
+
+    /* SONDE DE L'ENTREE EN ROUND -- 17/09/2026. Frederic, chez Yun 1 et 2 (etages 42 et
+       43) : « joueurs non controllables ». Le combat n'est autorise (`Allow_a_battle_f`)
+       qu'au bout de cette sequence, et `Game_Manage_2_3` attend trois choses avant
+       l'annonce du round : la fin des entrees des personnages (`Appear_end`), celle du
+       decor (`bg_app`) et l'etat des joueurs (`pcon_rno`). Une ligne par seconde tant
+       que la sequence dure, sur les etages de New Generation seulement : elle dira
+       laquelle manque. */
+    if (bg_w.stage >= 37) {
+        static s32 attente_round = 0;
+
+        if ((++attente_round % 60) == 0) {
+            TraceFin("entree en round, etage %d : etape %d.%d\n", bg_w.stage, C_No[1], C_No[2]);
+            TraceFin("   Appear_end %d, bg_app %d, Next_Step %d\n", Appear_end, bg_app, Next_Step);
+            TraceFin("   pcon_rno %d %d, effets libres %d\n", pcon_rno[0], pcon_rno[1], frwctr);
+        }
+    }
 }
 
 void Game_Manage_2_0() {

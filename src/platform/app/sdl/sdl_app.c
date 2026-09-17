@@ -79,6 +79,12 @@ static Uint64 frame_deadline = 0;
 static FrameMetrics frame_metrics = { 0 };
 static Uint64 last_frame_end_time = 0;
 
+/* LE TEMPS DE TRAVAIL DES TRAMES, pour le battement du moteur -- 16/09/2026. Frederic : « tout
+   le jeu est devenu lent ». Le battement disait QUELLE trame, pas COMBIEN de temps : on
+   cumule ici ce que chaque trame a coute hors attente, et le battement l'ecrit. */
+static Uint64 travail_cumule_ns = 0;
+static Uint64 travail_pointe_ns = 0;
+
 static Uint64 last_mouse_motion_time = 0;
 static const int mouse_hide_delay_ms = 2000; // 2 seconds
 
@@ -351,6 +357,16 @@ static void update_metrics(Uint64 sleep_time) {
 
     frame_metrics.head = (frame_metrics.head + 1) % SDL_arraysize(frame_metrics.frame_time);
     last_frame_end_time = new_frame_end_time;
+
+    if (frame_time > sleep_time) {
+        const Uint64 travail = frame_time - sleep_time;
+
+        travail_cumule_ns += travail;
+
+        if (travail > travail_pointe_ns) {
+            travail_pointe_ns = travail;
+        }
+    }
 }
 
 static void end_frame() {
@@ -481,11 +497,28 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
            intercalent dans l'ordre, donc le journal dit d'un coup d'oeil si le moteur
            battait encore APRES « etage 38 ». Une ligne par seconde, borne a 4000. */
         static s32 trame_moteur = 0;
+        static Uint64 battement_precedent_ns = 0;
 
         trame_moteur++;
 
         if ((trame_moteur % 60) == 0) {
-            TraceFin("battement moteur : trame %d\n", trame_moteur, 0, 0);
+            /* Et combien de temps ces soixante trames ont pris : 1007 ms quand tout va bien
+               (59,6 images par seconde), davantage si le jeu ralentit. Le travail moyen dit
+               si c'est une trame trop lourde (plus de 16,8 ms) ou autre chose. En centiemes
+               de milliseconde. */
+            const Uint64 maintenant = SDL_GetTicksNS();
+            const s32 duree_ms = battement_precedent_ns ? (s32)((maintenant - battement_precedent_ns) / 1000000) : 0;
+
+            TraceFin("battement moteur : trame %d, %d ms, travail moyen %d centiemes de ms\n",
+                     trame_moteur, duree_ms, (s32)(travail_cumule_ns / 60 / 10000));
+
+            if (travail_pointe_ns > target_frame_time_ns) {
+                TraceFin("   pointe %d centiemes de ms\n", (s32)(travail_pointe_ns / 10000), 0, 0);
+            }
+
+            battement_precedent_ns = maintenant;
+            travail_cumule_ns = 0;
+            travail_pointe_ns = 0;
         }
 
         Jalon_Trame(trame_moteur);

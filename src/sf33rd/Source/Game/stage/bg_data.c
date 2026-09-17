@@ -6,6 +6,7 @@
 #include "sf33rd/Source/Game/stage/bg_data.h"
 #include "port/video/etages2i_plans.inc"
 #include "port/video/etagesng_plans.inc"
+#include "port/video/etagesng_reecriture.inc"
 #include "port/video/etages2ibis_plans.inc"
 #include "common.h"
 #include "structs.h"
@@ -51,7 +52,11 @@ const u8 use_real_scr[58] = { 2, 1, 3, 2, 1, 2, 1, 2, 2, 2, 2, 1, 2, 2, 3, 2, 2,
     /* Les quinze etages ajoutes -- genere, voir etages2i_plans.inc */
     ETAGES2I_USE_SCR,
     /* Les dix-neuf etages de New Generation -- genere, voir etagesng_plans.inc */
-    ETAGESNG_USE_SCR
+    ETAGESNG_USE_SCR,
+    /* Les deux bandes de 2I restees de cote (56, 57). Elles manquaient ICI et pas dans
+       `use_scr` : 0 plan reel, donc un decor tout noir -- sur 56 et 57, et sur ELENA
+       STAGE (30), dont l'aire 0 lit la case 56 via `bg_index_tbl`. Trace le 15/09. */
+    ETAGES2IBIS_USE_SCR
 };
 
 const u8 use_family[58] = { 0, 160, 4, 0, 0, 32, 160, 4, 38, 38, 0, 160, 38, 32, 0, 32, 32, 0, 32, 160, 32, 160,
@@ -89,7 +94,11 @@ const u8 rewrite_scr[58] = { 0, 0, 0, 25, 0, 0, 0, 12, 24, 0, 96, 0, 0, 0, 1, 0,
     0 /* etage 22, copie de 5 */,
     0 /* etage 22, copie de 5 */,
     0 /* etage 22, copie de 5 */,
-    0 /* etage 22, copie de 5 */
+    0 /* etage 22, copie de 5 */,
+    /* LES PAGES DE REECRITURE DES PLANS ANIMES DE NEW GENERATION -- 18/09/2026. La pluie de
+       Londres et l'horizon de Gill changent leur couche entiere : chaque vue est un jeu de
+       32 pages, chargees ici avec l'etage. Voir `bg.c` et `plansng.py`. */
+    ETAGESNG_REWRITE
 };
 
 const u8 use_scr2[7] = { 1, 1, 1, 1, 1, 1, 1 };
@@ -671,13 +680,13 @@ const s16 limit_tbl3[58][3][4] = {
     { { 0x10C, 0x2F2, 0xF0, 0xF0 }, { 0x112, 0x2F0, 0xF0, 0xF0 }, { 0x10C, 0x2F2, 0xF0, 0xF0 } },
     { { 0x1C4, 0x23C, 0xB8, 0xB8 }, { 0x1C4, 0x23C, 0xB8, 0xB8 }, { 0x1C4, 0x23C, 0xB8, 0xB8 } },
     { { 0x1C4, 0x23C, 0xB8, 0xB8 }, { 0x1C4, 0x23C, 0xB8, 0xB8 }, { 0x1C4, 0x23C, 0xB8, 0xB8 } },
-    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } },  /* etage 22 : bg00 GILL, 384 px jouables */
-    { { 0x0100, 0x0300, 0xF0, 0xF0 }, { 0x0100, 0x0300, 0xF0, 0xF0 }, { 0x0100, 0x0300, 0xF0, 0xF0 } },  /* etage 23 : bg01 ALEX, 512 px jouables */
-    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } },  /* etage 24 : bg02 RYU, 384 px jouables */
-    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } },  /* etage 25 : bg03 YUN, 384 px jouables */
-    { { 0x0110, 0x02f0, 0xF0, 0xF0 }, { 0x0110, 0x02f0, 0xF0, 0xF0 }, { 0x0110, 0x02f0, 0xF0, 0xF0 } },  /* etage 26 : bg04 DUDLEY, 480 px jouables */
-    { { 0x013f, 0x02ec, 0xF0, 0xF0 }, { 0x013f, 0x02ec, 0xF0, 0xF0 }, { 0x013f, 0x02ec, 0xF0, 0xF0 } },  /* etage 27 : bg05 NECRO, 429 px jouables */
-    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } },  /* etage 28 : bg06 HUGO, 384 px jouables */
+    { { 0x0130, 0x02B4, 0xF0, 0xF0 }, { 0x0142, 0x02BC, 0xF0, 0xF0 }, { 0x00D1, 0x02F4, 0xF0, 0xF0 } },  /* etage 22 : bg00 GILL, 378 px jouables */
+    { { 0x014D, 0x02B7, 0xF0, 0xF0 }, { 0x0102, 0x02FC, 0xF0, 0xF0 }, { 0x0189, 0x027A, 0xF0, 0xF0 } },  /* etage 23 : bg01 ALEX, 506 px jouables */
+    { { 0x0136, 0x02C5, 0xF0, 0xF0 }, { 0x0136, 0x02CB, 0xF0, 0xF0 }, { 0x0136, 0x02C5, 0xF0, 0xF0 } },  /* etage 24 : bg02 RYU, 405 px jouables */
+    { { 0x0148, 0x02B0, 0xF0, 0xF0 }, { 0x0142, 0x02BC, 0xF0, 0xF0 }, { 0x0148, 0x02B0, 0xF0, 0xF0 } },  /* etage 25 : bg03 YUN, 378 px jouables */
+    { { 0x0110, 0x02F0, 0xF0, 0xF0 }, { 0x0110, 0x02F0, 0xF0, 0xF0 }, { 0x0110, 0x02F0, 0xF0, 0xF0 } },  /* etage 26 : bg04 DUDLEY, 480 px jouables */
+    { { 0x00CA, 0x0330, 0xF0, 0xF0 }, { 0x00C6, 0x033C, 0xF0, 0xF0 }, { 0x00CA, 0x0330, 0xF0, 0xF0 } },  /* etage 27 : bg05 NECRO, 630 px jouables */
+    { { 0x0142, 0x02B8, 0xF0, 0xF0 }, { 0x014C, 0x02BC, 0xF0, 0xF0 }, { 0x0142, 0x02B8, 0xF0, 0xF0 } },  /* etage 28 : bg06 HUGO, 368 px jouables */
     /* PISTE FERMEE -- la table 0x8C1D54E0 (12 octets par etage) donnait 0x148..0x2b0
        pour Ibuki. Appliquee, le niveau devenait PLUS ETROIT que sur Dreamcast : ce ne
        sont pas les limites de camera. Sa regularite -- la seconde paire vaut la premiere
@@ -692,14 +701,14 @@ const s16 limit_tbl3[58][3][4] = {
        L'autre valeur, 495, donne 512 +/- 248 = 0x108..0x2F8, soit 496 de course.
        C'est celle-ci qu'on essaie ici : elle est plus large que les 448 poses a la main,
        ce qui va dans le sens du « moins large que sur Dreamcast » observe. */
-    { { 0x0108, 0x02f8, 0xF0, 0xF0 }, { 0x0108, 0x02f8, 0xF0, 0xF0 }, { 0x0108, 0x02f8, 0xF0, 0xF0 } },  /* etage 29 : bg07 IBUKI, 496 px jouables */
-    { { 0x0140, 0x0240, 0xF0, 0xF0 }, { 0x0140, 0x0240, 0xF0, 0xF0 }, { 0x0140, 0x0240, 0xF0, 0xF0 } },  /* etage 30 : bg09 ELENA, 256 px jouables */
-    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } },  /* etage 31 : bg0a ORO, 384 px jouables */
-    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } },  /* etage 32 : bg0b YANG, 384 px jouables */
-    { { 0x00df, 0x0320, 0xF0, 0xF0 }, { 0x00df, 0x0320, 0xF0, 0xF0 }, { 0x00df, 0x0320, 0xF0, 0xF0 } },  /* etage 33 : bg0c KEN, 577 px jouables */
-    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } },  /* etage 34 : bg0d SEAN, 384 px jouables */
-    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } },  /* etage 35 : bg0e URIEN, 384 px jouables */
-    { { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 }, { 0x0140, 0x02c0, 0xF0, 0xF0 } }   /* etage 36 : bg0f GORGE, 384 px jouables */,
+    { { 0x0158, 0x02A8, 0xF0, 0xF0 }, { 0x0122, 0x02DA, 0xF0, 0xF0 }, { 0x0122, 0x02DA, 0xF0, 0xF0 } },  /* etage 29 : bg07 IBUKI, 440 px jouables */
+    { { 0x0154, 0x02B8, 0xF0, 0xF0 }, { 0x0142, 0x02BC, 0xF0, 0xF0 }, { 0x0154, 0x02B8, 0xF0, 0xF0 } },  /* etage 30 : bg09 ELENA, 378 px jouables */
+    { { 0x0144, 0x02AC, 0xF0, 0xF0 }, { 0x0144, 0x02BA, 0xF0, 0xF0 }, { 0x0144, 0x02AC, 0xF0, 0xF0 } },  /* etage 31 : bg0a ORO, 374 px jouables */
+    { { 0x0148, 0x02B0, 0xF0, 0xF0 }, { 0x0148, 0x02BE, 0xF0, 0xF0 }, { 0x0148, 0x02B0, 0xF0, 0xF0 } },  /* etage 32 : bg0b YANG, 374 px jouables */
+    { { 0x00AD, 0x0318, 0xF0, 0xF0 }, { 0x00E4, 0x031C, 0xF0, 0xF0 }, { 0x00D1, 0x02F4, 0xF0, 0xF0 } },  /* etage 33 : bg0c KEN, 568 px jouables */
+    { { 0x00D1, 0x02F4, 0xF0, 0xF0 }, { 0x014A, 0x02BE, 0xF0, 0xF0 }, { 0x00D1, 0x02F4, 0xF0, 0xF0 } },  /* etage 34 : bg0d SEAN, 372 px jouables */
+    { { 0x00D1, 0x02F4, 0xF0, 0xF0 }, { 0x0148, 0x02BE, 0xF0, 0xF0 }, { 0x00D1, 0x02F4, 0xF0, 0xF0 } },  /* etage 35 : bg0e URIEN, 374 px jouables */
+    { { 0x0141, 0x02B8, 0xF0, 0xF0 }, { 0x0141, 0x02BC, 0xF0, 0xF0 }, { 0x0141, 0x02B8, 0xF0, 0xF0 } },  /* etage 36 : bg0f GORGE, 379 px jouables */
     /* Les dix-neuf etages de New Generation -- genere, voir etagesng_plans.inc */
     ETAGESNG_LIMIT,
     ETAGES2IBIS_LIMIT
@@ -718,9 +727,14 @@ const s8 bg_index_tbl[58][3] = { { 0, 0, 0 },    { 1, 1, 1 },    { 2, 2, 2 },   
     { 27, 27, 27 },
     { 28, 28, 28 },
     { 29, 29, 29 },
-    { 56, 30, 30 } /* LA VARIANTE : la table 0x8C1D591C de 2nd Impact donne
-                       decor 8 -> bandes 8, 9, 9. L'aire 0 montre donc bg08,
-                       monte a l'etage 56, et les aires 1 et 2 bg09. */,
+    { 30, 30, 30 } /* PLUS DE VARIANTE PAR AIRE -- 16/09/2026. La table 0x8C1D591C de
+                       2nd Impact donne bien decor 8 -> bandes 8, 9, 9, mais le portage
+                       ne suivait l'aire qu'a MOITIE : `Bg_Texture_Load` prend pages,
+                       profondeurs et plans a `bg_w.stage` (30), `Bg_Family_Set` et les
+                       objets a `bg_index` (56). L'etage 30 montrait donc les pages
+                       d'Elena 1 avec les plans et les objets -- aucun -- de la variante,
+                       et toujours en aire 0 (traces du 15/09). Chacune a maintenant son
+                       etage entier : 30 Elena 1, 56 la variante du pont. */,
     { 31, 31, 31 },
     { 32, 32, 32 },
     { 33, 33, 33 },

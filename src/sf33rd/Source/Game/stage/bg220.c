@@ -10,6 +10,8 @@
 #include "common.h"
 #include "sf33rd/Source/Game/effect/eff05.h"
 #include "sf33rd/Source/Game/engine/plcnt.h"
+#include "sf33rd/Source/Game/engine/slowf.h"
+#include "sf33rd/Source/Game/engine/workuser.h"
 #include "sf33rd/Source/Game/stage/bg.h"
 #include "sf33rd/Source/Game/stage/bg_data.h"
 #include "port/video/etages2i_plans.inc"
@@ -67,9 +69,9 @@ void bg2204() {
 /* Le quatrieme plan porte le coefficient qui restait sans place. Pour `bg00` c'est
    l'objet 6, celui du plan 7 de 2nd Impact : le petit obelisque gris, 0,625 en x et
    0,875 en y. Avec trois plans il devait se contenter du 0,875 du temple. */
-static const s32 bg220_speed_x_quatre[58] = { ETAGES2I_SPEED_X_QUATRE };
+static const s32 bg220_speed_x_quatre[58] = { ETAGES2I_SPEED_X_QUATRE, ETAGES2IBIS_SPEED_X_QUATRE };
 
-static const s32 bg220_speed_y_quatre[58] = { ETAGES2I_SPEED_Y_QUATRE };
+static const s32 bg220_speed_y_quatre[58] = { ETAGES2I_SPEED_Y_QUATRE, ETAGES2IBIS_SPEED_Y_QUATRE };
 
 void bg2204_init00() {
     bgw_ptr->r_no_0++;
@@ -83,8 +85,11 @@ void bg2204_init00() {
     /* CELLE-CI RESTE, et c'est voulu : `bg220_speed_x_quatre` ne porte que
        `ETAGES2I_SPEED_X_QUATRE`. Aucun etage de New Generation n'a de QUATRIEME plan --
        seul `bg00` en a un en 2nd Impact -- donc il n'y a rien a lire au-dela de 36, et
-       lever la garde ici irait chercher des zeros. */
-    if (bg_w.bg_index >= 22 && bg_w.bg_index < 37) {
+       lever la garde ici irait chercher des zeros.
+
+       SAUF LA VARIANTE D'ELENA (56), 16/09/2026 : ses arbres a cranes passent devant les
+       combattants et defilent a 1,00 -- `ETAGES2IBIS_SPEED_X_QUATRE`. */
+    if ((bg_w.bg_index >= 22 && bg_w.bg_index < 37) || bg_w.bg_index >= 56) {
         bgw_ptr->speed_x = bg220_speed_x_quatre[bg_w.bg_index];
         bgw_ptr->speed_y = bg220_speed_y_quatre[bg_w.bg_index];
     }
@@ -101,7 +106,7 @@ void bg2204_init00() {
  *
  * `y_limit` / `y_limit2` restent poses, comme dans `bg020_sync_init` : `bg_y_move_check`
  * ecrete sur `y_limit2`, et le laisser a zero rabattrait le plan des qu'il bougerait. */
-static const s32 bg220_speed_x_tiers[58] = { ETAGES2I_SPEED_X_TIERS, ETAGESNG_SPEED_X_TIERS };
+static const s32 bg220_speed_x_tiers[58] = { ETAGES2I_SPEED_X_TIERS, ETAGESNG_SPEED_X_TIERS, ETAGES2IBIS_SPEED_X_TIERS };
 
 /* LA VERTICALE AUSSI, et elle se lit au meme endroit : `+20` de la fiche d'objet.
  * Laissee a zero, le plan ne suivait pas du tout la camera en hauteur et se decalait
@@ -110,7 +115,7 @@ static const s32 bg220_speed_x_tiers[58] = { ETAGES2I_SPEED_X_TIERS, ETAGESNG_SP
  *
  * C'est ce plan-ci qui peut la prendre, et pas `bgw[0]` : `bg_y_move_check` ecrete sur
  * `y_limit2`, et seul `bg2203_init00` le pose. */
-static const s32 bg220_speed_y_tiers[58] = { ETAGES2I_SPEED_Y_TIERS, ETAGESNG_SPEED_Y_TIERS };
+static const s32 bg220_speed_y_tiers[58] = { ETAGES2I_SPEED_Y_TIERS, ETAGESNG_SPEED_Y_TIERS, ETAGES2IBIS_SPEED_Y_TIERS };
 
 void bg2203_init00() {
     bgw_ptr->r_no_0++;
@@ -131,9 +136,44 @@ void bg2203_init00() {
     }
 }
 
+/* LE FOND DE NECRO DEFILE TOUT SEUL -- 16/09/2026.
+ *
+ * Frederic : « le defilement en boucle de l'arriere plan est absent ». Il est dans la
+ * routine d'etage de 2nd Impact, a `0x8C0DD0E8`, et il tient en quatre instructions :
+ *
+ *     mov.w @(26,r3),r0 ; add #-5,r0 ; mov.w r0,@(26,r3)      xy[0].disp.pos  -= 5
+ *     mov #34,r0 ; mov.w @(r0,r3),r2 ; add #-5,r2 ; ...       wxy[0].disp.pos -= 5
+ *
+ * `+26` et `+34` sont `xy[0].disp.pos` et `wxy[0].disp.pos` du plan, et ce sont les deux
+ * champs que `bg_x_move_check` recalcule chaque trame -- d'ou le passage par
+ * `pos_x_work`, le seul terme qui SURVIT au recalcul : il s'y ajoute a chaque fois.
+ *
+ * L'installation de Necro avance, et la chaine de montagnes passe derriere la vitre. Le
+ * plan doit donc se repeter : voir `bg_boucle_x` dans `bg.c`. On replie `pos_x_work` sur
+ * 1024 pour qu'il ne derive pas jusqu'au debordement du s16 en fin de round.
+ *
+ * `0` = le plan ne defile pas, ce qui est le cas de tous les autres. */
+static const s16 bg220_derive_x[58] = {
+    [27] = 5,     /* bg05 NECRO : cinq pixels par trame, vers la gauche */
+    /* NECRO DE NEW GENERATION, 17/09/2026 : les memes quatre instructions, dans la routine
+       du plan 2 de la bande 9 (`0x8C08A970`). Frederic : « NECRO pas de scrolling ». Le plan
+       des montagnes est `bgw[0]` depuis que `etagesng.fiche` range les plans a coefficient
+       egal par leur profondeur. */
+    [46] = 5,
+};
+
 void bg2201() {
     void (*bg2201_jmp[2])() = { bg2201_init00, bg_move_common };
     bg2201_jmp[bgw_ptr->r_no_0]();
+
+    if (bg_w.bg_index >= 22 && bg_w.bg_index < 58 && bg220_derive_x[bg_w.bg_index] &&
+        bgw_ptr->r_no_0 != 0 && EXE_flag == 0 && Game_pause == 0) {
+        bgw_ptr->pos_x_work -= bg220_derive_x[bg_w.bg_index];
+
+        if (bgw_ptr->pos_x_work <= 0x200 - 1024) {
+            bgw_ptr->pos_x_work += 1024;
+        }
+    }
 }
 
 /* LA PARALLAXE DU PLAN LOINTAIN, en 16.16, un coefficient par etage ajoute.

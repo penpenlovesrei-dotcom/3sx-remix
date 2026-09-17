@@ -212,6 +212,18 @@ void effect_05_move(WORK_Other* ewk) {
                     load_any_texture_patnum(ewk->wu.cg_number, 2, 0);
                     Jalon("       eff05 texture chargee", ewk->wu.type);
                 }
+
+                /* UN OBJET QUI NAGE -- les poissons de Yang. `disp_pos_trans_entry_s` relit
+                   `xyz` juste apres : il suffit d'y poser la position de la trame. */
+                {
+                    s32 x;
+                    s32 y;
+
+                    if (DecorObjets_Position(&ewk->wu, &x, &y)) {
+                        ewk->wu.xyz[0].disp.pos = (s16)x;
+                        ewk->wu.xyz[1].disp.pos = (s16)y;
+                    }
+                }
             }
             Jalon("       eff05 disp_pos_trans_entry_s", ewk->wu.type);
             disp_pos_trans_entry_s(ewk);
@@ -334,6 +346,16 @@ s32 effect_05_init() {
                dessiner juste devant le couchant. Zero garde la valeur du modele. */
             if (notre_anim->z) {
                 ewk->wu.my_priority = ewk->wu.position_z = notre_anim->z;
+            }
+
+            /* PAS DE DECALAGE : la profondeur lue dans 2I est la bonne, a condition que les
+               plans aient les leurs -- lues dans SF3_2ND.BIN depuis le 16/09 (table
+               0x8C601EE8, voir DECORS.md section 11). Le recul de 16 des cascades est
+               retire : il compensait des plans mal places. */
+
+            /* DIAGNOSTIC `SF3_DECOR_Z` -- voir `DecorObjets_ProfondeurForcee`. */
+            if (DecorObjets_ProfondeurForcee()) {
+                ewk->wu.my_priority = ewk->wu.position_z = (s16)DecorObjets_ProfondeurForcee();
             }
 
             DecorObjets_Marquer(&ewk->wu, bg_w.bg_index, i);
