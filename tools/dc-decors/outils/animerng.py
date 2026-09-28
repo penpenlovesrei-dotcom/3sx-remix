@@ -1445,17 +1445,11 @@ def famille_et_z(o):
     # derriere tout le reste -- le plan du milieu d'Alex est a 94 --, il ne fait que passer
     # devant SA page. Deux fiches sont concernees dans les dix-neuf etages : celles du
     # gratte-ciel d'Alex.
-    import etagesng as E
-
-    f = E.fiche(o["bande"])
-
-    if fam == 1 and 132 in f["couches"]:
-        cn = E.couches_ng(o["bande"])
-        k = f["couches"][132][2]
-
-        if k < 4 and cn[k] and cn[k][0] == o["plan"] and cn[k][1] == z:
-            return fam, z - 1
-
+    # ET IL EST RETIRE AVEC LUI -- 29/09/2026. Ce cran de profondeur ne servait qu'a
+    # empecher le BOUCHAGE d'effacer le gratte-ciel d'Alex. Le bouchage est retire
+    # (`couchesng.SANS_BOUCHAGE`), la page du fond redevient pleine de trous, et le
+    # gratte-ciel se voit A TRAVERS comme il l'a toujours fait. Le remettre a 103 serait
+    # changer une profondeur lue sans rien y gagner.
     return fam, z
 
 

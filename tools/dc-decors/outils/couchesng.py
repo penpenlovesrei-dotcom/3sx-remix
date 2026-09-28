@@ -192,7 +192,34 @@ def recoller(pages, f):
 # de la console dans `animerng.famille_et_z` (z - 1 d'un cran, deux fiches concernees, le
 # gratte-ciel d'Alex), et plus rien ne s'oppose au bouchage. La liste reste, vide, parce que
 # c'est elle qui dit ou regarder si un objet du fond disparait.
-SANS_BOUCHAGE = set()
+#
+#
+# LE BOUCHAGE EST RETIRE -- 29/09/2026. LA REGLE ETAIT FAUSSE.
+# ---------------------------------------------------------------
+# Frederic, sur RYU NG : « un gros carre violet ». C'etait celui-ci.
+#
+# La regle disait : « le plan le plus lointain n'a rien derriere lui, donc un trou y montre
+# du noir, donc on le bouche ». La premisse est juste ; la conclusion ne l'est pas, parce
+# qu'un plan lointain n'est pas toujours un CIEL. Le descripteur de scene le dit, et il
+# suffisait de le lire avant :
+#
+#     bande 1  ALEX   couche 2  scene  512,512  512x256    un ciel, un seul rectangle
+#     bande 4  KEN    couche 2  scene    0,512  512x512    un ciel, deux rectangles jointifs
+#                               scene  512,512  512x512
+#     bande 3  RYU    couche 2  scene  192,672  320x256    DEUX MORCEAUX LOCAUX, poses
+#                               scene  512,672  256x256    au milieu de la scene
+#
+# Chez Ryu la couche 2 n'est pas un fond : ce sont les deux vues de son fond anime (l'entree
+# 3), 320x256 et 256x256 posees en 192,672 et 512,672. Les etaler sur 1024x512 par le pixel
+# peint le plus proche donne un aplat de la couleur de leur bord -- le carre violet.
+#
+# CE QU'IL AURAIT FALLU FAIRE, et qui reste a faire : ne boucher que la surface que le
+# DESCRIPTEUR declare pour cette couche, et seulement quand ses rectangles couvrent la
+# largeur de la scene. La mesure est deja ecrite ci-dessus, elle attend d'etre branchee.
+#
+# En attendant, on ne touche a rien : dix-sept etages sur dix-neuf n'avaient rien demande.
+# Le trait noir d'Alex et les extremites de Ken sont a reprendre autrement.
+SANS_BOUCHAGE = set(range(37, 56))
 
 
 def combler_le_fond(plan):

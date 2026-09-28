@@ -239,8 +239,24 @@ EN_DUR = {
     # Leur table de 54 octets (`0x8C553E40`) est de la RAM, construite par la routine
     # d'etage elle-meme ; elle ne porte AUCUN des champs ci-dessus, qui sont tous en
     # immediats dans les engendreurs. On n'en a donc pas besoin.
-    0x8C0B13C0: [dict(x=496, y=80, pal=10, plan=1, script=6, col=67, id=115)],
-    0x8C0B168C: [dict(x=512, y=104, pal=10, plan=1, script=7, col=67, id=117)],
+    # ET ILS SONT RETIRES -- 29/09/2026. Frederic : « KEN NG, des planches qui volent ».
+    #
+    # C'etaient eux, et la lecture le disait : les deux ecrivent `disp_flag` a ZERO, ils
+    # naissent INVISIBLES. J'ai quand meme choisi le defaut « visibles » de la famille
+    # reactive, et on voit des planches de bain flotter au milieu de l'ecran. Ce ne sont pas
+    # non plus les inscriptions sur les rochers.
+    #
+    # Le releve reste ici pour la suite -- il est juste, c'est la decision de les montrer
+    # qui etait fausse :
+    #
+    #     0x8C0B13C0 (id 115)   x 496, y 80,  script 6, plan 1, profondeur et palette 10,
+    #                           col 67, table 0x8C0DE6D8 (celle de Ken, sans decalage)
+    #     0x8C0B168C (id 117)   x 512, y 104, script 7, tout le reste identique
+    #
+    # Pour les remettre il faudra d'abord lire CE QUI LES ALLUME : la condition est dans
+    # leurs routines, `0x8C0B102C` et `0x8C0B1618` (table `0x8C1ADA10`).
+    # 0x8C0B13C0: [dict(x=496, y=80, pal=10, plan=1, script=6, col=67, id=115)],
+    # 0x8C0B168C: [dict(x=512, y=104, pal=10, plan=1, script=7, col=67, id=117)],
 
     # RYU (NG) -- LES PETALES DE SAKURA (id 34, `0x8C0A2C94`) -- 28/09/2026
     # ---------------------------------------------------------------------
