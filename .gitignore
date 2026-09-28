@@ -39,3 +39,20 @@ run.err
 #
 #     python animer2i.py --ecrire && python animerng.py --ecrire
 src/port/video/decor_objets_data.c
+
+# Les outils des decors portent la METHODE, pas les donnees -- 28/09/2026
+#
+# `tools/dc-decors` ne contient que les scripts et la documentation. Tout ce que la chaine
+# LIT dans les binaires de Capcom ou en TIRE reste dehors : les binaires eux-memes, les
+# banques de tuiles, les releves extraits d'eux, les pages cuites et le cache. Voir
+# `tools/dc-decors/LISEZMOI.md` pour la liste et la facon de les regenerer.
+tools/dc-decors/**/*.BIN
+tools/dc-decors/**/*.bin
+tools/dc-decors/**/*.PVC
+tools/dc-decors/**/*.pvc
+tools/dc-decors/**/*.pkl
+tools/dc-decors/**/*.json
+tools/dc-decors/**/*.png
+tools/dc-decors/outils/__cache_decors__/
+tools/dc-decors/outils/__pycache__/
+tools/dc-decors/outils/*.avant*
