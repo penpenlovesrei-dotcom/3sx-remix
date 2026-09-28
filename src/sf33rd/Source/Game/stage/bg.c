@@ -1,5 +1,6 @@
 #include "port/video/trace_fin.h"
 #include <stdio.h>
+#include <stdlib.h>
 /**
  * @file bg.c
  * Background/Stage logic
@@ -22,6 +23,7 @@
 #include "sf33rd/Source/Game/rendering/dc_ghost.h"
 #include "sf33rd/Source/Game/rendering/mtrans.h"
 #include "sf33rd/Source/Game/stage/bg_data.h"
+#include "sf33rd/Source/Game/stage/bg_sub.h"
 #include "sf33rd/Source/Game/system/ramcnt.h"
 #include "sf33rd/Source/Game/system/work_sys.h"
 #include "structs.h"
@@ -111,6 +113,40 @@ static s32 Bg_Boucle_X(s32 bgnm) {
  * suite (duree, vue) vient des tables du jeu ; `plansng.py` ecrit les pages et l'include. */
 #include "port/video/etagesng_pages.inc"
 
+/* L'ETAGE DONT ON LIT LES TABLES DE PLANS -- 25/09/2026.
+ *
+ * Frederic : « *corrige le crash du decor de Dudley entre les round 1 et 2* ». C'etait ca.
+ *
+ * Les tables par etage -- `stage_bgw_number`, `bg_map_tbl`, `use_real_scr`, `rewrite_scr`,
+ * `bgtex_stage_gbix`, `stage_priority`, `stage_opaque` -- etaient lues en `bg_w.stage`,
+ * qui ne change PAS quand on passe d'une aire a l'autre. Mais `bg_w.scrno`, lui, vient de
+ * `use_real_scr[bg_w.bg_index]`, qui change. Les deux se contredisaient des que les deux
+ * aires d'un decor n'avaient pas le meme nombre de plans :
+ *
+ *     Dudley   etage 44 -> 3 plans   etage 45 -> 2 plans    DIFFERENT
+ *     Yun      etage 42 -> 3         etage 43 -> 2          DIFFERENT
+ *     Yang     etage 55 -> 2         etage 54 -> 3          DIFFERENT
+ *     Ryu/Ken  40 -> 3   41 -> 3                            identique
+ *     Ibuki    48 -> 3   49 -> 3   50 -> 3                  identique
+ *     Elena    51 -> 2   52 -> 2                            identique
+ *
+ * La boucle de chargement tournait `bg_w.scrno` fois (2 pour Dudley 2) pendant que
+ * `scr_bcm` en remplissait `use_real_scr[bg_w.stage]` (3) : le troisieme plan gardait sa
+ * carte alors que son morceau de texture n'etait plus charge. Et comme `stg` sert ensuite
+ * de base a la liste de reecriture, `(stg * 64) + 0x64` glissait de soixante-quatre d'une
+ * aire a l'autre -- la pluie de Dudley allait chercher ses pages ailleurs.
+ *
+ * C'est pour ca que seules Ibuki et Elena passaient : leurs aires ont toutes le meme
+ * nombre de plans. Les trois qui n'en ont pas le meme sont exactement les trois qui
+ * tombaient.
+ *
+ * Une aire est un decor a part entiere -- l'etage 45 est choisissable tel quel -- donc
+ * ses tables sont les siennes. On les lit toutes au meme endroit. Sur un etage a aire
+ * unique, `bg_index` EST `stage` et rien ne change. */
+static s32 Bg_Plans_Source(void) {
+    return Bg_Aires_Multiples() ? (s32)bg_w.bg_index : (s32)bg_w.stage;
+}
+
 #define PLANS_ANIMES_MAX 2
 #define PAGES_PAR_VUE 32
 
@@ -130,14 +166,15 @@ static s32 pa_vue[PLANS_ANIMES_MAX];
 
 /// @brief L'animation de ce plan, et son rang dans la table de l'etage.
 static const PlanAnime* Plan_Anime(s32 bgnum, s32* rang) {
+    const s32 src = Bg_Plans_Source();
     s32 i;
 
-    if (bg_w.stage < 0 || bg_w.stage >= 58) {
+    if (src < 0 || src >= 58) {
         return NULL;
     }
 
     for (i = 0; i < PLANS_ANIMES_MAX; i++) {
-        const PlanAnime* a = &plans_animes[bg_w.stage][i];
+        const PlanAnime* a = &plans_animes[src][i];
 
         if (a->suite != NULL && a->plan == bgnum) {
             *rang = i;
@@ -150,12 +187,13 @@ static const PlanAnime* Plan_Anime(s32 bgnum, s32* rang) {
 
 /// @brief Remet les animations de plan de l'etage a leur premier pas.
 static void Plans_Animes_Init(s32 premier_gix) {
+    const s32 src = Bg_Plans_Source();
     s32 i;
 
     pa_gix = premier_gix;
 
     for (i = 0; i < PLANS_ANIMES_MAX; i++) {
-        const PlanAnime* a = (bg_w.stage >= 0 && bg_w.stage < 58) ? &plans_animes[bg_w.stage][i] : NULL;
+        const PlanAnime* a = (src >= 0 && src < 58) ? &plans_animes[src][i] : NULL;
 
         pa_pas[i] = (a != NULL) ? a->suite : NULL;
         pa_reste[i] = (pa_pas[i] != NULL) ? pa_pas[i][0] : 0;
@@ -165,7 +203,7 @@ static void Plans_Animes_Init(s32 premier_gix) {
 
 /// @brief Une trame de l'animation d'un plan. Appelee une fois par plan et par trame.
 static void Plans_Animes_Avancer(s32 rang) {
-    const PlanAnime* a = &plans_animes[bg_w.stage][rang];
+    const PlanAnime* a = &plans_animes[Bg_Plans_Source()][rang];
 
     if (pa_pas[rang] == NULL) {
         return;
@@ -394,19 +432,52 @@ void Bg_Texture_Load_EX() {
 
     ending_flag = 0;
 
+    /* Les tables de plans suivent l'AIRE, pas l'etage -- voir `Bg_Plans_Source`. */
+    const s32 src = Bg_Plans_Source();
+
     for (stg = 0; stg < 4; stg++) {
-        if (stage_bgw_number[bg_w.stage][stg] != 0) {
+        if (stage_bgw_number[src][stg] != 0) {
             break;
         }
     }
 
-    for (i = 0; i < use_real_scr[bg_w.stage]; i++) {
-        scr_bcm[stg + i] = bg_map_tbl[bg_w.stage][i];
+    for (i = 0; i < use_real_scr[src]; i++) {
+        scr_bcm[stg + i] = bg_map_tbl[src][i];
     }
 
     for (i = 0; i < 4; i++) {
-        if (stage_bgw_number[bg_w.stage][i] > 0) {
+        if (stage_bgw_number[src][i] > 0) {
             Bg_On_R(1 << i);
+        }
+    }
+
+    /* DIAGNOSTIC `SF3_PLAN_SEUL` -- un diagnostic, pas un reglage.
+     *
+     * Frederic, sur Alex : « *il manque le plan derriere le clochard* ». Les valeurs sont
+     * celles de la console (relues dans `SF3_1ST.BIN`), les pages n'ont aucune colonne
+     * vide (mesure colonne par colonne sur les trois listes), et la correspondance
+     * plan -> famille est confirmee par les coefficients de defilement. Le defaut est
+     * donc au DESSIN, et il faut savoir QUELLE couche.
+     *
+     * `SF3_PLAN_SEUL=0`, `=1` ou `=2` n'en laisse qu'une allumee. Trois lancements, et
+     * celle qui ne montre rien est la coupable. Absent, rien ne change.
+     *
+     * Pour Alex : couche 0 = liste 132 (coef 0,625, z 104), couche 1 = liste 196 (la rue,
+     * coef 1,0, z 84), couche 2 = liste 260 (coef 0,875, z 94). */
+    {
+        const char* seul_txt = getenv("SF3_PLAN_SEUL");
+
+        if (seul_txt != NULL) {
+            const s32 seul = atoi(seul_txt);
+            s32 k;
+
+            for (k = 0; k < 4; k++) {
+                if (k != seul) {
+                    Bg_Off_R((u16)(1 << k));
+                }
+            }
+
+            TraceFin("SF3_PLAN_SEUL = %d : seule la couche %d reste allumee\n", seul, seul, 0);
         }
     }
 
@@ -414,7 +485,12 @@ void Bg_Texture_Load_EX() {
         Bg_On_R(4);
     }
 
-    TexRemix_SetStage(bg_w.stage);
+    /* LES PAGES SUIVENT L AIRE, PAS L ETAGE -- 26/09/2026. Le remix nomme les pages d'un
+       etage ajoute par son NUMERO (stage<N>/<liste>-<page>.tex). Ibuki a trois aires qui
+       portent trois jeux de pages differents, aux etages 48, 49 et 50 : c'est donc
+       `bg_index` qu'il faut lui donner, et non `stage`, qui resterait a 48 pour les trois.
+       Sur un etage a aire unique les deux sont le meme nombre, et rien ne change. */
+    TexRemix_SetStage(Bg_Aires_Multiples() ? bg_w.bg_index : bg_w.stage);
     key1 = Search_ramcnt_type(0x12);
     loadAdrs = Get_ramcnt_pointer(key1);
     loadSize = Get_size_data_ramcnt_key(key1);
@@ -422,7 +498,7 @@ void Bg_Texture_Load_EX() {
     shift = 0x18;
 
     for (j = 0; j < 3; j++, shift -= 8, assign1 = pmask >>= 8) {
-        prio = stage_priority[bg_w.stage];
+        prio = stage_priority[src];
         prio &= pmask;
         prio >>= shift;
         bg_priority[j] = prio;
@@ -433,13 +509,13 @@ void Bg_Texture_Load_EX() {
     /* Le QUATRIEME plan des etages ajoutes. Son z etait code en dur a 70 parce que le
        plan 3 ne servait qu'a l'effet d'aube ; le dernier octet de `stage_priority`
        restait donc inutilise. On le lit pour nos etages, et pour eux seuls. */
-    if (bg_w.stage >= 22 && (stage_priority[bg_w.stage] & 0xFF) != 0) {
-        bg_priority[3] = stage_priority[bg_w.stage] & 0xFF;
+    if (src >= 22 && (stage_priority[src] & 0xFF) != 0) {
+        bg_priority[3] = stage_priority[src] & 0xFF;
     }
     accnum = 0;
 
     for (j = 0; j < bg_w.scrno; j++, assign3 = stg++) {
-        tgbix = bgtex_stage_gbix[bg_w.stage][j];
+        tgbix = bgtex_stage_gbix[src][j];
         mask = 0x80000000;
         ppgSetupCurrentDataList(&ppgBgList[stg]);
         ppgSetupTexChunk_1st(NULL, loadAdrs, loadSize, (stg * 64) + 0x84, 32, 0, 0);
@@ -453,7 +529,19 @@ void Bg_Texture_Load_EX() {
         }
     }
 
-    x = rewrite_scr[bg_w.stage];
+    x = rewrite_scr[src];
+
+    /* QUI AFFAME L'ARCHIVE -- 27/09/2026. Frederic : « le decor du 2eme round est glitche »
+       sur Elena 2I, qui change de bande a la manche 2 (etage 56 puis 30). `pages-manquantes.log`
+       compte 1408 pages non installees, toutes avec `accnum 96, textures 96` : l'archive n'a
+       plus rien a donner quand on lui demande les pages de REECRITURE. Le commentaire de
+       `ppgSetupTexChunk_2nd` le disait deja -- « des qu'un etage reclame un plan de plus que
+       son donneur n'en a » -- mais le journal ne dit ni l'etage ni la liste. Ces deux lignes
+       le disent, et elles ne coutent qu'un chargement d'etage. */
+    TraceFin("pages : etage %d, plan de base %d, pages de reecriture %d\n",
+             (s32)src, (s32)stg, (s32)x);
+    TraceFin("   deja consommees %d, liste de reecriture %d\n",
+             (s32)accnum, (s32)((stg * 64) + 0x64), 0);
 
     if (x) {
         ppgSetupCurrentDataList(&ppgRwBgList);
@@ -464,6 +552,8 @@ void Bg_Texture_Load_EX() {
             accnum = ppgSetupTexChunk_2nd(NULL, i + ((stg * 64) + 0x64));
             ppgSetupTexChunk_3rd(NULL, i + ((stg * 64) + 0x64), 1);
         }
+
+        TraceFin("   apres reecriture : consommees %d\n", (s32)accnum, 0, 0);
     }
 
     /* Les pages de reecriture viennent d'etre chargees : nos animations de plan savent

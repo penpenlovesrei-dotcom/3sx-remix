@@ -13,6 +13,7 @@
 #include "sf33rd/Source/Game/io/gd3rd_data.h"
 #include "sf33rd/Source/Game/rendering/color3rd.h"
 #include "sf33rd/Source/Game/rendering/texgroup.h"
+#include "sf33rd/Source/Game/stage/bg_sub.h"
 #include "sf33rd/Source/Game/system/ramcnt.h"
 #include "sf33rd/Source/Game/system/work_sys.h"
 #include "structs.h"
@@ -301,6 +302,11 @@ static void Push_LDREQ_Queue_Metamor() {
 }
 
 void Push_LDREQ_Queue_BG(s16 ix) {
+    /* NE PAS DETOURNER CE NUMERO -- essaye et rate le 27/09/2026. J'y avais mis
+       `Bg_Archive_Source(ix)` pour faire charger l'archive de la bande 56 d'Elena 2I au lieu
+       de celle de l'etage 30 : le bloc de requetes de l'etage 56 n'est pas celui que le jeu
+       attend pour un match sur l'etage 30, et LE DECOR NE SE LANCE PLUS DU TOUT.
+       Frederic : « mais tu fais quoi ? le decor ne se lance meme plus ! ». */
     Push_LDREQ_Queue_Union(ix + 20);
     Push_LDREQ_Queue_Metamor();
 }

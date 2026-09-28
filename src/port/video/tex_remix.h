@@ -24,8 +24,9 @@ typedef struct {
 /// handed to the texture pool. A replacement is found by what the page *contains*, never by where it
 /// came from, so nothing has to know which screen or which archive entry is being loaded.
 ///
-/// On a hit, `bits` is rewritten to describe the replacement -- larger, and always 32-bit colour --
-/// and points at memory this module owns until the next call. Sprite corners are cut from a page in
+/// On a hit, `bits` is rewritten to describe the replacement -- larger, and either 32-bit colour or,
+/// since the version 2 of the container, 8-bit indices with a palette of its own -- and points at
+/// memory this module owns until the next call. Sprite corners are cut from a page in
 /// fractions of its width, so a page that holds four times the pixels is cut in exactly the same
 /// places: no geometry, no layout and no drawing code needs to hear about any of this.
 ///
@@ -73,6 +74,20 @@ void TexRemix_NotePair(u32 tex_code);
 ///
 /// Coordinates are the quad's texture coordinates, 0 to 1 across the page.
 void TexRemix_NoteQuad(float u0, float v0, float u1, float v1);
+
+/// @brief La palette de la page qu'on vient de substituer, ou `NULL`.
+///
+/// Une page en version 2 du format arrive en INDICES, pas en couleur : ses couleurs sont dans la
+/// page elle-meme, et non dans une palette que le jeu aurait preparee. Le rendu la reprend ici au
+/// moment ou il cree la texture, et la donne a cette texture-la seulement.
+///
+/// Elle ne se reprend qu'une fois : le deuxieme appel rend `NULL`. C'est ce qui garantit qu'une
+/// texture creee plus tard -- une qui ne vient pas d'une substitution -- ne puisse pas heriter de
+/// la palette d'une page precedente.
+///
+/// @return 256 entrees de quatre octets, dans l'ordre meme des pixels 32 bits de la version 1, ou
+///         `NULL` si la derniere substitution n'etait pas indexee.
+const u32* TexRemix_TakeReplacementPalette(void);
 
 /// @brief Forget what a texture handle held. Called when one is (re)created, so a recycled
 /// handle never keeps the mark of the page that used it before.

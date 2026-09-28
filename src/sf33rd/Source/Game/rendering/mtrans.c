@@ -1801,8 +1801,36 @@ u16 seqsGetSprMax() {
     return seqs_w.sprMax;
 }
 
+/* LE TAMPON DE MORCEAUX -- 24/09/2026, le plantage de Sean.
+
+   `0xD000` = 53248 octets, et un `Sprite2` en fait exactement 52 : **1024 morceaux**, ce
+   que garde le controle de `seqsStoreChip` (`> 0x400`). C'etait la mesure de la console.
+
+   Nos etages ajoutes en demandent DAVANTAGE, et ca se compte dans la table des fiches --
+   la somme des `cols * ligs` de tous les objets vivants d'une variante :
+
+       etage 51  2236 morceaux      etage 39 (Sean)  2025
+       etage 37  2043               etage 47         1453
+
+   Trois etages au-dessus du double du tampon. Et `seqsStoreChip` **ecrivait AVANT de
+   controler** : au 1025e morceau il posait 52 octets APRES la fin du bloc, puis
+   journalisait. Une ecriture hors bornes dans le tas, a chaque trame -- c'est la que
+   mourait le jeu, sans un mot, a l'entree de l'etage 39.
+
+   Quatre mille places. Le tampon passe de 52 Ko a 208 Ko, ce qui ne se discute pas sur une
+   machine de bureau, et le controle -- desormais AVANT l'ecriture -- garde son sens.
+
+   ET IL NE SE PREND PLUS DANS LE TAS -- 24/09/2026, une heure plus tard. Le demander a
+   `mppMalloc` a VIDE le tas de la console : `flAllocMemory` a rendu NULL, et
+   `seqsInitialize` a fait ce qu'il fait d'un NULL -- `while (1) {}`, sans un mot. Le jeu
+   ne se lancait plus du tout. Frederic : « le jeu ne se lance meme plus ».
+
+   Le tampon est donc un tableau STATIQUE de `main.c`, comme `tpu_free_mem` et les deux
+   autres a cote de lui. 208 Ko dans le binaire ne coutent rien ici, et le tas de la
+   console retrouve exactement ce qu'il avait. */
+
 u32 seqsGetUseMemorySize() {
-    return 0xD000;
+    return SEQS_CHIP_MAX * sizeof(Sprite2);
 }
 
 void seqsBeforeProcess() {
@@ -1853,6 +1881,14 @@ s32 seqsStoreChip(f32 x, f32 y, s32 w, s32 h, s32 gix, s32 code, s32 attr, s32 a
     Sprite2* chip;
     s32 u;
     s32 v;
+
+    /* ON CONTROLE AVANT D'ECRIRE. L'ordre inverse posait le morceau de trop hors du
+       bloc avant de s'en apercevoir. */
+    if (seqs_w.sprTotal >= SEQS_CHIP_MAX) {
+        // The number of OBJ fragments has exceeded the planned number
+        flLogOut("ＯＢＪの破片が予定数を越えてしまいました");
+        while (1) {}
+    }
 
     chip = &seqs_w.chip[seqs_w.sprTotal];
     chip->v[0].x = x;
@@ -1906,13 +1942,6 @@ s32 seqsStoreChip(f32 x, f32 y, s32 w, s32 h, s32 gix, s32 code, s32 attr, s32 a
     chip->vertex_color = curr_bright | ((0xFF - alpha) << 24);
     chip->id = id;
     seqs_w.sprTotal += 1;
-
-    if (seqs_w.sprTotal > 0x400) {
-        // The number of OBJ fragments has exceeded the planned number
-        flLogOut("ＯＢＪの破片が予定数を越えてしまいました");
-        while (1) {}
-    }
-
     return 1;
 }
 
@@ -2024,6 +2053,26 @@ static s32 get_mltbuf16_ext_2(MultiTexture* mt, u32 code, u32 palt, s32* ret, Pa
 
         return 1;
     }
+
+    /* CE QUI A DEBORDE, EN CLAIR -- 27/09/2026. Le message japonais ne dit pas lequel des
+       trois cas c'est, et Elena 2I gele « entre le 1er et le 2eme round », c'est-a-dire au
+       changement de bande (decor 8 : etage 56 a la manche 1, etage 30 ensuite). Les trois
+       candidats se separent par ces nombres :
+         - la reserve est trop petite            -> `utilises` == `sur`, `libres` == 0
+         - une entree de `cpat` a ete retrouvee mais ses emplacements sont vides
+                                                 -> `utilises` < `sur` et `libres` == 0
+         - la palette double les emplacements    -> `utilises` monte avec le meme `code`
+       On les ecrit dans `fatal.log`, a cote du message, et dans le journal de fin de round
+       pour avoir la suite des etages. */
+    /* `TraceFin` D'ABORD : `flLogOut` est declare `__dead2`, il peut ne pas revenir. Et il
+       ne prend QUE trois entiers -- voir `trace_fin.h`. */
+    TraceFin("GEL x16 EXT2 : etage %d, %d morceaux utilises sur %d\n",
+             (s32)mts_ob_curr_stage, (s32)mt->tpu->x16, (s32)mt->mltnum16);
+    TraceFin("   libres %d, palette %d, code bas %d\n",
+             (s32)mt->tpf->x16, (s32)palt, (s32)(code & 0xFFFF));
+    flLogOut("  etage %d : x16 utilises %d sur %d, libres %d, code %08X, palette %d\n",
+             (s32)mts_ob_curr_stage, (s32)mt->tpu->x16, (s32)mt->mltnum16, (s32)mt->tpf->x16,
+             (u32)code, (s32)palt);
 
     // CG cache is full. x16 EXT2\n
     flLogOut("ＣＧキャッシュが一杯になりました。×１６　ＥＸＴ２\n");

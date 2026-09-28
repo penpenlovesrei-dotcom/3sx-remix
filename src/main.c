@@ -1,6 +1,7 @@
 #include "main.h"
 #include "common.h"
 #if NETPLAY_ENABLED
+#include "port/utils.h"
 #include "platform/netplay/netplay.h"
 #include "platform/netplay/netplay_stress.h"
 #endif
@@ -44,6 +45,11 @@ MPP mpp_w;
 static u8 dctex_linear_mem[0x800];
 static u8 texcash_melt_buffer_mem[0x1000];
 static u8 tpu_free_mem[0x2000];
+
+/* LES MORCEAUX D'UNE TRAME. Statique, et pas pris dans le tas : voir `SEQS_CHIP_MAX`
+   (`mtrans.h`). Le demander a `mppMalloc` vidait le tas et `seqsInitialize` bouclait
+   sur le NULL qu'il recevait, sans un mot. */
+static u8 seqs_chip_mem[SEQS_CHIP_MAX * sizeof(Sprite2)];
 
 static u8* mppMalloc(u32 size) {
     return flAllocMemory(size);
@@ -90,7 +96,7 @@ static void njUserInit() {
     mpp_w.language = Get_Default_Language();
     mmSystemInitialize();
     flGetFrame(&mpp_w.fmsFrame);
-    seqsInitialize(mppMalloc(seqsGetUseMemorySize()));
+    seqsInitialize(seqs_chip_mem);
     ppg_Initialize(mppMalloc(0x60000), 0x60000);
     zlib_Initialize(mppMalloc(0x10000), 0x10000);
     size = flGetSpace();
@@ -120,6 +126,8 @@ static void distributeScratchPadAddress() {
 }
 
 void Main_Init() {
+    /* AVANT TOUT LE RESTE : un plantage dur doit nommer sa fonction. */
+    install_crash_handler();
     flInitialize();
     flSetRenderState(FLRENDER_BACKCOLOR, 0);
     system_init_level = 0;

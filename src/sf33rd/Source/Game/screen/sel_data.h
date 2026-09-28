@@ -28,6 +28,11 @@ extern const s16 Width_Data_76[];
 extern const u8 PL_Color_Data[20];
 extern const u8 Victory_Color_Data[20];
 extern const u8 Random_Stage_Data[2][32];
+
+/// @brief Les etages que l'entree RANDOM du selecteur peut tirer, nos decors compris.
+///
+/// 128 cases, lues par `Random_ix32 & 0x7F` -- voir `sel_data.c` pour le pourquoi.
+extern const u8 Etage_Au_Hasard[128];
 extern const s16 Slide_Pos_Data_61[][2];
 extern const s16 Slide_Pos_Data_63[][2];
 extern const s16 Slide_Pos_Data_64[][2];

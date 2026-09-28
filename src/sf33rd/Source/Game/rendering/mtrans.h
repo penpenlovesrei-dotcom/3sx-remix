@@ -1,10 +1,19 @@
 #ifndef MTRANS_H
 #define MTRANS_H
 
+#include "core/render_primitives.h"
 #include "structs.h"
 #include "types.h"
 
 extern f32 PrioBase[128];
+
+/// @brief Les morceaux de sprite qu'une trame peut porter -- voir `seqsStoreChip`.
+///
+/// 1024 sur la console (53248 octets pour des `Sprite2` de 52). Nos etages ajoutes en
+/// demandent jusqu'a 2268 : le tampon deborde, et il debordait EN ECRIVANT avant de
+/// controler. Le tableau est statique dans `main.c` -- le prendre dans le tas de la
+/// console le vidait et le jeu ne se lancait plus.
+#define SEQS_CHIP_MAX 4096
 
 void appSetupBasePriority();
 void appSetupTempPriority();

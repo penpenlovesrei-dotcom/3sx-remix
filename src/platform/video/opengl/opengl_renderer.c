@@ -7,6 +7,7 @@
 #include "sf33rd/AcrSDK/ps2/flps2etc.h"
 #include "sf33rd/AcrSDK/ps2/flps2render.h"
 #include "sf33rd/AcrSDK/ps2/foundaps2.h"
+#include "port/video/tex_remix.h"
 
 #include "glad.h"
 #include "stb/stb_ds.h"
@@ -56,6 +57,9 @@ typedef struct GLTexture {
     Uint16 width;
     Uint16 height;
     GLPaletteType palette_type;
+    /* La palette qu'une page de decor porte elle-meme -- voir le meme champ cote SDL GPU.
+       Non nulle, elle passe avant celle que le jeu a preparee. */
+    GLuint propre_palette;
 } GLTexture;
 
 typedef struct GLTextureSpec {
@@ -237,6 +241,11 @@ static void OpenGLRenderer_CreateTexture(unsigned int th) {
 
     if (textures[texture_index].handle != 0) {
         glDeleteTextures(1, &textures[texture_index].handle);
+
+        if (textures[texture_index].propre_palette != 0) {
+            glDeleteTextures(1, &textures[texture_index].propre_palette);
+        }
+
         SDL_zero(textures[texture_index]);
     }
 
@@ -289,11 +298,28 @@ static void OpenGLRenderer_CreateTexture(unsigned int th) {
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, internal_format, buffer_width, fl_texture->height, 0, format, type, pixels);
 
+    /* LA PAGE SUBSTITUEE PORTE PEUT-ETRE SA PROPRE PALETTE -- voir `tex_remix.c`.
+       Les octets sont ceux que la version 1 du `.tex` posait par pixel, c'est-a-dire
+       B, G, R, A : `GL_BGRA` les remet donc dans le bon ordre, exactement comme pour
+       les palettes du jeu. */
+    GLuint propre_palette = 0;
+    const u32* palette_de_la_page = TexRemix_TakeReplacementPalette();
+
+    if (palette_de_la_page != NULL && palette_type == PALETTE_8) {
+        glGenTextures(1, &propre_palette);
+        glBindTexture(GL_TEXTURE_1D, propre_palette);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, 256, 0, GL_BGRA, GL_UNSIGNED_BYTE, palette_de_la_page);
+    }
+
     textures[texture_index] = (GLTexture) {
         .handle = texture,
         .width = fl_texture->width,
         .height = fl_texture->height,
         .palette_type = palette_type,
+        .propre_palette = propre_palette,
     };
 }
 
@@ -364,7 +390,11 @@ static void OpenGLRenderer_SetTexture(unsigned int th) {
 
     const int palette_handle = HI_16_BITS(th);
 
-    if (palette_handle > 0) {
+    if (textures[texture_index].propre_palette != 0) {
+        /* Une page de decor porte ses propres couleurs ; celle du jeu ne vaut que pour
+           les pages du jeu. */
+        latest_texture_spec.palette = textures[texture_index].propre_palette;
+    } else if (palette_handle > 0) {
         const int palette_index = palette_handle - 1;
         latest_texture_spec.palette = palettes[palette_index];
     } else {

@@ -682,7 +682,29 @@ const s16 limit_tbl3[58][3][4] = {
     { { 0x1C4, 0x23C, 0xB8, 0xB8 }, { 0x1C4, 0x23C, 0xB8, 0xB8 }, { 0x1C4, 0x23C, 0xB8, 0xB8 } },
     { { 0x0130, 0x02B4, 0xF0, 0xF0 }, { 0x0142, 0x02BC, 0xF0, 0xF0 }, { 0x00D1, 0x02F4, 0xF0, 0xF0 } },  /* etage 22 : bg00 GILL, 378 px jouables */
     { { 0x014D, 0x02B7, 0xF0, 0xF0 }, { 0x0102, 0x02FC, 0xF0, 0xF0 }, { 0x0189, 0x027A, 0xF0, 0xF0 } },  /* etage 23 : bg01 ALEX, 506 px jouables */
-    { { 0x0136, 0x02C5, 0xF0, 0xF0 }, { 0x0136, 0x02CB, 0xF0, 0xF0 }, { 0x0136, 0x02C5, 0xF0, 0xF0 } },  /* etage 24 : bg02 RYU, 405 px jouables */
+    /* RYU 2I : LES EXTREMITES, MESUREES -- 26/09/2026.
+     *
+     * Frederic : « *Ryu 2I est corrige au niveau des sprites mais pas des extremites du
+     * decor* ». Le fond, lui, est juste : les 32 pages de la liste 196 sont identiques a
+     * la banque du disque au pixel pres. Ce qu'on voit aux bords n'est pas un fond faux,
+     * c'est un fond ABSENT -- la camera sort de ce que la bande peint.
+     *
+     * Mesure, sur les pages deployees, de la bande a hauteur des combattants (y 384..447
+     * de la demi-banque basse) :
+     *
+     *     le decor peint         x  128 .. 895
+     *     0x0136..0x02C5 voit    x  118 .. 900      10 px a gauche, 5 px a droite de vide
+     *     0x0140..0x02C0 voit    x  128 .. 895      exactement la bande peinte
+     *
+     * Et 0x140..0x2C0 n'est pas un reglage : c'est le defaut de 3rd Strike, et c'est la
+     * course de 383 que 2nd Impact impose lui-meme -- `0x8C0D9C26` borne la camera a
+     * [0, 383] ou [0, 495] selon `0x8C841F3C`, sans aucune table par etage. Les 405 px
+     * poses a la main le 15/09 debordaient des deux cotes.
+     *
+     * ON NE TOUCHE QUE L'ETAGE 24. La meme mesure dit que les etages 22, 27, 33, 34 et 35
+     * debordent aussi (16, 90/143, 51, 111/53 et 111/53 px) : ce n'est pas signale, donc
+     * ce n'est pas change. C'est ecrit dans DECORS.md. */
+    { { 0x0140, 0x02C0, 0xF0, 0xF0 }, { 0x0140, 0x02C0, 0xF0, 0xF0 }, { 0x0140, 0x02C0, 0xF0, 0xF0 } },  /* etage 24 : bg02 RYU, 384 px jouables */
     { { 0x0148, 0x02B0, 0xF0, 0xF0 }, { 0x0142, 0x02BC, 0xF0, 0xF0 }, { 0x0148, 0x02B0, 0xF0, 0xF0 } },  /* etage 25 : bg03 YUN, 378 px jouables */
     { { 0x0110, 0x02F0, 0xF0, 0xF0 }, { 0x0110, 0x02F0, 0xF0, 0xF0 }, { 0x0110, 0x02F0, 0xF0, 0xF0 } },  /* etage 26 : bg04 DUDLEY, 480 px jouables */
     { { 0x00CA, 0x0330, 0xF0, 0xF0 }, { 0x00C6, 0x033C, 0xF0, 0xF0 }, { 0x00CA, 0x0330, 0xF0, 0xF0 } },  /* etage 27 : bg05 NECRO, 630 px jouables */
@@ -727,14 +749,34 @@ const s8 bg_index_tbl[58][3] = { { 0, 0, 0 },    { 1, 1, 1 },    { 2, 2, 2 },   
     { 27, 27, 27 },
     { 28, 28, 28 },
     { 29, 29, 29 },
-    { 30, 30, 30 } /* PLUS DE VARIANTE PAR AIRE -- 16/09/2026. La table 0x8C1D591C de
-                       2nd Impact donne bien decor 8 -> bandes 8, 9, 9, mais le portage
-                       ne suivait l'aire qu'a MOITIE : `Bg_Texture_Load` prend pages,
-                       profondeurs et plans a `bg_w.stage` (30), `Bg_Family_Set` et les
-                       objets a `bg_index` (56). L'etage 30 montrait donc les pages
-                       d'Elena 1 avec les plans et les objets -- aucun -- de la variante,
-                       et toujours en aire 0 (traces du 15/09). Chacune a maintenant son
-                       etage entier : 30 Elena 1, 56 la variante du pont. */,
+    /* ELENA 2I NE BASCULE PLUS -- RETIREE UNE SECONDE FOIS, le 27/09/2026.
+       Frederic : « *le decor fonctionnait parfaitement ! remets-le en etat !* »
+
+       HISTORIQUE, PARCE QUE C'EST LA DEUXIEME FOIS :
+
+         16/09  bascule { 56, 30, 30 } RETIREE -- le portage ne suivait l'aire qu'a moitie,
+                `Bg_Texture_Load` prenant pages, profondeurs et plans a `bg_w.stage` pendant
+                que les objets suivaient `bg_index`.
+         25/09  REMISE a la demande de Frederic (« les 2 versions des decors d'Elena second
+                impact doivent s'enchainer entre les 2 rounds »), parce que `Bg_Plans_Source`
+                faisait desormais suivre `bg_index` a toutes les TABLES de plans.
+         27/09  RETIREE. Elle n'a jamais fonctionne depuis : le jeu ne charge qu'UNE archive
+                de pages par match, celle de `color_file[bg_w.stage]` -- l'etage 30, donc
+                `1543.bin`, 96 textures et TROIS plans -- et la bande 56 en a QUATRE, soit
+                128 pages. Les 32 du quatrieme plan ne sont jamais installees
+                (`ppgSetupTexChunk_2nd` rend la main des que `textures <= accnum`), leurs
+                emplacements gardent l'image precedente, et la manche 2 montre les deux
+                bandes a la fois.
+
+       CE QUE L'EQUIVALENT NG FAIT, ET POURQUOI LUI MARCHE : Elena NG enchaine 51 et 52, qui
+       ont TOUS DEUX DEUX PLANS ; Ibuki 48/49/50 en a trois partout. Une seule archive suffit
+       parce que les deux bandes en demandent autant. Chez Elena 2I, 56 en a quatre et 30 en
+       a trois : c'est cet ecart, et lui seul, qui empeche la bascule.
+
+       Pour la remettre un jour il faut d'abord egaliser les plans des deux bandes -- soit
+       ramener 56 a trois (la forme d'Elena NG), soit donner un quatrieme plan a l'etage 30.
+       Tant que ce n'est pas fait, on laisse le decor dans l'etat qui fonctionne. */
+    { 30, 30, 30 },
     { 31, 31, 31 },
     { 32, 32, 32 },
     { 33, 33, 33 },

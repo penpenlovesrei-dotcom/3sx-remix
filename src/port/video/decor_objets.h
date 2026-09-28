@@ -109,6 +109,20 @@ typedef struct {
     /// d'Oro lit le personnage des joueurs a sa naissance : couche en 700 contre les
     /// inconnus, debout en 608 devant Ibuki, Elena ou Oro.
     s32 variante;
+    /// @brief Les AIRES ou l'objet existe -- un bit par manche ; 0 ou 7 = les trois.
+    ///
+    /// Un etage peut changer d'objets d'une manche a l'autre SANS changer de bande, et
+    /// Hugo le fait. Ses deux spawners lisent `bloc = table[decor*12 + aire*4]`, et les
+    /// trois aires donnent trois blocs :
+    ///
+    ///     aire 0   scripts 17, 4        et 19, 26, 27, 24
+    ///     aire 1   scripts 20, 22, 4    et 15, 26, 27, 24
+    ///     aire 2   scripts 20, 21, 22   et 15, 26, 27, 24
+    ///
+    /// `variante` ne pouvait pas porter ca : elle est TIREE (`rand() & 3`), alors que
+    /// l'aire est la manche, `bg_w.area`. D'ou ce second masque, teste par
+    /// `dans_la_variante`. Les objets qui ne dependent pas de la manche portent 0.
+    s32 aires;
     /// @brief 0, ou l'objet dont la ROUTINE choisit l'image -- voir `conduire`.
     ///
     /// 1 = le chien debout d'Oro (regard, queue, aboiement), 2 = le chien couche (repos,
@@ -123,7 +137,10 @@ typedef struct {
     /// @brief Le premier pas de chaque suite, puis la fin : `nb_suites + 1` entrees.
     const unsigned short* suites;
     s32 nb_suites;
-    /// @brief Le trajet d'un objet qui se deplace : `{ duree, vx, vy, suite }` par segment.
+    /// @brief Le trajet d'un objet qui se deplace : `{ duree, vx, vy, suite, z }` par segment.
+    ///
+    /// `z` est la profondeur du segment ; **zero garde celle de la fiche**. Elle sert a
+    /// l'oiseau d'Elena 1, dont la routine ecrit `[+556]` en cours de vol.
     ///
     /// `vx` et `vy` sont en 1/256 de pixel par trame ; `suite` vaut -1 quand le segment ne
     /// change pas l'animation. La liste boucle sur son premier segment, et l'objet y
@@ -132,6 +149,81 @@ typedef struct {
     /// d'Elena 1 revient a sa place toutes les 33 trames. Voir `TRAJET` dans le .c.
     const short* trajet;
     s32 nb_trajet;
+    /// @brief 1 quand le trajet NE BOUCLE PAS : au bout, l'objet s'eteint.
+    ///
+    /// L'oiseau d'Elena 1 ne repasse pas par son perchoir. Sa routine `0x8C0A63F0` a un
+    /// etat 3 qui avance le script jusqu'au premier drapeau non nul, puis ecrit
+    ///
+    ///     0x8C0A6526   objet[+1] = 0        disp_flag : il DISPARAIT
+    ///
+    /// et passe a l'etat 4, qui attend quatre conditions globales
+    /// (`0x8C085B08` : `u8[0x8C545295]`, `u16[0x8C5452E6] == 1`, `s16[0x8C5493AC] >= 2`,
+    /// `u8[0x8C5493B4]`) avant le vol en gros plan, lequel finit par la DESTRUCTION de
+    /// l'objet (etat 9 -> etat 10, `0x8C032578`). Le perchoir ne revient jamais.
+    ///
+    /// Le trajet bouclait : Frederic voyait « une animation qui tourne en boucle ». Avec
+    /// ce drapeau, le dernier segment joue puis l'objet s'efface, et il en reste la.
+    s32 trajet_fin;
+    /// @brief La TAILLE de l'objet, en 1/64 -- 0 quand il garde la sienne.
+    ///
+    /// `mlt_obj_matrix` sait deja mettre un objet a l'echelle :
+    ///
+    ///     if (wk->my_mr_flag) {
+    ///         njScale(NULL, (1.0f / 64.0f) * (wk->my_mr.size.x + 1),
+    ///                       (1.0f / 64.0f) * (wk->my_mr.size.y + 1), 1.0f);
+    ///     }
+    ///
+    /// **Le neutre est donc 63**, et c'est exactement celui du Dreamcast : son code de
+    /// dessin fait `add #-63,r2` sur le meme champ (`0x8C032F28`). La caleche de Dudley 1
+    /// nait a 55 -- 56/64, soit 87,5 % -- et perd un cran toutes les huit trames pendant
+    /// qu'elle remonte la rue (`0x8C0A8B14`, `objet[+52] & 7 == 7`), jusqu'a 37 quand elle
+    /// passe sous x 48 et que tout recommence. C'est la PERSPECTIVE : elle s'eloigne.
+    ///
+    /// `echelle_pas` vaut 0 quand la taille ne bouge pas, et `echelle_seg` dit sur quel
+    /// segment de trajet elle decroit (-1 = sur tous) : la caleche ne retrecit que sur son
+    /// dernier segment, celui ou elle roule.
+    s32 echelle;
+    s32 echelle_pas;
+    s32 echelle_seg;
+    /// @brief L'ECART DE CE MORCEAU au premier morceau du groupe, en pixels.
+    ///
+    /// Un objet plus large que le cache est SERVI EN MORCEAUX voisins qui se rejoignent au
+    /// pixel (`animerng.morceaux_objet`), et la caleche en fait dix colonnes : neuf dans un
+    /// morceau, une dans l'autre, a 144 pixels de la. Or `njScale` agit autour du point ou
+    /// `njTranslate` vient de poser l'objet : mis a l'echelle chacun autour du SIEN, les
+    /// deux morceaux s'ecarteraient de `(1 - echelle) * 144`, soit 58 pixels au plus petit.
+    ///
+    /// On ramene donc chaque morceau vers le premier : `x -= (63 - taille) * ecart / 64`.
+    /// Le premier morceau a un ecart nul et ne bouge pas ; le second suit exactement le
+    /// bord droit du premier. Un objet d'un seul morceau porte zero et n'est pas concerne.
+    s32 echelle_ecart;
+    /// @brief La BOITE de l'objet -- `{ x, largeur, y, hauteur }`, ou 0 s'il ne se brise pas.
+    ///
+    /// Elle est dans le repere de la fiche, celui de `x` et `y` ci-dessus, et c'est le
+    /// generateur qui l'y met : le Dreamcast la range en `0x8C1D3ED4 + type*8`, relative a
+    /// `objet[+102]`/`+106`. Voir RUPTURE dans le .c.
+    s32 boite[4];
+    /// @brief L'image ou la BOUCLE reprend -- 0 quand tout le script reboucle.
+    ///
+    /// Frederic, sur Oro : « *l'animation d'un chaton tourne en boucle alors que ses
+    /// premieres phases d'animation ne doivent etre realisees qu'une seule fois* ».
+    ///
+    /// Un script de 2I ou de NG se termine par une COMMANDE, et il y en a deux :
+    ///
+    ///     0x01   reprend a l'enregistrement 0         tout le script reboucle
+    ///     0x02   reprend a l'enregistrement mot3 - 2  ce qui precede ne passe qu'UNE fois
+    ///
+    /// (`index = pas x (mot3 - 2)` dans son gestionnaire `0x8C0B530C`, table `0x8C1C5BC8`,
+    /// deja lu le 23/09 pour la statue de Yang.)
+    ///
+    /// Le chaton d'Oro (script 17, vingt-cinq images) finit sur `0x02` avec `mot3 = 0x000E` :
+    /// le Dreamcast rejoue a partir de l'enregistrement 12, donc **ses douze premieres
+    /// images ne passent qu'une fois** -- la longue pose de 103 trames, les baillements. Le
+    /// port les rejouait indefiniment.
+    ///
+    /// Trois objets de New Generation sont dans ce cas : le chaton d'Oro (12 images sur 25)
+    /// et un objet de Yun 1 et de Yang 1 (2 sur 7, script 24).
+    s32 depart_boucle;
 } DecorAnimation;
 
 extern const DecorAnimation decor_animations[];
@@ -140,6 +232,28 @@ extern const int decor_nb_animations;
 extern const short decor_anim_par_etage[58];
 /// @brief Combien d'animations chaque etage porte. Gill en a quatre.
 extern const short decor_nb_par_etage[58];
+
+/// @brief L'objet vient-il de se briser ? Rend 1 la trame ou la rupture part.
+///
+/// Sert au journal ; la rupture elle-meme est jouee par `conduire`.
+s32 DecorObjets_Brise(const void* work);
+
+/// @brief La taille de l'objet en 1/64, ou 0 quand il garde la sienne.
+///
+/// Rend 1 et ecrit `taille` quand l'objet est mis a l'echelle -- voir `DecorAnimation`.
+s32 DecorObjets_Echelle(const void* work, s32* taille);
+
+/// @brief Avance la manche des objets -- voir `DecorAnimation::aires`.
+///
+/// `Bg_Aire_Suivante` l'appelle pour TOUS les etages, y compris ceux dont la bande ne
+/// change pas : c'est le seul compteur de manche que les objets aient.
+void DecorObjets_MancheSuivante(void);
+
+/// @brief Cet etage a-t-il des objets qui dependent de la manche ?
+///
+/// `Bg_Aire_Suivante` s'en sert pour refaire les objets d'un etage a BANDE UNIQUE, ou
+/// rien d'autre ne justifierait un rechargement.
+s32 DecorObjets_ChangeParAire(s32 bg_index);
 
 /// @brief Combien d'objets animes cet etage demande. `bg_index`, pas `stage`.
 ///
@@ -157,6 +271,11 @@ s32 DecorObjets_Variante(void);
 /// Interrupteur de DIAGNOSTIC : il met tous nos objets a la meme profondeur pour savoir si
 /// un objet invisible est cache par un plan du decor. Sans la variable, rien ne change.
 s32 DecorObjets_ProfondeurForcee(void);
+
+/// @brief `SF3_DECOR_JETS` : la profondeur de rechange des deux jets de Hugo, ou 0.
+///
+/// Un diagnostic, pas un reglage -- voir le commentaire dans le .c.
+s32 DecorObjets_ProfondeurDesJets(void);
 
 
 /// @brief La `rang`-ieme animation de cet etage, ou NULL.
@@ -199,6 +318,14 @@ void DecorObjets_Marquer(const void* work, s32 bg_index, s32 rang);
 /// @param code rendu : l'identite a employer, seulement si la fonction rend 1
 /// @return 1 si c'est notre objet et qu'il est pret, 0 sinon -- et `code` reste intact
 s32 DecorObjets_Identite(const void* work, u32* code);
+
+/// @brief Ce `WORK` doit-il etre dessine cette trame-ci ?
+///
+/// Rend 0 pour un REACTIF que le combattant n'a pas declenche, 1 pour tout le reste --
+/// y compris pour un `WORK` qui n'est pas a nous. Voir le pave REACTIF dans le .c :
+/// le dessiner VIDE creait une collection de motifs d'une seule case, que le moteur
+/// retrouvait ensuite quand l'objet se montrait, et dans laquelle il cherchait en vain.
+s32 DecorObjets_Dessine(const void* work);
 
 /// @brief Les 256 octets a poser pour ce morceau, et la cle de cache a employer.
 ///

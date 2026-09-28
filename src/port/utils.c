@@ -64,6 +64,40 @@ void fatal_error(const char* fmt, ...) {
     abort();
 }
 
+/* UN PLANTAGE DUR MOURAIT MUET -- 24/09/2026.
+
+   `fatal_error` ne sert que sur les chemins que le jeu connait (`flLogOut`, les gels).
+   Une VRAIE faute de memoire, elle, n'avait aucun gestionnaire : le processus disparaissait
+   sans une ligne, et le journal s'arretait sur la derniere chose qu'il avait eu le temps
+   d'ecrire. C'est ce qui s'est passe a l'entree de l'etage 39, et ca n'a rien appris.
+
+   Windows laisse poser un dernier recours. Il reutilise le meme dumpeur de symboles que
+   `fatal_error`, donc la trace aura la meme forme -- et le lanceur la trouvera dans
+   `fatal.log` comme les autres. */
+#if _WIN32
+static LONG WINAPI dernier_recours(EXCEPTION_POINTERS* info) {
+    {
+        /* L'ADRESSE SEULE NE DIT RIEN : Windows deplace l'image a chaque lancement.
+           On donne l'ECART au debut du module, et l'adresse que les symboles de
+           l'executable portent (base preferee 0x140000000) -- `nm` la resout. */
+        char* base = (char*)GetModuleHandleA(NULL);
+        char* ou = (char*)info->ExceptionRecord->ExceptionAddress;
+
+        fatal_error("plantage dur : code 0x%08lX, ecart 0x%llX, symbole 0x%llX",
+                    (unsigned long)info->ExceptionRecord->ExceptionCode,
+                    (unsigned long long)(ou - base),
+                    (unsigned long long)(0x140000000ULL + (ou - base)));
+    }
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+#endif
+
+void install_crash_handler(void) {
+#if _WIN32
+    SetUnhandledExceptionFilter(dernier_recours);
+#endif
+}
+
 void not_implemented(const char* func) {
     fatal_error("Function not implemented: %s\n", func);
 }

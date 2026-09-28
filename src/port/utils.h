@@ -9,6 +9,9 @@
 
 __dead2 void fatal_error(const char* fmt, ...);
 __dead2 void not_implemented(const char* func);
+
+/// @brief Pose le dernier recours : un plantage dur ecrit sa trace au lieu de mourir muet.
+void install_crash_handler(void);
 void debug_print(const char* fmt, ...);
 
 #endif

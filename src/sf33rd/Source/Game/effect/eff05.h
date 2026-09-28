@@ -15,4 +15,7 @@ extern u32* char_add[58];
 void effect_05_move(WORK_Other* ewk);
 s32 effect_05_init();
 
+/// @brief Rend les objets de decor de l'aire precedente, pour que la suivante pose les siens.
+void effect_05_rendre(void);
+
 #endif

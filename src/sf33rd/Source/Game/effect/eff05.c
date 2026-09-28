@@ -224,9 +224,40 @@ void effect_05_move(WORK_Other* ewk) {
                         ewk->wu.xyz[1].disp.pos = (s16)y;
                     }
                 }
+
+                /* UN OBJET QUI RETRECIT -- la caleche de Dudley 1. `mlt_obj_matrix` sait
+                   deja le faire, `njScale((size + 1) / 64)`, et le Dreamcast emploie le
+                   meme champ avec le meme neutre, 63. Il ne manquait que ces trois
+                   lignes. Voir `DecorAnimation.echelle`. */
+                {
+                    s32 taille;
+
+                    if (DecorObjets_Echelle(&ewk->wu, &taille)) {
+                        ewk->wu.my_mr_flag = 1;
+                        ewk->wu.my_mr.size.x = (s16)taille;
+                        ewk->wu.my_mr.size.y = (s16)taille;
+                    } else {
+                        /* ET ON L'EFFACE POUR LES AUTRES. Le `WORK` vient du tas d'effets
+                           et il est recycle : un drapeau laisse a 1 par la caleche
+                           retrecirait l'objet qui reprend sa place. */
+                        ewk->wu.my_mr_flag = 0;
+                    }
+                }
             }
             Jalon("       eff05 disp_pos_trans_entry_s", ewk->wu.type);
-            disp_pos_trans_entry_s(ewk);
+
+            /* UN REACTIF QUE PERSONNE N'A DECLENCHE NE SE DESSINE PAS DU TOUT -- il ne
+               se dessinait "vide", ce qui lui faisait une collection de motifs d'UNE
+               case, que le moteur retrouvait quand l'objet se montrait. Voir REACTIF
+               dans `decor_objets.c`.
+
+               LE TEST DE L'ETAGE EST EN TETE, ET IL Y TIENT : les vingt-deux etages
+               d'origine ne doivent RIEN nous devoir, pas meme un appel de fonction.
+               Frederic, le 24/09 : « tu as casse le jeu entier ou juste ce decor ? ».
+               La reponse doit rester lisible dans le code. */
+            if (bg_w.bg_index < 22 || DecorObjets_Dessine(&ewk->wu)) {
+                disp_pos_trans_entry_s(ewk);
+            }
             Jalon("       eff05 objet rendu", ewk->wu.type);
             break;
 
@@ -236,6 +267,36 @@ void effect_05_move(WORK_Other* ewk) {
             push_effect_work(&ewk->wu);
             break;
         }
+    }
+}
+
+/* RENDRE LES OBJETS DE L'AIRE PRECEDENTE -- 25/09/2026.
+ *
+ * Frederic : « *apres le changement entre 2 round, les anciens sprites animes restent, et
+ * les nouveaux sprites a afficher ne sont pas charges* ».
+ *
+ * Les objets de decor naissent UNE FOIS, dans `bg2202_init00`, a la mise en place de
+ * l'etage. Changer d'aire change `bg_w.bg_index`, donc la liste d'objets que
+ * `DecorObjets_Combien` et `scr_obj_data` designent -- mais personne ne rendait les
+ * anciens ni n'appelait `effect_05_init` pour les nouveaux. Les deux moities du defaut
+ * ont la meme cause.
+ *
+ * On rend donc la liste 4 de tout ce qui porte notre signature (`id` 5, `work_id` 0x10).
+ * `push_effect_work` appelle deja `DecorObjets_Oublier`, donc le rang et la palette
+ * suivent. Le maillon suivant est lu AVANT de rendre celui-ci : la liste est chainee, et
+ * `push_effect_work` la recoud. */
+void effect_05_rendre(void) {
+    s16 ix = head_ix[4];
+
+    while (ix != -1) {
+        WORK* w = (WORK*)frw[ix];
+        const s16 suivant = w->behind;
+
+        if (w->id == 5 && w->work_id == 0x10) {
+            push_effect_work(w);
+        }
+
+        ix = suivant;
     }
 }
 
@@ -352,6 +413,14 @@ s32 effect_05_init() {
                plans aient les leurs -- lues dans SF3_2ND.BIN depuis le 16/09 (table
                0x8C601EE8, voir DECORS.md section 11). Le recul de 16 des cascades est
                retire : il compensait des plans mal places. */
+
+            /* LES DEUX JETS DE HUGO, A JUGER SUR L'IMAGE -- voir
+               `DecorObjets_ProfondeurDesJets`. Ce sont les seuls objets de ses deux
+               decors a porter 83 ; le plan proche est a 84. */
+            if (notre_anim->z == 83 && DecorObjets_ProfondeurDesJets()) {
+                ewk->wu.my_priority = ewk->wu.position_z =
+                    (s16)DecorObjets_ProfondeurDesJets();
+            }
 
             /* DIAGNOSTIC `SF3_DECOR_Z` -- voir `DecorObjets_ProfondeurForcee`. */
             if (DecorObjets_ProfondeurForcee()) {

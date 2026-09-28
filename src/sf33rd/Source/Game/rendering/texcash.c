@@ -421,10 +421,17 @@ const s16 mts_OB_page[58][2] = { { 1, 1 }, { 1, 3 }, { 1, 2 }, { 1, 1 }, { 1, 2 
     { 1, 1 } /* etage 23 alex  : 1 objet, 27 cases au pire */,
     { 2, 1 } /* etage 24 ryu   : 9 objets, 104 cases par trame -- deux de plus depuis que
                 le grand sprite est servi en morceaux */,
-    { 3, 1 } /* etage 25 yun   : 8 objets, 130 cases par trame. Il en avait 3 et UNE page :
-                son sprite de 9x11 = 99 cases etait ECARTE faute de tenir dans les 32 cases
-                de la cle de cache, il est maintenant servi en CINQ morceaux voisins */,
-    { 1, 1 } /* etage 26 dudley : 1 objet, 6 cases -- le feu de circulation */,
+    { 4, 1 } /* etage 25 yun   : 40 fiches, 756 cases par trame, 616 morceaux vivants.
+                Il en avait 3 et UNE page : son sprite de 9x11 = 99 cases etait ECARTE faute
+                de tenir dans les 32 cases de la cle de cache, il est maintenant servi en
+                CINQ morceaux voisins. QUATRE PAGES LE 27/09 : 616 sur 768 faisaient 80 %,
+                et Dudley a gele a 85 % -- la meme zone. Quatre pages : 60 %. */,
+    { 4, 1 } /* etage 26 dudley : 10 fiches depuis le 25/09 (il en avait UN, le feu de
+                circulation, 6 cases), 211 cases par trame, 218 morceaux vivants.
+                IL A GELE LE 27/09 sur « ×１６　ＥＸＴ２ » avec UNE page : 218 sur 256 font
+                85 %, et le modele de `verifier_objets` sous-compte -- il ignore la palette
+                dans la cle de cache et les morceaux de la manche precedente, encore vivants
+                douze trames apres un changement d'aire. Quatre pages : 21 %. */,
     { 4, 1 } /* etage 27 necro : 34 objets depuis le 16/09 -- son conducteur, sa rambarde,
                 les trois pieces de la machine. 398 morceaux vivants au pire : 77 % de deux
                 pages, sans marge (Hugo figeait a 108 %). Quatre pages : 38 %. */,
@@ -442,7 +449,14 @@ const s16 mts_OB_page[58][2] = { { 1, 1 }, { 1, 3 }, { 1, 2 }, { 1, 1 }, { 1, 2 
                 QUATRE PAGES DEPUIS LE 16/09/2026 : la cascade animee (entree 0) ajoute
                 sept morceaux de 174 cases par image ; au pire moment quatre images vivent,
                 soit ~700 morceaux plus les 160 du sprite -- plus que les 768 de trois
-                pages, moins que les 1024 de quatre. */,
+                pages, moins que les 1024 de quatre.
+                J'AVAIS MIS DIX LE 27/09, ET JE LES RETIRE LE MEME SOIR. C'etait pour le
+                changement de bande d'Elena 2I ; la bascule est retiree (voir `bg_data.c`),
+                donc ce budget n'a plus de raison d'etre -- et Frederic voit le decor
+                GLITCHE depuis. La memoire d'un cache d'objets sort du meme allocateur que
+                les pages du decor : dix pages en prennent 20 Ko de plus que quatre. Tant
+                qu'on n'a pas mesure ce que ca coute aux pages, on ne gonfle pas un budget
+                sans raison. */,
     { 4, 1 } /* etage 31 oro   : 9 objets, 82 cases */,
     { 4, 1 } /* etage 32 yang  : 34 objets depuis le 17/09 -- ses cinq elements, le
                 monsieur en vert (19 images de 30 cases) et les deux poissons. 574 morceaux

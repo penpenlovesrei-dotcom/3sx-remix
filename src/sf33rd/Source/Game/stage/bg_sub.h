@@ -4,6 +4,12 @@
 #include "structs.h"
 #include "types.h"
 
+/// @brief L'etage dont l'ARCHIVE DE PAGES doit etre chargee -- voir `bg_sub.c`.
+///
+/// Rend `stage` INCHANGE pour tout etage a aire unique ; seul un etage qui bascule de bande
+/// entre les manches -- Elena 2I, aires { 56, 30, 30 } -- rend autre chose que lui-meme.
+s16 Bg_Archive_Source(s16 stage);
+
 void check_cg_zoom();
 void bg_chase_move();
 void chase_start_check();
@@ -40,6 +46,14 @@ void bg_pos_hosei_sub3(s16 bg_no);
 void bg_pos_hosei2();
 s16 get_center_position();
 s16 get_height_position();
+/// @brief L'etage courant a-t-il plusieurs aires ? Voir `Bg_Aire_Suivante`.
+s32 Bg_Aires_Multiples(void);
+
+/// @brief Fait avancer l'aire du decor d'une manche, comme le Dreamcast.
+///
+/// Ne fait rien sur un etage a aire unique, c'est-a-dire sur les 57 autres.
+void Bg_Aire_Suivante(void);
+
 void bg_work_clear();
 void compel_bg_init_position();
 void bg_base_move_common();

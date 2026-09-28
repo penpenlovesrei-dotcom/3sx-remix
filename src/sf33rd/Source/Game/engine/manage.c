@@ -758,6 +758,7 @@ void Game_Manage_6th() {
         C_No[0] = 7;
         C_No[1] = 0;
         Round_num++;
+
         Quick_Entry();
         break;
     }
@@ -915,6 +916,7 @@ void Game_Manage_8th() {
 
 void Game_Manage_8_0() {
     Round_num++;
+
     Quick_Entry();
     Stop_Update_Score = 1;
 
@@ -1115,6 +1117,24 @@ void Game_Manage_9th() {
 
     default:
         if (Switch_Screen(0)) {
+            /* L AIRE DU DECOR AVANCE AVEC LA MANCHE, ET C EST ICI -- corrige le 25/09.
+             *
+             * Frederic : « *la transition entre les decors entre 2 rounds a lieu trop tot,
+             * elle devrait avoir lieu pendant l ecran noir entre les rounds* ». Elle etait
+             * appelee juste apres `Round_num++`, dans l etat 6 et dans l etat 8_0 : le
+             * decor changeait sous les yeux du joueur, pendant que le vainqueur posait
+             * encore.
+             *
+             * `Switch_Screen(0)` ne rend vrai que quand `WipeOut` a fini : l ecran est
+             * alors ENTIEREMENT couvert. C est le seul instant ou un rechargement ne se
+             * voit pas, et c est juste avant que la manche suivante soit armee.
+             *
+             * Les deux chemins d avant passent tous les deux par ici -- l etat 6 met
+             * `C_No[0] = 7`, qui mene a 8 puis a 9 -- et la manche qui termine le match
+             * sort en `C_No[1] == 0` sans jamais y venir, ce qui est juste : on ne
+             * recharge pas pour un decor qu on quitte. */
+            Bg_Aire_Suivante();
+
             BGM_No[0] = 1;
             BGM_Timer[0] = 1;
             G_No[2] = 5;

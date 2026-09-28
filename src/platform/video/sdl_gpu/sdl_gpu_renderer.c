@@ -1,6 +1,7 @@
 #if CRS_VIDEO_DRIVER_SDL_GPU
 
 #include "platform/video/sdl_gpu/sdl_gpu_renderer.h"
+#include "port/video/tex_remix.h"
 #include "common.h"
 #include "port/config/config.h"
 #include "port/utils.h"
@@ -59,6 +60,13 @@ typedef struct _Texture {
     Uint16 width;
     Uint16 height;
     _PaletteType palette_type;
+    /* LA PALETTE QUE LA PAGE PORTE ELLE-MEME -- 25/09/2026.
+     *
+     * Une page de decor en version 2 du `.tex` arrive en indices ET avec ses couleurs.
+     * Elle ne passe donc pas par `palettes[quad->palette_index]`, qui est la palette que
+     * le JEU a preparee pour la page d'origine et qui n'a rien a voir avec la sienne.
+     * Non nulle, celle-ci a la priorite, et seulement pour cette texture. */
+    SDL_GPUTexture* propre_palette;
 } _Texture;
 
 typedef struct _TextureCreateInfo {
@@ -70,6 +78,10 @@ typedef struct _TextureCreateInfo {
     _PaletteType palette_type;
     bool is_palette;
     const void* pixels;
+    /* La creation est differee d'une trame : la palette est COPIEE ici, pas pointee.
+       Celle que `tex_remix` tient sera deja celle d'une autre page. */
+    bool a_sa_palette;
+    Uint32 propre_palette[256];
 } _TextureCreateInfo;
 
 typedef struct _TextureUploadInfo {
@@ -337,6 +349,11 @@ static void SDLGPURenderer_CreateTexture(Uint32 th) {
 
     if (textures[texture_index].handle != NULL) {
         arrpush(textures_to_delete, textures[texture_index].handle);
+
+        if (textures[texture_index].propre_palette != NULL) {
+            arrpush(textures_to_delete, textures[texture_index].propre_palette);
+        }
+
         SDL_zero(textures[texture_index]);
     }
 
@@ -376,6 +393,19 @@ static void SDLGPURenderer_CreateTexture(Uint32 th) {
     default:
         fatal_error("Unhandled pixel format: %d", fl_texture->format);
         break;
+    }
+
+    /* LA PAGE QU'ON VIENT DE SUBSTITUER PORTE PEUT-ETRE SA PROPRE PALETTE.
+     *
+     * `TexRemix_Substitute` est appelee juste avant `flCreateTextureHandle`, qui nous
+     * amene ici : la palette qu'elle tient est celle de CETTE page. On la reprend, et
+     * elle se retire en meme temps -- la prochaine texture creee ne la retrouvera pas.
+     * Une page qui n'est pas indexee n'en laisse aucune et rien ne change. */
+    const u32* palette_de_la_page = TexRemix_TakeReplacementPalette();
+
+    if (palette_de_la_page != NULL && tex_create_info.palette_type == PALETTE_8) {
+        SDL_memcpy(tex_create_info.propre_palette, palette_de_la_page, sizeof(tex_create_info.propre_palette));
+        tex_create_info.a_sa_palette = true;
     }
 
     arrpush(textures_to_create, tex_create_info);
@@ -895,11 +925,50 @@ static void SDLGPURenderer_RenderFrame(SDL_Rect viewport) {
         if (info->is_palette) {
             palettes[info->index] = texture;
         } else {
+            SDL_GPUTexture* propre = NULL;
+
+            if (info->a_sa_palette) {
+                /* 256 x 1, au format meme des pages en couleur pleine : le nuanceur leur
+                   applique le meme `.bgra`, donc l'image sortie est identique a celle que
+                   la version 1 donnait. */
+                SDL_GPUTransferBuffer* pal_transfert = SDL_CreateGPUTransferBuffer(
+                    device,
+                    &(SDL_GPUTransferBufferCreateInfo) {
+                        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+                        .size = sizeof(info->propre_palette),
+                    }
+                );
+
+                void* pal_ptr = SDL_MapGPUTransferBuffer(device, pal_transfert, false);
+                SDL_memcpy(pal_ptr, info->propre_palette, sizeof(info->propre_palette));
+                SDL_UnmapGPUTransferBuffer(device, pal_transfert);
+
+                propre = SDL_CreateGPUTexture(
+                    device,
+                    &(SDL_GPUTextureCreateInfo) {
+                        .type = SDL_GPU_TEXTURETYPE_2D,
+                        .format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+                        .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER,
+                        .width = 256,
+                        .height = 1,
+                        .layer_count_or_depth = 1,
+                        .num_levels = 1,
+                    }
+                );
+
+                _TextureUploadInfo* pal_upload = arraddnptr(texture_uploads, 1);
+                pal_upload->texture = propre;
+                pal_upload->transfer_buffer = pal_transfert;
+                pal_upload->w = 256;
+                pal_upload->h = 1;
+            }
+
             textures[info->index] = (_Texture) {
                 .handle = texture,
                 .width = info->width,
                 .height = info->height,
                 .palette_type = info->palette_type,
+                .propre_palette = propre,
             };
         }
     }
@@ -1075,7 +1144,10 @@ static void SDLGPURenderer_RenderFrame(SDL_Rect viewport) {
                                 .sampler = sampler,
                             },
                             {
-                                .texture = palettes[quad->palette_index],
+                                /* Une page de decor porte ses propres couleurs ; celle du
+                                   jeu ne vaut que pour les pages du jeu. */
+                                .texture = (texture->propre_palette != NULL) ? texture->propre_palette
+                                                                             : palettes[quad->palette_index],
                                 .sampler = sampler,
                             },
                         },

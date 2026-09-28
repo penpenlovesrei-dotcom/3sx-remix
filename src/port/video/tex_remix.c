@@ -10,7 +10,9 @@
  * of the code. Palettes are held elsewhere, so a sprite drawn in twenty colour schemes still
  * fingerprints as one page.
  *
- * The `.tex` container is deliberately blunt: `3STX`, a version, width, height, then rows of RGBA.
+ * The `.tex` container is deliberately blunt: `3STX`, a version, width, height, then rows of RGBA --
+ * or, in version 2, a palette of 256 entries and then one index byte per pixel, which is the format
+ * the game's own background pages have always used and a quarter of the weight.
  * There is no image decoder in this build and a page has no business carrying compression the game
  * would have to undo at load time. `tools/make_tex.py` builds one from any image.
  *
@@ -39,6 +41,34 @@
 #define STAGE_COUNT_ADDED 58
 #define TEX_MAGIC 0x58545333u // '3STX', little end first
 #define TEX_VERSION 1
+/* LA VERSION 2 : LA MEME PAGE, MAIS EN INDICES -- 25/09/2026.
+ *
+ * Une page de decor porte 128 x 128 pixels. En couleur pleine c'est 64 Ko ; le jeu, lui,
+ * n'a jamais charge que du 128 x 128 a huit bits indexes, soit 16 Ko -- mesure sur les
+ * 26 000 pages du vidage, sans une exception, listes 132, 196, 228, 260, 292 et 324. Nos
+ * decors etaient les seuls objets trente-deux bits de tout 3SX.
+ *
+ * Ils tiennent tous dans 256 couleurs : compte sur les 2550 pages distinctes de New
+ * Generation et de 2nd Impact, la pire en porte 206 (`stage24/196-226.tex`). La
+ * conversion est donc SANS PERTE, d'autant que l'echantillonnage est deja en NEAREST.
+ *
+ *     0  '3STX'
+ *     4  2
+ *     8  largeur
+ *    12  hauteur
+ *    16  256 entrees de quatre octets, dans l'ordre meme des pixels de la version 1
+ *  1040  largeur * hauteur indices
+ *
+ * La palette garde les octets tels que la version 1 les posait : elle traverse le meme
+ * `.bgra` du nuanceur, donc l'image sortie est la meme, octet pour octet. Rien a
+ * raisonner sur l'ordre des composantes.
+ *
+ * La version 1 reste lue : une page qui depasserait 256 couleurs la garde, et les
+ * illustrations de `art_remix` ne sont pas concernees du tout.
+ */
+#define TEX_VERSION_INDEXED 2
+#define TEX_PALETTE_ENTRIES 256
+#define TEX_PALETTE_SIZE (TEX_PALETTE_ENTRIES * 4)
 #define TEX_HEADER_SIZE 16
 #define DUMPED_KEYS_MAX 512
 
@@ -90,6 +120,17 @@ static int pairs_count = 0;
 /// texture pool before it asks for another.
 static void* replacement = NULL;
 
+/* LA PALETTE DE LA PAGE QU'ON VIENT DE POSER, ET POURQUOI UNE SEULE CASE SUFFIT.
+ *
+ * `TexRemix_Substitute` est appelee dans `ppgSetupTexChunk_3rd` juste avant
+ * `flCreateTextureHandle`, qui appelle lui-meme `Renderer_CreateTexture`. Entre les deux
+ * il ne se cree aucune autre texture : le rendu peut donc reprendre ici la palette de la
+ * page qu'il est en train de creer. Elle se reprend UNE FOIS --
+ * `TexRemix_TakeReplacementPalette` la rend et la retire -- pour qu'une texture creee
+ * plus tard ne puisse pas heriter de celle d'une page precedente. */
+static u32 palette_en_attente[TEX_PALETTE_ENTRIES];
+static bool palette_en_attente_prete = false;
+
 static void _log(SDL_LogPriority priority, SDL_PRINTF_FORMAT_STRING const char* fmt, ...) SDL_PRINTF_VARARG_FUNC(2);
 
 static void _log(SDL_LogPriority priority, const char* fmt, ...) {
@@ -126,6 +167,138 @@ static Uint64 fingerprint(const plContext* bits) {
 
 /// Stage currently loading its pages, or -1. Only stages past the original 22 use it.
 static s32 current_stage = -1;
+
+/* LES PAGES EN DOUBLE, ET L'INDEX QUI LES RETROUVE -- 23/09/2026.
+ *
+ * Une page d'etage ajoute pese 64 Ko, et Dudley 1 en porte 320 : deux listes de base, une
+ * troisieme, et surtout la pluie de Londres, un plan anime a HUIT vues de 32 pages
+ * (`etagesng_pages.inc`, `[44] = { plan 2, 8 vues }`). C'est le plus lourd des quarante
+ * etages -- 20 Mo, le double du second -- et Frederic le trouve « tres long a charger ».
+ *
+ * Or la pluie ne couvre qu'une partie de chaque page : tout ce qu'elle ne touche pas se
+ * repete d'une vue a l'autre. Mesure : 177 contenus distincts pour 320 fichiers, 143
+ * doublons OCTET POUR OCTET, dont un groupe de vingt-quatre. Et ce n'est pas propre a
+ * Dudley -- sur les quarante etages, 1467 pages sur 3360, soit 210 Mo qui tiennent en 118.
+ *
+ * `outils/pages_doublons.py --appliquer` ne garde donc qu'un fichier par contenu et ecrit
+ * a cote un `doublons.txt` qui dit, pour chaque page effacee, laquelle porte son contenu :
+ *
+ *     de_liste de_page vers_liste vers_page
+ *
+ * On le lit UNE FOIS par etage, et seulement quand le chemin direct manque : un etage qui
+ * n'a pas ete dedupliqué ne paie rien, et une installation qui garde ses doublons se
+ * comporte exactement comme avant. Rien n'est perdu : le contenu efface etait identique.
+ */
+/* `remix_path` est defini plus bas ; l'index en a besoin des maintenant. */
+static char* remix_path(const char* leaf);
+
+#define DOUBLONS_MAX 2048
+
+typedef struct {
+    s32 de_liste;
+    s32 de_page;
+    s32 vers_liste;
+    s32 vers_page;
+} PageDoublon;
+
+static PageDoublon doublons[DOUBLONS_MAX];
+static s32 doublons_nb;
+static s32 doublons_stage = -1;
+
+/// Lit `stage<N>/doublons.txt`. Absent ou illisible : zero ligne, et on n'y revient pas.
+static void charger_doublons(s32 stage) {
+    doublons_stage = stage;
+    doublons_nb = 0;
+
+    char leaf[64];
+    SDL_snprintf(leaf, sizeof(leaf), "stage%d/doublons.txt", (int)stage);
+    char* path = remix_path(leaf);
+
+    if (path == NULL) {
+        return;
+    }
+
+    size_t taille = 0;
+    char* texte = SDL_LoadFile(path, &taille);
+
+    SDL_free(path);
+
+    if (texte == NULL) {
+        return;
+    }
+
+    const char* p = texte;
+    const char* fin = texte + taille;
+
+    while (p < fin && doublons_nb < DOUBLONS_MAX) {
+        /* une ligne : quatre entiers, ou un commentaire qui commence par '#' */
+        while (p < fin && (*p == '\r' || *p == '\n')) {
+            p++;
+        }
+
+        if (p >= fin) {
+            break;
+        }
+
+        if (*p == '#') {
+            while (p < fin && *p != '\n') {
+                p++;
+            }
+            continue;
+        }
+
+        s32 n[4];
+        s32 lu = 0;
+
+        while (lu < 4 && p < fin) {
+            while (p < fin && (*p == ' ' || *p == '\t')) {
+                p++;
+            }
+
+            if (p >= fin || *p < '0' || *p > '9') {
+                break;
+            }
+
+            s32 v = 0;
+
+            while (p < fin && *p >= '0' && *p <= '9') {
+                v = v * 10 + (*p - '0');
+                p++;
+            }
+
+            n[lu++] = v;
+        }
+
+        while (p < fin && *p != '\n') {
+            p++;
+        }
+
+        if (lu == 4) {
+            doublons[doublons_nb++] = (PageDoublon) { n[0], n[1], n[2], n[3] };
+        }
+    }
+
+    SDL_free(texte);
+    _log(SDL_LOG_PRIORITY_INFO, "stage %d: %d duplicate pages share %s", (int)stage, (int)doublons_nb,
+         doublons_nb == 1 ? "another page" : "other pages");
+}
+
+/// La page qui porte le contenu de `(liste, page)`, quand celle-ci a ete effacee.
+static bool page_canonique(s32 stage, s32 liste, s32 page, s32* o_liste, s32* o_page) {
+    if (stage != doublons_stage) {
+        charger_doublons(stage);
+    }
+
+    for (s32 i = 0; i < doublons_nb; i++) {
+        if (doublons[i].de_liste == liste && doublons[i].de_page == page) {
+            *o_liste = doublons[i].vers_liste;
+            *o_page = doublons[i].vers_page;
+            return true;
+        }
+    }
+
+    return false;
+}
 
 void TexRemix_SetStage(s32 stage) {
     /* On note l'ouverture et la fermeture de la substitution : le journal du 31/08
@@ -469,12 +642,21 @@ bool TexRemix_Substitute(plContext* bits, const TexPageOrigin* from) {
         return false;
     }
 
-    const Uint64 key = fingerprint(bits);
-    pending_key = key;
+    /* L'EMPREINTE N'EST CALCULEE QUE SI ELLE SERT -- 22/09/2026. Elle parcourt la page
+       octet par octet ; un etage ajoute, lui, retrouve ses pages PAR NUMERO et n'en a
+       aucun besoin. Dudley 1 charge 320 pages (son archive porte sept vues de pluie) :
+       c'etaient 320 empreintes pour rien a chaque entree dans le decor, et Frederic le
+       trouve « tres long a charger ». On ne la prend plus que pour le vidage, ou quand
+       la recherche par numero n'a rien donne et qu'il faut la cle. */
+    pending_key = 0;
     pending_replaced = false;
+    palette_en_attente_prete = false;
 
-    if (Config_GetBool(CFG_TEX_REMIX_DUMP)) {
-        dump_page(key, bits, from);
+    const bool dump = Config_GetBool(CFG_TEX_REMIX_DUMP);
+
+    if (dump) {
+        pending_key = fingerprint(bits);
+        dump_page(pending_key, bits, from);
     }
 
     char* path = NULL;
@@ -492,12 +674,31 @@ bool TexRemix_Substitute(plContext* bits, const TexPageOrigin* from) {
         if (path != NULL && !SDL_GetPathInfo(path, NULL)) {
             SDL_free(path);
             path = NULL;
+
+            /* ELLE A PEUT-ETRE ETE DEDUPLIQUEE : une autre page porte le meme contenu,
+               octet pour octet, et `doublons.txt` dit laquelle -- voir `charger_doublons`. */
+            s32 liste = 0;
+            s32 page = 0;
+
+            if (page_canonique(current_stage, from->first, from->index, &liste, &page)) {
+                SDL_snprintf(leaf, sizeof(leaf), "stage%d/%d-%d.tex", (int)current_stage, (int)liste, (int)page);
+                path = remix_path(leaf);
+
+                if (path != NULL && !SDL_GetPathInfo(path, NULL)) {
+                    SDL_free(path);
+                    path = NULL;
+                }
+            }
         }
     }
 
     if (path == NULL) {
+        if (!dump) {
+            pending_key = fingerprint(bits);
+        }
+
         char* leaf = NULL;
-        SDL_asprintf(&leaf, "%016" SDL_PRIx64 ".tex", key);
+        SDL_asprintf(&leaf, "%016" SDL_PRIx64 ".tex", pending_key);
         path = (leaf != NULL) ? remix_path(leaf) : NULL;
         SDL_free(leaf);
     }
@@ -522,13 +723,20 @@ bool TexRemix_Substitute(plContext* bits, const TexPageOrigin* from) {
     }
 
     const Uint32* const header = file;
+    const Uint32 version = header[1];
     const Uint32 width = header[2];
     const Uint32 height = header[3];
-    const size_t expected = (size_t)width * height * 4;
 
-    if (header[0] != TEX_MAGIC || header[1] != TEX_VERSION) {
-        _log(SDL_LOG_PRIORITY_WARN, "%s is not a version %d .tex file", path, TEX_VERSION);
-    } else if (loaded - TEX_HEADER_SIZE < expected) {
+    /* La version 2 porte sa palette entre l'entete et les indices, et un octet par pixel
+       au lieu de quatre. Tout le reste du controle est le meme. */
+    const bool indexee = (version == TEX_VERSION_INDEXED);
+    const size_t avant = indexee ? (size_t)TEX_PALETTE_SIZE : 0u;
+    const size_t expected = (size_t)width * height * (indexee ? 1u : 4u);
+
+    if (header[0] != TEX_MAGIC || (version != TEX_VERSION && !indexee)) {
+        _log(SDL_LOG_PRIORITY_WARN, "%s is not a version %d or %d .tex file", path, TEX_VERSION,
+             TEX_VERSION_INDEXED);
+    } else if (loaded - TEX_HEADER_SIZE < expected + avant) {
         _log(
             SDL_LOG_PRIORITY_WARN, "%s claims %ux%u but holds %zu bytes of pixels", path, width, height,
             loaded - TEX_HEADER_SIZE
@@ -546,13 +754,21 @@ bool TexRemix_Substitute(plContext* bits, const TexPageOrigin* from) {
         replacement = SDL_malloc(expected);
 
         if (replacement != NULL) {
-            SDL_memcpy(replacement, (const Uint8*)file + TEX_HEADER_SIZE, expected);
+            SDL_memcpy(replacement, (const Uint8*)file + TEX_HEADER_SIZE + avant, expected);
+
+            if (indexee) {
+                SDL_memcpy(palette_en_attente, (const Uint8*)file + TEX_HEADER_SIZE, TEX_PALETTE_SIZE);
+                palette_en_attente_prete = true;
+            }
 
             bits->desc = 0;
             bits->width = width;
             bits->height = height;
-            bits->bitdepth = 4;
-            bits->pitch = width * 4;
+            /* 1 = PSMT8, un octet d'indice par pixel ; 4 = PSMCT32, la couleur pleine.
+               `flPS2ConvertTextureFromContext` recopie le PSMT8 tel quel, sans entrelacer :
+               ce qu'on ecrit ici est exactement ce que le nuanceur lira. */
+            bits->bitdepth = indexee ? 1 : 4;
+            bits->pitch = width * bits->bitdepth;
             bits->ptr = replacement;
             bits->pixelformat = (PixelFormat) {
                 .rl = 8, .rs = 0,  .rm = 0xFF,
@@ -561,7 +777,10 @@ bool TexRemix_Substitute(plContext* bits, const TexPageOrigin* from) {
                 .al = 8, .as = 24, .am = 0xFF,
             };
 
-            _log(SDL_LOG_PRIORITY_INFO, "%016" SDL_PRIx64 " -> %ux%u", key, width, height);
+            /* UNE LIGNE PAR PAGE REMPLACEE, ET IL Y EN A 320 CHEZ DUDLEY 1 : en DEBUG,
+               pas en INFO. La cle n'est plus calculee pour un etage ajoute ; le chemin
+               dit de toute facon laquelle c'est. */
+            _log(SDL_LOG_PRIORITY_DEBUG, "%s -> %ux%u", path, width, height);
             pending_replaced = true;
             SDL_free(file);
             SDL_free(path);
@@ -574,9 +793,19 @@ bool TexRemix_Substitute(plContext* bits, const TexPageOrigin* from) {
     return false;
 }
 
+const u32* TexRemix_TakeReplacementPalette(void) {
+    if (!palette_en_attente_prete) {
+        return NULL;
+    }
+
+    palette_en_attente_prete = false;
+    return palette_en_attente;
+}
+
 void TexRemix_Destroy(void) {
     SDL_free(replacement);
     replacement = NULL;
+    palette_en_attente_prete = false;
     dumped_count = 0;
     SDL_zero(replacement_handle);
 }

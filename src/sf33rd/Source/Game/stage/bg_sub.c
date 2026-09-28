@@ -9,6 +9,8 @@
 #include "sf33rd/Source/Game/engine/plcnt.h"
 #include "sf33rd/Source/Game/engine/pls02.h"
 #include "sf33rd/Source/Game/engine/workuser.h"
+#include "port/video/decor_objets.h"
+#include "sf33rd/Source/Game/effect/eff05.h"
 #include "sf33rd/Source/Game/stage/bg.h"
 #include "sf33rd/Source/Game/stage/bg_data.h"
 #include "sf33rd/Source/Game/stage/ta_sub.h"
@@ -1045,6 +1047,207 @@ s16 get_height_position() {
     return bg_w.bgw[1].xy[1].disp.pos;
 }
 
+/* L'AIRE AVANCE ENTRE LES MANCHES -- 26/09/2026.
+ *
+ * Frederic : « *pour le decor d'Ibuki, est-il possible de charger ses 3 versions des le
+ * 1er round et ensuite de changer les variants entre chaque round ?* »
+ *
+ * Ses trois versions ne sont pas des variantes : ce sont les TROIS AIRES d'un meme decor,
+ * et le Dreamcast les fait avancer a chaque manche. Lu dans `SF3_1ST.BIN`, etat 4 de la
+ * machine de deroulement du match (table `0x8C15BE18`, entree 4 -> `0x8C03ADA8`) :
+ *
+ *     0x8C087738   u8[contexte + 0..2] = 0, u8[contexte + 7] = 0
+ *                  -- et il ne touche NI au decor (+4), NI a l'aire (+5), NI a la
+ *                     variante (+6)
+ *     0x8C03AE20   u8[contexte + 5] += 1, plafonne a 2        <- L'AIRE
+ *     0x8C085F28   l'etat 0 remonte l'etage
+ *
+ * C'est exactement ce qu'on fait ici : avancer l'aire et remettre la tache de decor a son
+ * etat 0, ce qui rejoue `bg_initialize` -- le pendant du `u8[contexte + 0] = 0`.
+ *
+ * ET LE DREAMCAST RECHARGE. Son chargeur de bande `0x8C1172B8` ne garde qu'UNE bande a la
+ * fois (`0x8C612E70`) : il court-circuite quand la bande demandee est deja en place, et
+ * recharge sinon. Ibuki change de bande a chaque manche, donc il recharge trois fois. Le
+ * port fait de meme, pour la meme raison qu'il ne peut pas faire autrement : les vingt et
+ * un etages ajoutes partagent TOUS la meme carte de pages (`bg_map_tbl`, le gabarit de
+ * l'etage 5), donc les trois Ibuki portent les MEMES numeros de page, 132..163 et
+ * 196..227. Deux d'entre elles ne peuvent pas tenir ensemble dans le puits de textures :
+ * la page 132 ne peut etre qu'une seule image. Les charger toutes les trois demanderait de
+ * leur donner des numeros distincts, ce qui est un autre chantier.
+ *
+ * ON NE TOUCHE QU'AUX ETAGES A PLUSIEURS AIRES. Aujourd'hui il n'y en a qu'un -- l'etage
+ * 48 -- et le test le dit plutot que de le nommer : les 57 autres ne changent pas d'un
+ * pixel. */
+s32 Bg_Aires_Multiples(void) {
+    if (bg_w.stage < 0 || bg_w.stage >= 58) {
+        return 0;
+    }
+
+    return bg_index_tbl[bg_w.stage][1] != bg_index_tbl[bg_w.stage][0] ||
+           bg_index_tbl[bg_w.stage][2] != bg_index_tbl[bg_w.stage][0];
+}
+
+/// @brief L'etage dont il faut charger l'ARCHIVE DE PAGES pour ce match.
+///
+/// LA BASCULE D'AIRE N'ETAIT SUIVIE QUE PAR LES TABLES -- 27/09/2026.
+///
+/// Frederic : « le decor du 2eme round est glitche », puis « ce decor fonctionnait
+/// correctement, retrouve comment ». Il fonctionnait parce que `bg_index_tbl[30]` valait
+/// `{ 30, 30, 30 }` : une seule bande, un seul chargement. La bascule avait ete RETIREE le
+/// 16/09 pour cette raison exacte -- le portage ne suivait l'aire qu'a moitie -- puis remise
+/// le 25/09, quand `Bg_Plans_Source` a fait suivre `bg_index` a toutes les tables de plans.
+///
+/// Elle ne l'etait toujours qu'a moitie : **l'archive de pages, elle, suit `bg_w.stage`**.
+/// `Push_LDREQ_Queue_BG(bg_w.stage)` prend `color_file[30]`, donc `1543.bin` -- 96 textures,
+/// TROIS plans -- alors que la bande 56 de la premiere manche en a QUATRE et en demande 128.
+/// La trace du 27/09 le mesure mot pour mot :
+///
+///     etage 56, plan de base 4 ... deja consommees 96
+///
+/// Les 32 pages du quatrieme plan ne sont donc jamais installees -- `ppgSetupTexChunk_2nd`
+/// rend la main des que `textures <= accnum` --, leurs emplacements gardent ce qu'ils
+/// contenaient, et a la manche 2 on voit les deux bandes a la fois.
+///
+/// On charge donc l'archive de la bande qui demande LE PLUS DE PLANS parmi les trois aires.
+/// Pour tout etage dont les trois aires sont la meme, la fonction rend l'etage INCHANGE :
+/// seul Elena 2I (etage 30, aires { 56, 30, 30 }) change de comportement.
+s16 Bg_Archive_Source(s16 stage) {
+    s16 meilleur;
+    s16 a;
+
+    if (stage < 0 || stage >= 58) {
+        return stage;
+    }
+
+    meilleur = stage;
+
+    for (a = 0; a < 3; a++) {
+        const s16 b = bg_index_tbl[stage][a];
+
+        if (b >= 0 && b < 58 && use_real_scr[b] > use_real_scr[meilleur]) {
+            meilleur = b;
+        }
+    }
+
+    return meilleur;
+}
+
+/// Refait naitre les objets sans toucher au decor -- la bande, elle, ne change pas.
+static void Bg_Objets_De_La_Manche(void) {
+    if (!DecorObjets_ChangeParAire(bg_w.bg_index)) {
+        return;
+    }
+
+    effect_05_rendre();
+    DecorObjets_Oublier(NULL);
+    effect_05_init();
+    TraceFin("manche suivante : etage %d, objets de la manche refaits\n", (s32)bg_w.stage, 0, 0);
+}
+
+void Bg_Aire_Suivante(void) {
+    s8 avant;
+
+    /* LA MANCHE AVANCE POUR TOUS LES ETAGES -- 25/09/2026. Un etage peut changer d'objets
+       sans changer de bande : Hugo remplace ses scripts 17 et 4 par 20, 22 et 21 aux aires
+       1 et 2. `bg_w.area`, lui, n'avance que pour les etages a bandes multiples, parce que
+       `appear.c` le lit pour couper les entrees scenarisees -- on ne touche pas a ca. */
+    DecorObjets_MancheSuivante();
+
+    if (!Bg_Aires_Multiples()) {
+        Bg_Objets_De_La_Manche();
+        return;
+    }
+
+    avant = bg_index_tbl[bg_w.stage][bg_w.area];
+
+    if (bg_w.area < 2) {
+        bg_w.area++;
+    }
+
+    /* ET ON NE RECHARGE PAS POUR RIEN. Deux des trois decors ouverts ont la MEME bande
+       aux aires 1 et 2 -- Dudley (44, 45, 45) et Elena (51, 52, 52) -- seule Ibuki en a
+       trois distinctes. La console fait pareil : son chargeur `0x8C1172B8` court-circuite
+       quand la bande demandee est deja en place, et `0x8C10F740` le teste un cran plus
+       haut sur `u32[0x8C4DF128]`.
+
+       LA DIFFERENCE ASSUMEE : le Dreamcast rejoue quand meme toute sa mise en place -- les
+       registres, les palettes -- et ne saute QUE le chargement des pages. Ici on ne rejoue
+       rien du tout, parce que le decor est le meme : ce qui suit la camera la suit deja a
+       chaque trame. */
+    if (bg_index_tbl[bg_w.stage][bg_w.area] == avant) {
+        Bg_Objets_De_La_Manche();
+        return;
+    }
+
+    /* ON NE RECHARGE QUE LES PAGES -- CORRIGE LE 25/09, deuxieme passe.
+     *
+     * Frederic, sur la premiere version : « *pour Dudley, le 2eme round est glitche avec
+     * les 2 combattants colles sur le cote gauche du decor au debut de round et plein de
+     * defauts dans le decor* ».
+     *
+     * C'est que je passais par `bg_w.bg_routine = 0`, donc par `bg_initialize`, qui fait
+     * bien plus que charger : il remet les SEPT couches a zero -- `pos_x_work`,
+     * `pos_y_work`, `xy[].cal`, `wxy[].cal`, `hos_xy[].cal`, les vitesses, `zuubun` --
+     * plus `bg_f_x`, `bg_f_y`, `max_x`, `scr_stop`. Le decor repartait donc de son bord
+     * gauche pendant que les combattants restaient ou ils etaient.
+     *
+     * LA CONSOLE NE FAIT PAS CA NON PLUS. `0x8C088018` remet les registres de defilement
+     * et charge la bande ; ce qui suit la camera la suit deja a chaque trame et n'a pas a
+     * etre replace.
+     *
+     * On fait donc ici, et seulement ici, ce que le changement de bande exige :
+     *
+     *   * rendre les poignees de l'aire precedente (`Bg_TexInit` ne libere RIEN, il ne
+     *     fait que repointer `ppgBgList[i].tex` -- c'etait le crash d'Ibuki) ;
+     *   * eteindre les trois couches, parce que le nombre de plans peut changer d'une
+     *     aire a l'autre (Dudley 3 -> 2, Yun 3 -> 2, Yang 2 -> 3) ; `Bg_Texture_Load_EX`
+     *     rallume celles de la nouvelle aire ;
+     *   * poser `bg_index`, `scno`, `scrno` et `bg_opaque` de la nouvelle aire, puisque
+     *     c'est `bg_initialize` qui s'en chargeait ;
+     *   * charger les pages et refaire la liste de reecriture.
+     *
+     * Les positions, elles, ne sont pas touchees. */
+    /* LES OBJETS DE L'AIRE PRECEDENTE S'EN VONT AVEC ELLE -- 25/09/2026.
+     *
+     * Frederic : « *apres le changement entre 2 round, les anciens sprites animes restent,
+     * et les nouveaux sprites a afficher ne sont pas charges* ». Les deux moities ont la
+     * meme cause : les objets naissent une seule fois, dans `bg2202_init00`, et personne
+     * ne s'occupait d'eux au changement d'aire. On les rend ici, et on refait naitre ceux
+     * de la nouvelle aire une fois ses pages en place. */
+    effect_05_rendre();
+
+    Bg_Close();
+    /* QUATRE couches, pas trois : l'aire 0 d'Elena 2I (etage 56) en compte quatre, et
+       l'aire suivante (30) moins. Celle qui n'est pas rallumee doit s'eteindre. */
+    Bg_Off_R(0xF);
+
+    bg_w.bg_index = bg_index_tbl[bg_w.stage][bg_w.area];
+    bg_w.scno = use_scr[bg_w.bg_index];
+    bg_w.scrno = use_real_scr[bg_w.bg_index];
+    bg_w.bg_opaque = stage_opaque[bg_w.bg_index];
+
+    Bg_Texture_Load_EX();
+    Bg_Kakikae_Set();
+
+    /* ET UNE GENERATION DE PLUS AVANT DE LES REFAIRE NAITRE.
+     *
+     * `DecorObjets_Identite` porte l'image, le rang, et deux bits de generation. Le
+     * commentaire de `decor_objets.c` dit pourquoi : quand le tas de morceaux repart a
+     * zero mais que l'identite ne change pas, `makeup_tpu_free` restreint la recherche
+     * aux emplacements que l'ancienne entree occupait -- des emplacements qui ne portent
+     * plus rien -- et `get_mltbuf16_ext` boucle a l'infini. Une aire qui change est une
+     * mise en place neuve : elle merite sa generation, exactement comme une entree
+     * d'etage. `DecorObjets_Oublier(NULL)` fait les deux. */
+    DecorObjets_Oublier(NULL);
+
+    /* ET LES OBJETS DE LA NOUVELLE AIRE NAISSENT. Apres les pages : `effect_05_init` lit
+       `bg_w.bg_index`, qu'on vient de poser, et `char_add[bg_index]`. */
+    effect_05_init();
+
+    TraceFin("manche suivante : etage %d, aire %d -> bg_index %d\n", (s32)bg_w.stage, (s32)bg_w.area,
+             (s32)bg_w.bg_index);
+}
+
 void bg_work_clear() {
     s16 i;
 
@@ -1106,11 +1309,15 @@ void bg_initialize() {
     Family_Init();
     Scrn_Pos_Init();
     Zoomf_Init();
-    bg_w.bg_opaque = stage_opaque[bg_w.stage];
     Screen_Switch = 0;
     Screen_Switch_Buffer = 0;
     bg_disp_off = 0;
     bg_w.bg_index = bg_index_tbl[bg_w.stage][bg_w.area];
+
+    /* L'opacite suit l'AIRE, comme les tables de plans (voir `Bg_Plans_Source` dans
+       `bg.c`) : elle etait lue avant meme que `bg_index` soit pose, donc toujours celle
+       de l'aire 0. Sur un etage a aire unique c'est le meme nombre. */
+    bg_w.bg_opaque = stage_opaque[Bg_Aires_Multiples() ? bg_w.bg_index : bg_w.stage];
     bg_w.scno = use_scr[bg_w.bg_index];
     bg_w.scrno = use_real_scr[bg_w.bg_index];
 

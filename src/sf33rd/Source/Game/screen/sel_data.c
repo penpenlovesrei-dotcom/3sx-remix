@@ -150,6 +150,45 @@ const s16 Width_Data_76[26] = { 80,  48, 192, 48, 48, 48,  48, 192, 192, 96,  96
 const u8 PL_Color_Data[20] = { 0, 5, 0, 0, 5, 3, 0, 4, 4, 5, 0, 5, 0, 0, 0, 4, 4, 0, 3, 0 };
 const u8 Victory_Color_Data[20] = { 0, 53, 0, 0, 53, 49, 0, 51, 51, 53, 0, 53, 0, 0, 0, 51, 51, 0, 49, 0 };
 
+/* LE TIRAGE RANDOM DU SELECTEUR, NOS DECORS COMPRIS -- 25/09/2026.
+ *
+ * Frederic : « *oui, ajoute nos decors au tirage RANDOM* ». `Random_Stage_Data` ne porte
+ * que des etages 0 a 19 : aucun de nos trente-six ajouts ne pouvait sortir au hasard.
+ *
+ * LES QUARANTE-CINQ ETAGES PROPOSABLES :
+ *
+ *     0 a 16, 18, 19       les dix-neuf d'origine (17 est vide, 20 EST le RANDOM)
+ *     22 a 36              les quinze de 2nd Impact
+ *     37, 38, 39, 40, 42, 44, 46, 48, 51, 53, 55   les onze de New Generation
+ *
+ * Ce sont exactement ceux que la selection propose -- `Etage_Non_Propose` en ecarte huit
+ * de New Generation, qui sont des AIRES et s'enchainent toutes seules de manche en manche.
+ * Les tirer separement donnerait un decor qui ne changerait jamais.
+ *
+ * POURQUOI 128 ENTREES ET PAS 32 : un tirage de `random_32()` ne rend que 0 a 31, trop
+ * etroit pour quarante-cinq etages. Mais `random_32` avance `Random_ix32`, un index de 0 a
+ * 127 -- et c'est LUI qu'on lit. Le tirage est consomme exactement comme avant, donc la
+ * suite du generateur ne bouge pas d'un cran : c'est la regle que ce port tient pour
+ * rester d'accord avec la borne. La table est donc batie comme `random_tbl_32` l'est
+ * elle-meme : 128 cases, lues par `Random_ix32 & 0x7F`.
+ *
+ * Chaque etage y sort deux ou trois fois, et **deux cases voisines ne portent jamais le
+ * meme** : deux tirages de suite ne peuvent pas rendre le meme decor. Graine fixe, table
+ * reproductible -- voir `outils/tirage.py`.
+ *
+ * `Random_Stage_Data` n'est pas touche : il sert encore au tirage de l'ARCADE, quand les
+ * deux joueurs prennent le personnage aleatoire. Celui-la reste ce qu'il etait. */
+const u8 Etage_Au_Hasard[128] = {
+     1, 28,  6, 32, 10, 36, 55, 26, 15, 23, 31, 25, 46,  2, 51, 38,
+     7, 40, 28, 31, 34, 10, 23, 24, 16, 42, 33, 12, 39, 14, 51, 13,
+    29, 26, 37, 29, 30,  9, 16, 42, 19, 29, 46,  9, 37, 18,  6,  7,
+     0, 53, 14, 28, 35, 36, 15, 24, 25,  0, 27,  4,  3, 44, 25,  5,
+    55, 12, 19, 40,  2, 22, 33, 34, 18, 11, 33, 16,  8, 15, 39, 37,
+    44, 34, 13, 30, 11, 27, 48, 23, 46, 35, 38,  3, 51, 53, 32, 53,
+     7, 32, 26, 55,  2,  4, 22,  8, 42, 38, 24, 10, 48, 36, 30, 19,
+    22,  4, 12,  1, 39, 18, 11, 31, 14,  8,  5,  9, 27, 44, 40,  0
+};
+
 const u8 Random_Stage_Data[2][32] = {
     { 14, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 2, 3, 4, 5, 6, 7, 8, 11, 12, 15, 16, 19, 0 },
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 2, 3, 4, 5, 6, 7, 8, 11, 12, 15, 16, 19, 0 }

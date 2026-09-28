@@ -2045,37 +2045,82 @@ void Handicap_Stage_Select(s16 PL_id) {
 /// pour 2nd Impact et outils/etagesng.py pour New Generation.
 #define VS_STAGE_MAX 57
 
+/// @brief Un etage que la selection ne propose pas.
+///
+/// DEUX RAISONS, ET ELLES NE SE MELANGENT PAS.
+///
+/// * 17 et 21 sont vides d'origine, 47 (NG HUGO) n'est que l'ebauche du decor de
+///   2nd Impact et n'est jamais atteignable dans New Generation. Leurs fichiers restent en
+///   place ; on ne les propose simplement pas.
+/// * LES AUTRES SONT DES AIRES, et depuis que `Bg_Aire_Suivante` les enchaine de manche en
+///   manche, les proposer separement n'a plus de sens : on tomberait sur une version du
+///   decor qui ne changerait jamais. `bg_index_tbl` dit lequel mene a l'autre --
+///
+///       { 40, 41, 41 }   Ryu, puis KEN      -> on garde 40, on saute 41
+///       { 42, 43, 43 }   Yun                -> on garde 42, on saute 43
+///       { 44, 45, 45 }   Dudley             -> on garde 44, on saute 45
+///       { 48, 49, 50 }   Ibuki, ses TROIS   -> on garde 48, on saute 49 et 50
+///       { 51, 52, 52 }   Elena              -> on garde 51, on saute 52
+///       { 55, 54, 54 }   Yang               -> on garde 55, on saute 54
+///
+///   ATTENTION A YANG : c'est le 55 qu'on garde, pas le 54. Son aire 0 EST l'etage 55 --
+///   la console commence par celui-la. Garder le 54 aurait donne un decor fixe.
+///
+///   ET RYU/KEN SE REUNISSENT : le decor 2 commence chez Ryu et passe chez Ken, le decor
+///   11 fait l'inverse. Deux entrees pour la meme paire ; l'etage 40 la donne en entier.
+///
+/// Les quinze etages ajoutes de 2nd Impact (22 a 36) n'ont AUCUNE aire multiple -- ils ne
+/// generent pas de table d'index -- donc il n'y a rien a y reunir.
+static s32 Etage_Non_Propose(s16 n) {
+    switch (n) {
+    case 17:
+    case 21:
+    case 47:
+    case 41:
+    case 43:
+    case 45:
+    case 49:
+    case 50:
+    case 52:
+    case 54:
+    /* L'ETAGE 56 EST DE NOUVEAU PROPOSE -- 27/09/2026.
+     *
+     * Il avait ete retire de la selection le 25/09 parce que `bg_index_tbl[30]` valait
+     * alors { 56, 30, 30 } : l'etage 30 le donnait en premiere manche, le proposer a part
+     * n'avait plus de sens. Cette bascule est retiree (voir `bg_data.c`), donc `bg08` --
+     * la gorge et son pont -- n'est plus atteignable autrement : il redevient un etage a
+     * lui, comme avant le 25/09.
+     *
+     * 57 reste ecarte : `bg10` est un decor de HUGO jamais finalise, Frederic le 25/09.
+     * Ses fichiers restent en place. */
+    case 57:
+        return 1;
+
+    default:
+        return 0;
+    }
+}
+
 void Handicap_Stage_Move_Sub(u16 sw) {
     switch (sw) {
-    // 17 et 21 sont vides d'origine ; 22 a 36 sont les etages ajoutes de 2nd Impact.
+    /* UNE BOUCLE, PLUS UNE SUITE DE `if`. Ibuki saute DEUX etages de suite (49 et 50) :
+       une comparaison par etage ne peut pas franchir une paire, elle s'arrete au milieu. */
     case SWK_LEFT:
-        if ((VS_Stage -= 1) < 0) {
-            VS_Stage = VS_STAGE_MAX;
-        }
-
-        if (VS_Stage == 17) {
-            VS_Stage = 16;
-        }
-
-        if (VS_Stage == 21) {
-            VS_Stage = 20;
-        }
+        do {
+            if ((VS_Stage -= 1) < 0) {
+                VS_Stage = VS_STAGE_MAX;
+            }
+        } while (Etage_Non_Propose(VS_Stage));
 
         SE_dir_cursor_move();
         break;
 
     case SWK_RIGHT:
-        if ((VS_Stage += 1) > VS_STAGE_MAX) {
-            VS_Stage = 0;
-        }
-
-        if (VS_Stage == 17) {
-            VS_Stage = 18;
-        }
-
-        if (VS_Stage == 21) {
-            VS_Stage = 22;
-        }
+        do {
+            if ((VS_Stage += 1) > VS_STAGE_MAX) {
+                VS_Stage = 0;
+            }
+        } while (Etage_Non_Propose(VS_Stage));
 
         SE_dir_cursor_move();
         break;
@@ -2132,8 +2177,12 @@ u8 Setup_Battle_Country() {
 
     if (Mode_Type == MODE_VERSUS) {
         if (VS_Stage == 20) {
+            /* LE TIRAGE EST CONSOMME COMME AVANT -- un appel, pas deux -- mais c'est son
+               INDEX qu'on lit, parce qu'il va de 0 a 127 la ou la valeur s'arrete a 31 et
+               qu'on a quarante-cinq etages a proposer. Voir `Etage_Au_Hasard`. */
             Rnd32 = random_32();
-            return Random_Stage_Data[1][Rnd32];
+            (void)Rnd32;
+            return Etage_Au_Hasard[Random_ix32 & 0x7F];
         }
 
         return VS_Stage;
