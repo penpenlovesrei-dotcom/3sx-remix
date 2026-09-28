@@ -39,6 +39,9 @@ run.err
 #
 #     python animer2i.py --ecrire && python animerng.py --ecrire
 src/port/video/decor_objets_data.c
+# ET SES SAUVEGARDES -- 29/09/2026. Deux d'entre elles (82 et 77 Mo) sont parties
+# sur GitHub parce que le motif ci-dessus ne prend pas les suffixes.
+src/port/video/decor_objets_data.c.*
 
 # Les outils des decors portent la METHODE, pas les donnees -- 28/09/2026
 #
